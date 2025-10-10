@@ -39,7 +39,7 @@ public class BluetoothChannel implements MethodCallHandler {
             case "isConnected":
                 result.success(connector.isConnected());
                 break;
-            case: "sendSerialCommand":
+            case "sendSerialCommand":
                 String command = call.argument("command");
                 String response = connector.sendSerialCommand(command);
                 result.success(response);

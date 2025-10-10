@@ -58,6 +58,9 @@ public class BluetoothConnector {
             Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
             if (!pairedDevices.isEmpty()) {
                 for (BluetoothDevice device : pairedDevices) {
+                    if (!device.getName().contains("OBD")) {
+                        continue; // Skip non-OBD devices
+                    }
                     Map<String, String> deviceMap = new HashMap<>();
                     // This requires BLUETOOTH_CONNECT permission on Android 12+
                     deviceMap.put("name", device.getName());
@@ -122,6 +125,7 @@ public class BluetoothConnector {
             return "Error: Not connected";
         }
         try {
+            Log.d(TAG, "Sending command: " + command);
             // ELM327 commands must end with a carriage return
             outputStream.write((command + "\r").getBytes());
             outputStream.flush();
@@ -132,11 +136,12 @@ public class BluetoothConnector {
             while ((c = (char) inputStream.read()) != '>') {
                 response.append(c);
             }
+            Log.d(TAG, "Received response: " + response.toString());
             // Clean up the response string
             return response.toString().trim().replace("\r", " ");
         } catch (IOException e) {
             Log.e(TAG, "Error sending command", e);
-            disconnect(); // Assume connection is lost
+            //disconnect(); // Assume connection is lost
             return "Error: " + e.getMessage();
         }
     }

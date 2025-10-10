@@ -57,7 +57,15 @@ class Elm327Driver {
 
   // Throttle Position: response "41 11 XX" => (XX*100)/255
   Future<double> throttlePosition() async {
+    /*await sendCommand('AT Z');
+    await sendCommand('AT E0');
+    await sendCommand('AT L0');
+    await sendCommand('AT S0');
+    await sendCommand('AT SP 0');*/
     final response = await sendCommand('01 11');
+    if (response.contains('SEARCHING') || response.contains('UNABLE TO CONNECT') || response.startsWith('Error:')) {
+      throw Exception('ELM327 error: $response');
+    }
     final parts = response.split(' ');
     if (parts.length >= 3) {
       final xx = int.parse(parts[2], radix: 16);

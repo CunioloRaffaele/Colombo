@@ -37,6 +37,38 @@ class _MyHomePageState extends State<MyHomePage> {
   Elm327Driver driver = Elm327Driver();
   bool _isConnected = false;
   bool _permissionsGranted = false;
+  int? _rpm;
+  int? _speed;
+  double? _throttlePosition;
+
+  Future<void> _startUpdates() async {
+    print("update");
+    if (true) {
+      print("update2");
+      try {
+        int rpm = await driver.rpm();
+        double throttle = 0.0;
+        int speed = await driver.speed();
+        if (mounted) {
+          setState(() {
+            _rpm = rpm;
+            _throttlePosition = throttle;
+            _speed = speed;
+          });
+        }
+      } catch (e) {
+        /*if (mounted) {
+          setState(() {
+            _isConnected = false;
+            _rpm = null;
+            _throttlePosition = null;
+            _speed = null;
+          });
+        }*/
+      }
+    }
+  }
+
 
   @override
   void initState() {
@@ -121,7 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     bool isConnected = await driver.isConnected();
     setState(() {
-      _isConnected = isConnected;
+      _isConnected = true;
     });
   }
 
@@ -140,6 +172,31 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               _isConnected ? 'Connesso' : 'Disconnesso',
             ),
+            const SizedBox(height: 24),
+            Text(
+              _rpm != null ? 'RPM: $_rpm' : 'RPM: --',
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _speed != null ? 'Velocità: $_speed km/h' : 'Velocità: -- km/h',
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _throttlePosition != null ? 'Posizione Acceleratore: ${_throttlePosition!.toStringAsFixed(1)}%' : 'Posizione Acceleratore: --%',
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 32),
+            MaterialButton(
+              onPressed: () async {
+                String version = await driver.elmVersion();
+                print("version:$version");
+                // Optionally show the version in a dialog or setState
+              },
+              child: const Text('Leggi versione ELM327 e scrivi in log'),
+            ),
+            MaterialButton(onPressed: _startUpdates, child: const Text('Start Updates') ),
           ],
         ),
       ),
