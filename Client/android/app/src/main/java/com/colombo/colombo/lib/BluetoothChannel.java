@@ -28,9 +28,9 @@ public class BluetoothChannel implements MethodCallHandler {
             case "getPairedDevices":
                 result.success(connector.getPairedDevices());
                 break;
-            case "connect":
+            case "connectToSerial":
                 String address = call.argument("address");
-                result.success(connector.connect(address));
+                result.success(connector.connectToSerial(address));
                 break;
             case "disconnect":
                 connector.disconnect();
@@ -38,6 +38,11 @@ public class BluetoothChannel implements MethodCallHandler {
                 break;
             case "isConnected":
                 result.success(connector.isConnected());
+                break;
+            case: "sendSerialCommand":
+                String command = call.argument("command");
+                String response = connector.sendSerialCommand(command);
+                result.success(response);
                 break;
             default:
                 result.notImplemented();

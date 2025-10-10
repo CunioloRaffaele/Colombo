@@ -17,6 +17,9 @@ import java.util.UUID;
 import android.content.Context;
 import android.os.Build;
 
+// Note: Bluetooth operations are blocking. Threading/asynchronous execution is handled in Dart (Flutter).
+// If you need to avoid blocking the Android main thread, ensure Dart calls these methods asynchronously.
+
 public class BluetoothConnector {
     private static final String TAG = "BluetoothConnector";
     // Standard Serial Port Profile (SPP) UUID
@@ -68,7 +71,7 @@ public class BluetoothConnector {
         return devicesList;
     }
 
-    public boolean connect(String address) {
+    public boolean connectToSerial(String address) {
         if (bluetoothAdapter == null || address == null) {
             Log.e(TAG, "Bluetooth adapter or address is null.");
             return false;
@@ -114,7 +117,7 @@ public class BluetoothConnector {
         return socket != null && socket.isConnected();
     }
 
-    public String sendCommand(String command) {
+    public String sendSerialCommand(String command) {
         if (!isConnected()) {
             return "Error: Not connected";
         }
