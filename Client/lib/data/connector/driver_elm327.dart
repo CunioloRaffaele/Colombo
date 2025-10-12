@@ -29,7 +29,7 @@ class Elm327Driver {
   }
 
   Future<String> sendCommand(String command) async {
-    if (!await isConnected()) throw Exception("Not connected to any device");
+    if (!await isConnected()) throw Exception("ELM327 driver: not connected to any device");
     return await _channel.invokeMethod<String>('sendSerialCommand', {'command': command}) ?? '';
   }
 
@@ -82,6 +82,41 @@ class Elm327Driver {
       return int.parse(parts[2], radix: 16) - 40;
     }
     throw Exception('Invalid coolant temp response: $response');
+  }
+
+  Future<double> fuelRate() async {
+    final response = await sendCommand('01 5E');
+    final parts = response.split(' ');
+    if (parts.length >= 4 && parts[0] == '41' && parts[1] == '5E') {
+      final xx = int.parse(parts[2], radix: 16);
+      final yy = int.parse(parts[3], radix: 16);
+      return ((xx * 256) + yy) / 20.0;
+    }
+    throw Exception('Invalid fuel rate response: $response');
+  }
+
+  Future<double> odometer() async {
+    final response = await sendCommand('01 A6');
+    final parts = response.split(' ');
+    if (parts.length >= 6 && parts[0] == '41' && parts[1] == 'A6') {
+      final xx1 = int.parse(parts[2], radix: 16);
+      final xx2 = int.parse(parts[3], radix: 16);
+      final xx3 = int.parse(parts[4], radix: 16);
+      final xx4 = int.parse(parts[5], radix: 16);
+      return ((xx1 << 24) + (xx2 << 16) + (xx3 << 8) + xx4) / 10.0;
+    }
+    throw Exception('Invalid odometer response: $response');
+  }
+
+  Future<double> engineExhaustFlow() async {
+    final response = await sendCommand('01 5F');
+    final parts = response.split(' ');
+    if (parts.length >= 4 && parts[0] == '41' && parts[1] == '5F') {
+      final xx = int.parse(parts[2], radix: 16);
+      final yy = int.parse(parts[3], radix: 16);
+      return ((xx * 256) + yy) / 100.0;
+    }
+    throw Exception('Invalid engine exhaust flow response: $response');
   }
 
   Future<String> elmVersion() async => await sendCommand('AT Z');
