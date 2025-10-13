@@ -44,17 +44,61 @@ class _MyHomePageState extends State<MyHomePage> {
   double? _engineExhaustFlow;
   double? _odometer;
 
+  void displaySnackbar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: 5),
+      ),
+    );
+  }
+
   Future<void> _startUpdates() async {
     print("update");
+    int? rpm;
+    int? speed;
+    double? throttle;
+    double? fuelRate;
+    double? engineExhaustFlow;
+    double? odometer;
     if (true) {
-      print("update2");
       try {
-        int rpm = await driver.rpm();
-        double throttle = await driver.throttlePosition();
-        int speed = await driver.speed();
-        double fuelRate = await driver.fuelRate();
-        double engineExhaustFlow = await driver.engineExhaustFlow();
-        double odometer = await driver.odometer();
+        rpm = await driver.rpm();
+      } catch (e) {
+        print("Error getting RPM: $e");
+        displaySnackbar("Error getting RPM: $e");
+      }
+      try {
+        throttle = await driver.throttlePosition();
+      } catch (e) {
+        print("Error getting throttle position: $e");
+        displaySnackbar("Error getting throttle position: $e");
+      }
+      try {
+        speed = await driver.speed();
+      } catch (e) {
+        print("Error getting speed: $e");
+        displaySnackbar("Error getting speed: $e");
+      }
+      try {
+        fuelRate = await driver.fuelRate();
+      } catch (e) {
+        print("Error getting fuel rate: $e");
+        displaySnackbar("Error getting fuel rate: $e");
+      }
+      try {
+        engineExhaustFlow = await driver.engineExhaustFlow();
+      } catch (e) {
+        print("Error getting engine exhaust flow: $e");
+        displaySnackbar("Error getting engine exhaust flow: $e");
+      }
+      try {
+        odometer = await driver.odometer();
+      } catch (e) {
+        print("Error getting odometer: $e");
+        displaySnackbar("Error getting odometer: $e");
+      }
         if (mounted) {
           setState(() {
             _rpm = rpm;
@@ -65,15 +109,6 @@ class _MyHomePageState extends State<MyHomePage> {
             _odometer = odometer;
           });
         }
-      } catch (e) {
-        // show toast with error
-        print("Error during update: $e");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Errore durante l\'aggiornamento: $e'),
-            duration: Duration(seconds: 5),
-          ),
-        );
         /*if (mounted) {
           setState(() {
             _isConnected = false;
@@ -84,7 +119,6 @@ class _MyHomePageState extends State<MyHomePage> {
         }*/
       }
     }
-  }
 
 
   @override
@@ -222,9 +256,26 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 32),
             MaterialButton(
               onPressed: () async {
-                String version = await driver.elmVersion();
-                print("version:$version");
-                // Optionally show the version in a dialog or setState
+                try {
+                  String version = await driver.elmVersion();
+                  print("version:$version");
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Versione ELM327: $version'),
+                      duration: Duration(seconds: 5),
+                    ),
+                  );
+                } catch (e) {
+                  print("Error getting ELM327 version: $e");
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Errore ottenendo la versione ELM327: $e'),
+                      duration: Duration(seconds: 5),
+                    ),
+                  );
+                }
               },
               child: const Text('Leggi versione ELM327 e scrivi in log'),
             ),
