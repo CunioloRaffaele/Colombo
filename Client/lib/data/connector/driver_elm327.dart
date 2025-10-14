@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 
 class Elm327Driver {
+  // https://en.wikipedia.org/wiki/OBD-II_PIDs#Service_01
   static const MethodChannel _channel = MethodChannel('bluetooth_channel');
 
   Future<bool> isBluetoothEnabled() async {
@@ -117,6 +118,16 @@ class Elm327Driver {
       return ((xx * 256) + yy) / 100.0;
     }
     throw Exception('Invalid engine exhaust flow response: $response');
+  }
+
+  Future <double> fuelTankLevel() async {
+    final response = await sendCommand('01 2F');
+    final parts = response.split(' ');
+    if (parts.length >= 3 && parts[0] == '41' && parts[1] == '2F') {
+      final xx = int.parse(parts[2], radix: 16);
+      return (xx * 100) / 255.0;
+    }
+    throw Exception('Invalid fuel tank level response: $response');
   }
 
   Future<String> elmVersion() async => await sendCommand('AT Z');

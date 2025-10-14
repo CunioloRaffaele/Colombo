@@ -43,13 +43,14 @@ class _MyHomePageState extends State<MyHomePage> {
   double? _fuelRate;
   double? _engineExhaustFlow;
   double? _odometer;
+  double? _fuelLevel;
 
   void displaySnackbar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        duration: Duration(seconds: 5),
+        duration: Duration(seconds: 2),
       ),
     );
   }
@@ -62,6 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
     double? fuelRate;
     double? engineExhaustFlow;
     double? odometer;
+    double ? fuelLevel;
     if (true) {
       try {
         rpm = await driver.rpm();
@@ -99,6 +101,12 @@ class _MyHomePageState extends State<MyHomePage> {
         print("Error getting odometer: $e");
         displaySnackbar("Error getting odometer: $e");
       }
+      try {
+        fuelLevel = await driver.fuelTankLevel();
+      } catch (e) {
+        print("Error getting fuel level: $e");
+        displaySnackbar("Error getting fuel level: $e");
+      }
         if (mounted) {
           setState(() {
             _rpm = rpm;
@@ -107,6 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
             _fuelRate = fuelRate;
             _engineExhaustFlow = engineExhaustFlow;
             _odometer = odometer;
+            _fuelLevel = fuelLevel;
           });
         }
         /*if (mounted) {
