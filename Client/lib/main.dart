@@ -262,6 +262,11 @@ class _MyHomePageState extends State<MyHomePage> {
               _odometer != null ? 'Odometer: ${_odometer!.toStringAsFixed(2)} km' : 'Odometer: -- km',
               style: const TextStyle(fontSize: 24),
             ),
+            const SizedBox(height: 16),
+            Text(
+              _fuelLevel != null ? 'Fuel Level: ${_fuelLevel!.toStringAsFixed(1)}%' : 'Fuel Level: --%',
+              style: const TextStyle(fontSize: 24),
+            ),
             const SizedBox(height: 32),
             MaterialButton(
               onPressed: () async {
