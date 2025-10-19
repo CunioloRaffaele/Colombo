@@ -1,7 +1,15 @@
 
 # Green Drive
 
-Repository monorepo per il progetto "Green Drive": 
+<div align="center">
+	<img src="Icon.png" alt="Green Drive Icon" width="128" height="128" />
+</div>
+
+L’applicazione proposta mira a promuovere una guida sostenibile attraverso la raccolta e l’analisi dei dati estratti in tempo reale dall’unità di controllo delle autovetture tramite interfaccia OBD-II (standard per la diagnostica dei veicoli,) con il microcontroller ELM327, collegato a smartphone con Bluetooth o WiFi.
+
+# Colombo Monorepo
+
+Repository monorepo per il progetto "Green Drive" codenamed Colombo: 
 
 - client mobile (Flutter)
 - pannello gestionale web (Angular) 
