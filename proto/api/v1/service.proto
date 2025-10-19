@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package colombo.api.v1;
+
+import "../common/types.proto";
+
+service CarService {
+  rpc ListCars(ListCarsRequest) returns (ListCarsResponse);
+  rpc GetCar(GetCarRequest) returns (Car);
+}
+
+message ListCarsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListCarsResponse {
+  repeated Car cars = 1;
+  int32 total = 2;
+}
+
+message GetCarRequest {
+  string id = 1;
+}

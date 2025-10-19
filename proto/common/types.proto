@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package colombo.common;
+
+message Car {
+  string id = 1;
+  string model = 2;
+  string plate = 3;
+  int32 year = 4;
+}
