@@ -66,7 +66,7 @@ CREATE TABLE Sessioni (
 -- ===============================
 CREATE TABLE Area (
     id SERIAL PRIMARY KEY,
-    area geometry(POLYGON, 4326),
+    polygon geometry(POLYGON, 4326),
     id_comune INT NOT NULL,
     FOREIGN KEY (id_comune)
         REFERENCES Comuni(id)
@@ -91,3 +91,16 @@ CREATE TABLE EcoScores (
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
+
+
+-- ===============================
+-- INDICI
+
+-- Indice sul campo polygon della tabella Area
+CREATE INDEX idx_area_polygon ON Area USING GIST (polygon);
+
+-- Indice sul campo email della tabella Cittadini
+CREATE INDEX idx_cittadini_email ON Cittadini(email);
+
+-- Indice sul campo id_sessione della tabella EcoScores
+CREATE INDEX idx_ecoscores_id_sessione ON EcoScores(id_sessione);
