@@ -8,7 +8,9 @@ CREATE TABLE Comuni (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     provincia VARCHAR(50) NOT NULL,
-    regione VARCHAR(15) NOT NULL
+    regione VARCHAR(15) NOT NULL,
+    email VARCHAR(50) UNIQUE,
+    password VARCHAR(255) NOT NULL
 );
 
 -- ===============================
@@ -19,7 +21,7 @@ CREATE TABLE Cittadini (
     nome VARCHAR(100),
     email VARCHAR(50) UNIQUE,
     data_nascita DATE,
-    password VARCHAR(255)
+    password VARCHAR(255) NOT NULL
 );
 
 -- ===============================
@@ -101,6 +103,9 @@ CREATE INDEX idx_area_polygon ON Area USING GIST (polygon);
 
 -- Indice sul campo email della tabella Cittadini
 CREATE INDEX idx_cittadini_email ON Cittadini(email);
+
+-- Indice sul campo email della tabella Comuni
+CREATE INDEX idx_comuni_email ON Comuni(email);
 
 -- Indice sul campo id_sessione della tabella EcoScores
 CREATE INDEX idx_ecoscores_id_sessione ON EcoScores(id_sessione);
