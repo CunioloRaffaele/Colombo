@@ -24,7 +24,7 @@ fi
 echo "Deploying to $SSH_HOST:$RELEASE_PATH (by: $DEPLOYER, commit: $COMMIT, source: $SOURCE)"
 
 # Create release directory
-ssh $SSH_USER@$SSH_HOST "mkdir -p $RELEASE_PATH"
+ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "mkdir -p $RELEASE_PATH"
 
 # Transfer files
 echo "Transferring files..."

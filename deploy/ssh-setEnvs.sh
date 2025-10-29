@@ -12,7 +12,7 @@ SSH_USER="${4:-$SSH_USER}"        # Fourth argument or env variable
 
 echo "Setting environment variable $ENV_NAME on $SSH_HOST"
 # Set environment variable on the remote server
-ssh $SSH_USER@$SSH_HOST "
+ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
     echo 'Setting environment variable...' && \
     echo '$ENV_NAME=$ENV_VALUE' >> ~/.bashrc && \
     source ~/.bashrc && \

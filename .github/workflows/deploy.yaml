@@ -49,7 +49,8 @@ jobs:
 
       - name: Copy docker files
         run: |
-          cp infrastructure/ dist/infrastructure/
+          mkdir -p dist/infrastructure
+          cp -r infrastructure/ dist/infrastructure/
 
       - name: Copy database init files
         run: |
@@ -70,6 +71,7 @@ jobs:
         run: |
           chmod +x ./deploy/ssh-setEnvs.sh
           ./deploy/ssh-setEnvs.sh "POSTGRES_USER" "$POSTGRES_USER" "$SSH_HOST" "$SSH_USER"
+          ./deploy/ssh-setEnvs.sh "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD" "$SSH_HOST" "$SSH_USER"
       
       - name: Execute deployment script
         env:
