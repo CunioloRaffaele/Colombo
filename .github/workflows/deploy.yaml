@@ -31,16 +31,6 @@ jobs:
           mkdir -p dist/web_admin
           cp -r services/web_admin/dist/* dist/web_admin
 
-      # Compile protobuf
-      - name: Compile protobuf (Backend)
-        working-directory: services/api
-        run: |
-          sudo apt update
-          sudo apt install -y protobuf-compiler
-          mkdir -p services/api/generated/proto
-          cd proto
-          protoc --js_out=import_style=commonjs,binary:../services/api/generated *.proto
-
       # Copy api files
       - name: Copy API files (Backend)
         run: |
@@ -68,10 +58,11 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           chmod +x ./deploy/ssh-setEnvs.sh
-          ./deploy/ssh-setEnvs.sh "POSTGRES_USER" "$POSTGRES_USER" "$SSH_HOST" "$SSH_USER"
-          ./deploy/ssh-setEnvs.sh "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD" "$SSH_HOST" "$SSH_USER"
+          ./deploy/ssh-setEnvs.sh "POSTGRES_USER" "$POSTGRES_USER" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
+          ./deploy/ssh-setEnvs.sh "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
       
       - name: Execute deployment script
         env:
