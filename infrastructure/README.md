@@ -1,4 +1,4 @@
 # colombo
 
-Colombo definizione docker-compose per deploy.
+Colombo definizione per deploy con Podman e podman-compose.
 

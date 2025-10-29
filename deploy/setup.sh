@@ -3,7 +3,7 @@
 # Install Podman + podman-compose and install/configure a DuckDNS DDNS updater + cron job.
 # Usage (manual): sudo ./deploy/setup.sh -t TOKEN -d greendrive
 
-set -euo pipefail
+set -euo pipefail # Exit on error, undefined variable, or pipe failure
 
 usage() {
     cat <<EOF
@@ -45,6 +45,10 @@ install_packages() {
     esac
 }
 
+setup_folders() {
+    run_as_root mkdir -p /srv/colombo/{releases,shared,config}
+}
+
 # Create ddns updater script and config
 install_ddns() {
     ddns_bin="/usr/local/bin/ddns-duckdns.sh"
@@ -61,9 +65,9 @@ DUCKDNS_DOMAIN='${DUCKDNS_DOMAIN}'
 mkdir -p ~/duckdns
 echo url="https://www.duckdns.org/update?domains=\${DUCKDNS_DOMAIN}&token=\${DUCKDNS_TOKEN}&ip=" | curl -k -o ~/duckdns/duck.log -K -
 if grep -q "OK" ~/duckdns/duck.log; then
-  echo "Aggiornamento DuckDNS completato con successo"
+  echo "Updated DuckDNS for domain \${DUCKDNS_DOMAIN}"
 else
-  echo "Errore nell'aggiornamento DuckDNS"
+  echo "Error updating DuckDNS"
 fi
 
 exit 0
@@ -84,6 +88,13 @@ EOF
     # Run once now
     run_as_root "$ddns_bin" || true
     echo "DuckDNS updater installed at $ddns_bin and log at ~/duckdns/duck.log"
+
+    # Checl if ~/duckdns/duck.log exists and contains "OK"
+    if [ -f ~/duckdns/duck.log ] && grep -q "OK" ~/duckdns/duck.log; then
+        echo "DuckDNS setup verified successfully."
+    else
+        echo "Warning: DuckDNS setup may have failed. Check ~/duckdns/duck.log for details."
+    fi
 }
 
 main() {

@@ -1,0 +1,82 @@
+# .github/workflows/deploy.yml
+
+name: Deploy to Production VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      # Build angular app
+      - name: Setup Node.js (for Angular)
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Install dependencies (Angular)
+        working-directory: services/web_admin
+        run: npm ci
+
+      - name: Build app (Angular)
+        working-directory: services/web_admin
+        run: npm run build -- --configuration production
+
+      - name: Move built app files (Angular)
+        run: |
+          mkdir -p dist/web_admin
+          cp -r services/web_admin/dist/* dist/web_admin
+
+      # Compile protobuf
+      - name: Compile protobuf (Backend)
+        working-directory: services/api
+        run: |
+          sudo apt update
+          sudo apt install -y protobuf-compiler
+          mkdir -p services/api/generated/proto
+          cd proto
+          protoc --js_out=import_style=commonjs,binary:../services/api/generated *.proto
+
+      # Copy api files
+      - name: Copy API files (Backend)
+        run: |
+          mkdir -p dist/api
+          cp -r services/api/* dist/api
+
+      - name: Copy docker files
+        run: |
+          cp infrastructure/ dist/infrastructure/
+
+      - name: Copy database init files
+        run: |
+          mkdir -p dist/db/init
+          cp -r db/* dist/db/init/
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@master
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Set env variables
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          chmod +x ./deploy/ssh-setEnvs.sh
+          ./deploy/ssh-setEnvs.sh "POSTGRES_USER" "$POSTGRES_USER" "$SSH_HOST" "$SSH_USER"
+      
+      - name: Execute deployment script
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          GITHUB_ACTIONS: ${{ github.event_name }}
+        run: |
+          chmod +x ./deploy/ssh-deploy.sh
+          ./deploy/ssh-deploy.sh "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH" "${{ github.actor }}" "${{ github.sha }}"
