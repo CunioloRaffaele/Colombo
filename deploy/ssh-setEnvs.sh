@@ -15,14 +15,12 @@ DEPLOY_PATH="${5:-$DEPLOY_PATH}"  # Fifth argument or env variable
 echo "Setting environment variable $ENV_NAME on $SSH_HOST"
 # Set environment variable on the remote server
 ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
-ENV_FILE=$DEPLOY_PATH/.env
+  ENV_FILE='$DEPLOY_PATH/.env'
   touch \$ENV_FILE
   VAR_LINE=\"$ENV_NAME=$ENV_VALUE\"
   if grep -q \"^$ENV_NAME=\" \$ENV_FILE; then
-    # Aggiorna la variabile se esiste
-    sed -i \"s/^$ENV_NAME=.*/$VAR_LINE/\" \$ENV_FILE
+    sed -i \"s/^$ENV_NAME=.*/\$VAR_LINE/\" \$ENV_FILE
   else
-    # Aggiungi la variabile se non esiste
     echo \$VAR_LINE >> \$ENV_FILE
   fi
   echo 'Environment variable set in .env file.'
