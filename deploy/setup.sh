@@ -97,9 +97,16 @@ EOF
     fi
 }
 
+setup_privileged_ports() {
+    run_as_root bash -c "grep -q '^net.ipv4.ip_unprivileged_port_start=80' /etc/sysctl.conf || echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf"
+    run_as_root sysctl --system
+    run_as_root sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+}
+
 main() {
     install_packages "apt"
     install_ddns
+    setup_privileged_ports
     echo "Podman and podman-compose installed (podman CLI: $(command -v podman))."
     echo "Setup complete."
 }

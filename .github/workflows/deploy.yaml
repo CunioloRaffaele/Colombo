@@ -24,7 +24,7 @@ jobs:
 
       - name: Build app (Angular)
         working-directory: services/web_admin
-        run: npm run build -- --configuration production
+        run: npm run build -- --configuration production --base-href /amministrazione/
 
       - name: Move built app files (Angular)
         run: |
