@@ -47,6 +47,8 @@ ssh $SSH_USER@$SSH_HOST "
   cd $DEPLOY_PATH && \
   echo 'Updating symlink...' && \
   ln -sfn $RELEASE_PATH $DEPLOY_PATH/current && \
+  echo 'Copying .env file...' && \
+  cp .env current/infrastructure/.env && \
   echo 'Restarting services...' && \
   podman-compose pull && \
   podman-compose up -d

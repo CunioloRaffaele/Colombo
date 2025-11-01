@@ -61,6 +61,10 @@ Lo scopo è fornire un repository organizzato per sviluppare, testare e distribu
 - `SSH_USER` — utente SSH (es. `deploy` o `ubuntu`).
 - `SSH_HOST` — IP o hostname del VPS.
 - `SSH_PORT` — (opzionale) porta SSH.
-- `DEPLOY_PATH` — es. `/srv/colombo`.
+- `DEPLOY_PATH` — es. `/home/ubuntu/srv/colombo`.
+- `POSTGRES_USER` — utente PostgreSQL.
+- `POSTGRES_PASSWORD` — password PostgreSQL.
+- `POSTGRES_DB_NAME` — nome del database PostgreSQL.
+- `POSTGRES_PORT` — porta di connessione al DB per il backend.
 
 Non mettere `.env` nel repo. Usa variabili d'ambiente sul server o secret manager.

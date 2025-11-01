@@ -46,7 +46,7 @@ install_packages() {
 }
 
 setup_folders() {
-    run_as_root mkdir -p /srv/colombo/{releases,shared,config}
+    mkdir -p srv/colombo/{releases,shared,config}
 }
 
 # Create ddns updater script and config
