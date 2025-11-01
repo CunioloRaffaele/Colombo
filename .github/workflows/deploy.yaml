@@ -58,11 +58,13 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB_NAME: ${{ secrets.POSTGRES_DB_NAME }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           chmod +x ./deploy/ssh-setEnvs.sh
           ./deploy/ssh-setEnvs.sh "POSTGRES_USER" "$POSTGRES_USER" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
           ./deploy/ssh-setEnvs.sh "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
+          ./deploy/ssh-setEnvs.sh "POSTGRES_DB_NAME" "$POSTGRES_DB_NAME" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
       
       - name: Execute deployment script
         env:

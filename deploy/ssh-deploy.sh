@@ -50,6 +50,7 @@ ssh $SSH_USER@$SSH_HOST "
   echo 'Copying .env file...' && \
   cp .env current/infrastructure/.env && \
   echo 'Restarting services...' && \
+  cd current/infrastructure && \
   podman-compose pull && \
   podman-compose up -d
 "
