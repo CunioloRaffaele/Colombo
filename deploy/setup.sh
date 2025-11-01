@@ -101,6 +101,7 @@ setup_privileged_ports() {
     run_as_root bash -c "grep -q '^net.ipv4.ip_unprivileged_port_start=80' /etc/sysctl.conf || echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf"
     run_as_root sysctl --system
     run_as_root sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+    run_as_rootsudo iptables -I INPUT -p tcp --dport 5432 -j ACCEPT
 }
 
 main() {

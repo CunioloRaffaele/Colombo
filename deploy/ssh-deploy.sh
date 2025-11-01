@@ -51,6 +51,7 @@ ssh $SSH_USER@$SSH_HOST "
   cp .env current/infrastructure/.env && \
   echo 'Restarting services...' && \
   cd current/infrastructure && \
+  podman-compose down && \
   podman-compose pull && \
   podman-compose up -d
 "

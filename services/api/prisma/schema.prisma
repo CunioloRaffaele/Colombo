@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_DATABASE_URL")
+}
+
+model area {
+  id        Int                      @id @default(autoincrement())
+  polygon   Unsupported("geometry")?
+  id_comune Int
+  comuni    comuni                   @relation(fields: [id_comune], references: [id], onDelete: Cascade)
+  ecoscores ecoscores[]
+
+  @@index([polygon], map: "idx_area_polygon", type: Gist)
+}
+
+model cittadini {
+  id           Int         @id @default(autoincrement())
+  nome         String?     @db.VarChar(100)
+  email        String?     @unique @db.VarChar(50)
+  data_nascita DateTime?   @db.Date
+  password     String      @db.VarChar(255)
+  propriet_    propriet_[]
+  sessioni     sessioni[]
+
+  @@index([email], map: "idx_cittadini_email")
+}
+
+model comuni {
+  id        Int     @id @default(autoincrement())
+  nome      String  @db.VarChar(100)
+  provincia String  @db.VarChar(50)
+  regione   String  @db.VarChar(15)
+  email     String? @unique @db.VarChar(50)
+  password  String  @db.VarChar(255)
+  area      area[]
+
+  @@index([email], map: "idx_comuni_email")
+}
+
+model ecoscores {
+  id          Int      @id @default(autoincrement())
+  punteggio   Float?
+  id_area     Int      @default(0)
+  id_sessione Int
+  area        area     @relation(fields: [id_area], references: [id], onDelete: SetDefault)
+  sessioni    sessioni @relation(fields: [id_sessione], references: [id], onDelete: Cascade)
+
+  @@index([id_sessione], map: "idx_ecoscores_id_sessione")
+}
+
+model propriet_ {
+  id           Int       @id @default(autoincrement())
+  id_cittadino Int
+  id_vettura   Int
+  cittadini    cittadini @relation(fields: [id_cittadino], references: [id], onDelete: Cascade)
+  vetture      vetture   @relation(fields: [id_vettura], references: [id], onDelete: Cascade)
+
+  @@map("proprietà")
+}
+
+model sessioni {
+  id           Int         @id @default(autoincrement())
+  id_cittadino Int
+  ecoscores    ecoscores[]
+  cittadini    cittadini   @relation(fields: [id_cittadino], references: [id], onDelete: Cascade)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+model vetture {
+  id        Int         @id @default(autoincrement())
+  nome      String      @db.VarChar(100)
+  euro      Int
+  vin       String      @db.VarChar(20)
+  propriet_ propriet_[]
+}

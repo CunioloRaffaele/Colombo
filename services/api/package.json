@@ -1,0 +1,33 @@
+{
+  "name": "backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "prisma:pull": "prisma db pull",
+    "prisma:generate": "prisma generate",
+    "easyStart": "npm run prisma:pull && npm run prisma:generate && npm start",
+    "start": "node ./bin/www",
+    "debug": "nodemon DEBUG=backend:* npm start"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.18.0",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "~1.4.7",
+    "cookieparser": "^0.1.0",
+    "cors": "^2.8.5",
+    "debug": "~4.4.3",
+    "dotenv": "^17.2.3",
+    "express": "~5.1.0",
+    "http-errors": "~2.0.0",
+    "jade": "~1.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "luxon": "^3.7.2",
+    "morgan": "~1.10.1",
+    "prisma": "^6.18.0",
+    "puppeteer": "^24.27.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

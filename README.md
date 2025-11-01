@@ -66,6 +66,7 @@ Lo scopo è fornire un repository organizzato per sviluppare, testare e distribu
 - `POSTGRES_PASSWORD` — password PostgreSQL.
 - `POSTGRES_DB_NAME` — nome del database PostgreSQL.
 - `POSTGRES_PORT` — porta di connessione al DB per il backend.
+- `PRISMA_DATABASE_URL` — stringa di connessione al DB per Prisma.
 - `API_PORT` — porta di connessione per l'API.
 - `API_JWT_SECRET` — segreto per firmare i JWT.
 - `API_JWT_EXPIRATION` — durata validità token JWT.
