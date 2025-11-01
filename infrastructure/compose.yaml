@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgis/postgis:latest
+    image: docker.io/postgis/postgis:latest
     container_name: postgres_db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
