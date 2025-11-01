@@ -1,6 +1,6 @@
 services:
   db:
-    image: docker.io/library/postgres:latest
+    image: postgis/postgis:latest
     container_name: postgres_db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
