@@ -40,7 +40,7 @@ jobs:
       - name: Copy docker files
         run: |
           mkdir -p dist/infrastructure
-          cp -r infrastructure/ dist/infrastructure/
+          cp -r infrastructure/* dist/infrastructure/
 
       - name: Copy database init files
         run: |
