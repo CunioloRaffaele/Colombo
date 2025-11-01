@@ -66,5 +66,8 @@ Lo scopo è fornire un repository organizzato per sviluppare, testare e distribu
 - `POSTGRES_PASSWORD` — password PostgreSQL.
 - `POSTGRES_DB_NAME` — nome del database PostgreSQL.
 - `POSTGRES_PORT` — porta di connessione al DB per il backend.
+- `API_PORT` — porta di connessione per l'API.
+- `API_JWT_SECRET` — segreto per firmare i JWT.
+- `API_JWT_EXPIRATION` — durata validità token JWT.
 
 Non mettere `.env` nel repo. Usa variabili d'ambiente sul server o secret manager.

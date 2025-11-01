@@ -11,6 +11,16 @@ services:
     ports:
       - "5432:5432"
 
+  nginx:
+    image: docker.io/library/nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../web_admin/web_admin/browser:/usr/share/nginx/html:ro
+    depends_on:
+      - db
+
 networks:
   default:
     driver: bridge

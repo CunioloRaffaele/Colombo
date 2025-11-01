@@ -60,11 +60,18 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB_NAME: ${{ secrets.POSTGRES_DB_NAME }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          API_PORT: ${{ secrets.API_PORT }}
+          API_JWT_SECRET: ${{ secrets.API_JWT_SECRET }}
+          API_JWT_EXPIRATION: ${{ secrets.API_JWT_EXPIRATION }}
+
         run: |
           chmod +x ./deploy/ssh-setEnvs.sh
           ./deploy/ssh-setEnvs.sh "POSTGRES_USER" "$POSTGRES_USER" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
           ./deploy/ssh-setEnvs.sh "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
           ./deploy/ssh-setEnvs.sh "POSTGRES_DB_NAME" "$POSTGRES_DB_NAME" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
+          ./deploy/ssh-setEnvs.sh "API_PORT" "$API_PORT" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
+          ./deploy/ssh-setEnvs.sh "API_JWT_SECRET" "$API_JWT_SECRET" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
+          ./deploy/ssh-setEnvs.sh "API_JWT_EXPIRATION" "$API_JWT_EXPIRATION" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
       
       - name: Execute deployment script
         env:
