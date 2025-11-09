@@ -104,10 +104,17 @@ setup_privileged_ports() {
     run_as_rootsudo iptables -I INPUT -p tcp --dport 5432 -j ACCEPT
 }
 
+enable_linger() {
+    run_as_root loginctl enable-linger ubuntu
+    echo "loginctl linger abilitato per l'utente ubuntu"
+    loginctl show-user ubuntu | grep Linger
+}
+
 main() {
     install_packages "apt"
     install_ddns
     setup_privileged_ports
+    enable_linger
     echo "Podman and podman-compose installed (podman CLI: $(command -v podman))."
     echo "Setup complete."
 }
