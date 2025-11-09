@@ -24,17 +24,3 @@ exports.verifyToken = (token) => {
     }
 };
 
-exports.isTokenBlacklisted = async (token) => {
-    try {
-        const user = await prisma.bljwts.findFirst({
-            where: {
-                jwt: token
-            }
-        });
-        return !!user;
-    } catch (error) {
-        console.error('Error checking token blacklist:', error);
-        // Decide: return false (fail open) or true (fail closed)
-        return false;
-    }
-};

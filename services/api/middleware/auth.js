@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const { isTokenBlacklisted } = require('../utils/jwt'); // Import the function to check if the token is blacklisted
 
 if (!process.env.JWT_SECRET || !process.env.JWT_EXPIRATION) {
     console.error('JWT_SECRET or JWT_EXPIRATION is not defined in the environment variables');
@@ -17,12 +16,6 @@ module.exports = async function (req, res, next) {
     }
 
     const token = authHeader.split(' ')[1]; // Extract the token
-
-    //Check if the token is blacklisted
-    const isBlacklisted = await isTokenBlacklisted(token);
-    if (isBlacklisted) {
-        return res.status(401).json({ error: 'Token is blacklisted and account is deleted' });
-    }
 
     try {
         // Verify the token
