@@ -11,6 +11,22 @@ services:
     ports:
       - "5432:5432"
 
+  api:
+    image: docker.io/library/node:latest
+    working_dir: /app
+    volumes:
+      - ../api:/app
+    command: sh -c "npm install && npm easyStart"
+    environment:
+      PRISMA_DATABASE_URL: ${PRISMA_DATABASE_URL}
+      API_JWT_SECRET: ${API_JWT_SECRET}
+      API_JWT_EXPIRATION: ${API_JWT_EXPIRATION}
+      API_PORT: ${API_PORT}
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    depends_on:
+      - db
+
   nginx:
     image: docker.io/library/nginx:latest
     ports:
