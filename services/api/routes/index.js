@@ -5,4 +5,8 @@ var userRouter = require('./users/index');
 routes.use('/users', userRouter);
 
 
+routes.get('/ping', function(req, res) {
+  res.status(200).json({ message: 'pong' });
+});
+
 module.exports = routes;
