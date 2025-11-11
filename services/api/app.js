@@ -3,11 +3,14 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-const result = require('dotenv').config()
 const cors = require('cors');
-if (result.error) {
-  console.log("Unable to load \".env\" file.");
-  process.exit(-1);
+if (process.env.NODE_ENV !== 'production') {
+  // Carica .env solo in debug
+  const result = require('dotenv').config();
+  if (result.error) {
+    console.log("Unable to load \".env\" file.");
+    process.exit(-1);
+  }
 }
 
 var routes = require('./routes/index');
