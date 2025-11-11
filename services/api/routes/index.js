@@ -18,4 +18,8 @@ routes.get ('/utcTime', (req, res) => {
     res.json({ utcTime: DateTime.utc().toISO() });
 });
 
+routes.get('/ping', function(req, res) {
+  res.status(200).json({ message: 'pong' });
+});
+
 module.exports = routes;
