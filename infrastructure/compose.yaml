@@ -20,9 +20,9 @@ services:
     environment:
       NODE_ENV: production
       PRISMA_DATABASE_URL: ${PRISMA_DATABASE_URL}
-      API_JWT_SECRET: ${API_JWT_SECRET}
-      API_JWT_EXPIRATION: ${API_JWT_EXPIRATION}
-      API_PORT: ${API_PORT}
+      JWT_SECRET: ${API_JWT_SECRET}
+      JWT_EXPIRATION: ${API_JWT_EXPIRATION}
+      PORT: ${API_PORT}
     ports:
       - "${API_PORT}:${API_PORT}"
     depends_on:
