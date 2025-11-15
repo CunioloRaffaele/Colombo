@@ -5,6 +5,12 @@ name: Deploy to Production VPS
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'services/api/**'
+      - 'services/web_admin/**'
+      - 'infrastructure/**'
+      - 'db/**'
+      - '.github/workflows/deploy.yaml'
 
 jobs:
   deploy:
