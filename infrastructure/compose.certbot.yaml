@@ -1,0 +1,13 @@
+# This is the Docker Compose file for Certbot service
+# It should be runned to obtain SSL certificates using the standalone method
+# before starting the main application services.
+# After obtaining the certificates, the main compose.yaml will use them and also renew them automatically.
+
+services:
+  certbot:
+    image: docker.io/certbot/certbot:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ../../../certbot-etc:/etc/letsencrypt
+    command: certonly --standalone -d greendrive.duckdns.org --agree-tos --non-interactive
