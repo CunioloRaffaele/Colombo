@@ -70,5 +70,6 @@ Lo scopo è fornire un repository organizzato per sviluppare, testare e distribu
 - `API_PORT` — porta di connessione per l'API.
 - `API_JWT_SECRET` — segreto per firmare i JWT.
 - `API_JWT_EXPIRATION` — durata validità token JWT.
+- `DUCKDNS_TOKEN` — Usato per ssl con certbot. (Deprecato... migrato da challange DNS a webroot su nginx)
 
 Non mettere `.env` nel repo. Usa variabili d'ambiente sul server o secret manager.

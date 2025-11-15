@@ -70,6 +70,7 @@ jobs:
           API_JWT_SECRET: ${{ secrets.API_JWT_SECRET }}
           API_JWT_EXPIRATION: ${{ secrets.API_JWT_EXPIRATION }}
           PRISMA_DATABASE_URL: ${{ secrets.PRISMA_DATABASE_URL }}
+          DUCKDNS_TOKEN: ${{ secrets.DUCKDNS_TOKEN }}
 
         run: |
           chmod +x ./deploy/ssh-setEnvs.sh
@@ -80,6 +81,7 @@ jobs:
           ./deploy/ssh-setEnvs.sh "API_JWT_SECRET" "$API_JWT_SECRET" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
           ./deploy/ssh-setEnvs.sh "API_JWT_EXPIRATION" "$API_JWT_EXPIRATION" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
           ./deploy/ssh-setEnvs.sh "PRISMA_DATABASE_URL" "$PRISMA_DATABASE_URL" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
+          ./deploy/ssh-setEnvs.sh "DUCKDNS_TOKEN" "$DUCKDNS_TOKEN" "$SSH_HOST" "$SSH_USER" "$DEPLOY_PATH"
 
       - name: Execute deployment script
         env:
