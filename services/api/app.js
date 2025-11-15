@@ -13,12 +13,12 @@ if (process.env.NODE_ENV !== 'production') {
   }
 }
 
-var routes = require('./routes/index');
+var routesV1 = require('./routes/index');
 
 var app = express();
 
 app.use(cors({
-  origin: '*', // consenti solo il frontend Angular
+  origin: '*',
   credentials: true
 }));
 app.use(logger('dev'));
@@ -27,7 +27,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 //app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api', routes);
+app.use('/v1', routesV1);
 
 // Requested endpoint is not matched by any route
 app.use(function(req, res, next) {
