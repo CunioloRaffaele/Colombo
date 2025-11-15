@@ -33,8 +33,18 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ../web_admin/web_admin/browser:/usr/share/nginx/html:ro
+      - ./nginx-certbot-challenges:/var/www/certbot
+      - ./certbot-etc:/etc/letsencrypt
     depends_on:
       - db
+
+  certbot:
+    image: docker.io/certbot/certbot:latest
+    volumes:
+      - ./certbot-var:/var/lib/letsencrypt
+      - ./nginx-certbot-challenges:/var/www/certbot
+      - ./certbot-etc:/etc/letsencrypt
+    command: certbot certonly --webroot -w /var/www/certbot -d greendrive.duckdns.org --agree-tos
 
 networks:
   default:
