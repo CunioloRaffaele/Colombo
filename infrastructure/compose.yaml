@@ -30,6 +30,7 @@ services:
     image: docker.io/library/nginx:latest
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ../web_admin/web_admin/browser:/usr/share/nginx/html:ro
@@ -44,7 +45,7 @@ services:
       - ./certbot-var:/var/lib/letsencrypt
       - ./nginx-certbot-challenges:/var/www/certbot
       - ./certbot-etc:/etc/letsencrypt
-    command: certbot certonly --webroot -w /var/www/certbot -d greendrive.duckdns.org --agree-tos
+    command: certonly --webroot -w /var/www/certbot -d greendrive.duckdns.org --agree-tos --non-interactive
 
 networks:
   default:
