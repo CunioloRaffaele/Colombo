@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+message Coordinate {
+  double lng = 1;
+  double lat = 2;
+}
+
+message SaveZoneRequest {
+  int32 id_comune = 1;
+  repeated Coordinate coordinates = 2;
+}
+
+message SaveZoneResponse {
+  string message = 1;
+}
+
+message ContainsRequest {
+  int32 areaId = 1;
+  Coordinate point = 2;
+}
+
+message ContainsResponse {
+  bool contains = 1;
+}

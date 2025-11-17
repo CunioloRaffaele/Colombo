@@ -4,19 +4,10 @@ const { DateTime } = require('luxon');
 
 // Import all routers
 var userRouter = require('./users/index');
-var airlineRouter = require('./airlines/index');
-var navigationRouter = require('./navigation/index');
-var bookingRouter = require('./bookings/index');
+routes.use('/auth', userRouter);
 
-// Attach all routers to the main router
-routes.use('/users', userRouter);
-routes.use('/airlines', airlineRouter);
-routes.use('/navigate', navigationRouter);
-routes.use('/bookings', bookingRouter);
-
-routes.get ('/utcTime', (req, res) => {
-    res.json({ utcTime: DateTime.utc().toISO() });
-});
+var zoneRouter = require('./zones/index');
+routes.use('/zones', zoneRouter);
 
 routes.get('/ping', function(req, res) {
   res.status(200).json({ message: 'pong' });
