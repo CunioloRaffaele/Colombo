@@ -2,13 +2,20 @@ var express = require('express');
 const controller = require('./controller');
 const authMiddleware = require('../../middleware/auth');
 const validateJsonRequest = require('../../middleware/validateJsonRequest');
-var userRouter = express.Router();
 
-userRouter.post ('/user', validateJsonRequest, controller.createNewAccount);
-userRouter.post ('/login', validateJsonRequest, controller.logUserIn);
-userRouter.get  ('/user', authMiddleware, controller.getAccountInfo);
-userRouter.delete('/user', authMiddleware, controller.deleteAccount);
-userRouter.get  ('/accounts', authMiddleware, controller.sudoListAccount);
-userRouter.delete('/accounts/:id', authMiddleware, controller.sudoDeleteAccount);
+
+// Utenti cittadini
+userRouter.post('/user', validateJsonRequest, controller.registerUser);
+userRouter.post('/login/user', validateJsonRequest, controller.loginUser);
+
+// Comuni
+userRouter.post('/comune', validateJsonRequest, controller.registerComune);
+userRouter.post('/login/comune', validateJsonRequest, controller.loginComune);
+userRouter.get('/comuni', controller.getAllComuni);
+
+// Informazioni account
+userRouter.get('/user', authMiddleware, controller.getUserAccountInfo);
+userRouter.get('/comune', authMiddleware, controller.getComuneAccountInfo);
+
 
 module.exports = userRouter;

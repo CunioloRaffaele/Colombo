@@ -5,7 +5,7 @@
   "scripts": {
     "prisma:pull": "prisma db pull",
     "prisma:generate": "prisma generate",
-    "easyStart": "npm run prisma:pull && npm run prisma:generate && npm start",
+    "easyStart": "npm run prisma:generate && npm start",
     "start": "node ./bin/www",
     "debug": "nodemon DEBUG=backend:* npm start"
   },

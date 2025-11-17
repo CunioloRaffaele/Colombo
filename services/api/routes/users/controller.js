@@ -2,211 +2,106 @@ const { generateToken } = require('../../utils/jwt');
 const bcrypt = require('bcrypt');
 const prisma = require('../../utils/prisma');
 
-exports.createNewAccount = async (req, res) => {
-    const { name, email, password } = req.body;
+// Registrazione cittadino
+exports.registerUser = async (req, res) => {
+  const { nome, email, password, data_nascita } = req.body;
+  if (!nome || !email || !password) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const existingUser = await prisma.cittadini.findUnique({ where: { email } });
+  if (existingUser) return res.status(400).json({ error: 'User already exists' });
 
-    // Validate required fields
-    if (!name || !email || !password) {
-        return res.status(400).json({ 
-            error: 'Missing required fields: name, surname, email, password' 
-        });
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await prisma.cittadini.create({
+    data: {
+      nome,
+      email,
+      password: hashedPassword,
+      data_nascita: data_nascita ? new Date(data_nascita) : null
     }
-    // Check if user already exists
-    const existingUser = await prisma.users.count({
-        where: {
-            email: email
-        }
-    });
-    if (existingUser > 0) {
-        return res.status(400).json({ 
-            error: 'User already exists with this email' 
-        });
-    }
-    // Create new user account
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
-    await prisma.users.create({
-        data: {
-            name: name,
-            email: email,
-            password: hashedPassword,
-            role: 0 // Default role
-        }
-    });
-    // Get user ID and role
-    const user = await prisma.users.findUnique({
-        where: {
-            email: email
-        }
-    });
-
-    // create JWT token
-    const token = generateToken({
-        userId: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-    });
-
-    res.status(200).json({
-        message: 'Account created successfully',
-        token: token
-    });
+  });
+  const token = generateToken({ id: user.id, type: 'cittadino', nome: user.nome });
+  res.status(201).json({ message: 'Account created successfully', token });
 };
 
-exports.logUserIn = async (req, res) => {
-    const { email, password } = req.body;
+// Login cittadino
+exports.loginUser = async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Missing required fields' });
 
-    // Validate required fields
-    if (!email || !password) {
-        return res.status(400).json({ 
-            error: 'Missing required fields: email, password' 
-        });
-    }
-    // Check if user exists
-    const user = await prisma.users.findUnique({
-        where: {
-            email: email
-        }
+  const user = await prisma.cittadini.findUnique({ where: { email } });
+  if (!user) return res.status(400).json({ error: 'User not found' });
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) return res.status(400).json({ error: 'Invalid password' });
+
+  const token = generateToken({ id: user.id, type: 'cittadino', nome: user.nome });
+  res.status(200).json({ message: 'Login successful', token });
+};
+
+// Registrazione comune
+exports.registerComune = async (req, res) => {
+  const { nome, provincia, regione, email, password } = req.body;
+  if (!nome || !provincia || !regione || !email || !password) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const existingComune = await prisma.comuni.findUnique({ where: { email } });
+  if (existingComune) return res.status(400).json({ error: 'Comune already exists' });
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const comune = await prisma.comuni.create({
+    data: { nome, provincia, regione, email, password: hashedPassword }
+  });
+  const token = generateToken({ id: comune.id, type: 'comune', nome: comune.nome });
+  res.status(201).json({ message: 'Comune created successfully', token});
+};
+
+// Login comune
+exports.loginComune = async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Missing required fields' });
+
+  const comune = await prisma.comuni.findUnique({ where: { email } });
+  if (!comune) return res.status(400).json({ error: 'Comune not found' });
+
+  const isPasswordValid = await bcrypt.compare(password, comune.password);
+  if (!isPasswordValid) return res.status(400).json({ error: 'Invalid password' });
+
+  const token = generateToken({ id: comune.id, type: 'comune', nome: comune.nome });
+  res.status(200).json({ message: 'Login successful', token });
+};
+
+// Ottenere tutti i comuni
+exports.getAllComuni = async (req, res) => {
+  try {
+    const comuni = await prisma.comuni.findMany({
+      select: { id: true, nome: true, provincia: true, regione: true, email: true }
     });
-    if (!user) {
-        return res.status(400).json({ 
-            error: 'User not found with this email' 
-        });
-    }
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res.status(400).json({ 
-            error: 'Invalid password' 
-        });
-    }
-    // create JWT token
-    const token = generateToken({
-        userId: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-    });
+    res.json(comuni);
+  } catch (err) {
+    res.status(500).json({ error: 'Error while retrieving municipalities' });
+  }
+};
 
-    res.status(200).json({
-        message: 'Login successful',
-        token: token
-    });
-}
+// Informazioni account cittadino
+exports.getUserAccountInfo = async (req, res) => {
+  const userId = req.userToken.id; 
+  const user = await prisma.cittadini.findUnique({
+    where: { id: userId },
+    select: { id: true, nome: true, email: true, data_nascita: true }
+  });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json(user);
+};
 
-exports.getAccountInfo = (req, res) => {
-        res.status(200).json({
-        message: 'User info retrieved successfully',
-        user: req.userToken
-    });
-}
+// Informazioni account comune
 
-exports.deleteAccount = async (req, res) => {
-    // Validate required fields
-    if (!req.userToken) {
-        return res.status(400).json({ 
-            error: 'Token is missing' 
-        });
-    }
-    const userId = req.userToken.userId;
-    const token = req.jwt;
-
-    try {
-        // Execute a transaction to delete the user and add the token to the blacklist
-        await prisma.$transaction([
-            // Delete the user account
-            prisma.users.delete({
-                where: {
-                    id: userId
-                }
-            }),
-            // Add the token to the blacklist
-            prisma.bljwts.create({
-                data: {
-                    jwt: token
-                }
-            }),
-        ]);
-
-        res.status(200).json({
-            message: 'Account deleted and token blacklisted successfully'
-        });
-    } catch (error) {
-        return res.status(500).json({
-            error: 'Error deleting account or blacklisting token: ' + error.message
-        });
-    }
-}
-
-exports.sudoDeleteAccount = async (req, res) => {
-    // Validate required fields
-    if (!req.userToken || req.userToken.role !== 1) {
-        return res.status(403).json({ 
-            error: 'Only admin (role = 1) can delete accounts' 
-        });
-    }
-    const accountToDelete = parseInt(req.params.id, 10); // Convert to integer (base 10)
-
-    if (isNaN(accountToDelete)) {
-        return res.status(500).json({
-            error: 'Invalid account ID number'
-        });
-    }
-
-    try {
-        // Check if the user exists
-        const user = await prisma.users.findUnique({
-            where: {
-                id: accountToDelete
-            }
-        });
-
-        if (!user) {
-            return res.status(500).json({
-                error: 'User not found'
-            });
-        }
-        // Delete the user account
-        await prisma.users.delete({
-            where: {
-                id: accountToDelete
-            }
-        }),
-        res.status(200).json({
-            message: 'Account deleted identified by ID: ' + accountToDelete + ' successfully'
-        });
-    } catch (error) {
-        return res.status(500).json({
-            error: 'Error deleting account: ' + error.message
-        });
-    }
-}
-
-exports.sudoListAccount = async (req, res) => {
-    // Validate required fields
-    if (!req.userToken || req.userToken.role !== 1) {
-        return res.status(403).json({ 
-            error: 'Only admin (role = 1) can list accounts' 
-        });
-    }
-
-    try {
-        // List all user accounts
-        const users = await prisma.users.findMany({
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true
-            }
-        });
-
-        res.status(200).json({
-            users: users
-        });
-    } catch (error) {
-        return res.status(500).json({
-            error: 'Error listing accounts: ' + error.message
-        });
-    }
-}
+exports.getComuneAccountInfo = async (req, res) => {
+  const comuneId = req.userToken.id; 
+  const comune = await prisma.comuni.findUnique({
+    where: { id: comuneId },
+    select: { id: true, nome: true, provincia: true, regione: true, email: true }
+  });
+  if (!comune) return res.status(404).json({ error: 'Comune not found' });
+  res.json(comune);
+};

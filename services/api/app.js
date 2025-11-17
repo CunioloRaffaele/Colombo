@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
 if (process.env.NODE_ENV !== 'production') {
-  // Carica .env solo in debug
+  // Load .env only in non-production environments
   const result = require('dotenv').config();
   if (result.error) {
     console.log("Unable to load \".env\" file.");
