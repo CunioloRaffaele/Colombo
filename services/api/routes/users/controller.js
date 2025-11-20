@@ -5,8 +5,12 @@ const prisma = require('../../utils/prisma');
 // Registrazione cittadino
 exports.registerUser = async (req, res) => {
   const { nome, email, password, data_nascita } = req.body;
-  if (!nome || !email || !password) {
+  if (!nome || !email || !password || !data_nascita) {
     return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
   }
   const existingUser = await prisma.cittadini.findUnique({ where: { email } });
   if (existingUser) return res.status(400).json({ error: 'User already exists' });
@@ -28,7 +32,10 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Missing required fields' });
-
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
   const user = await prisma.cittadini.findUnique({ where: { email } });
   if (!user) return res.status(400).json({ error: 'User not found' });
 
@@ -45,6 +52,10 @@ exports.registerComune = async (req, res) => {
   if (!nome || !provincia || !regione || !email || !password) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
   const existingComune = await prisma.comuni.findUnique({ where: { email } });
   if (existingComune) return res.status(400).json({ error: 'Comune already exists' });
 
@@ -60,6 +71,10 @@ exports.registerComune = async (req, res) => {
 exports.loginComune = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Missing required fields' });
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
 
   const comune = await prisma.comuni.findUnique({ where: { email } });
   if (!comune) return res.status(400).json({ error: 'Comune not found' });
