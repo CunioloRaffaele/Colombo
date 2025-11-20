@@ -1,7 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import '../../ui/widgets/loading_overlay.dart'; // ValueNotifier
-import '../../ui/widgets/notification_overlay.dart';
 
 class LoadingInterceptor extends Interceptor {
   @override
@@ -32,7 +30,6 @@ class LoadingInterceptor extends Interceptor {
       if (loadingRequestCount.value > 0) {
         loadingRequestCount.value--;
       }
-      NotificationOverlay.show('Errore durante la richiesta al server.', Colors.redAccent);
     }
     super.onError(err, handler);
   }

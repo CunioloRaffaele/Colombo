@@ -8,7 +8,7 @@ class ApiException implements Exception {
   final dynamic data;
   ApiException(this.message, {this.status, this.data});
   @override
-  String toString() => 'ApiException($status): $message\nError Data: $data';
+  String toString() => 'Errore dal server: ($status) $data';
 }
 
 class ApiClient {
@@ -26,12 +26,15 @@ class ApiClient {
         baseUrl: ApiConstants.baseUrl,
         connectTimeout: Duration(seconds: ApiConstants.timeoutSeconds),
         receiveTimeout: Duration(seconds: ApiConstants.timeoutSeconds),
-        headers: {'Content-Type': 'application/json','Accept': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       ),
     );
 
     dio.interceptors.add(LoadingInterceptor()); // show loading overlay
-    
+
     dio.interceptors.add(
       InterceptorsWrapper(
         onError: (e, handler) {
@@ -45,7 +48,11 @@ class ApiClient {
               requestOptions: e.requestOptions,
               response: e.response,
               type: e.type,
-              error: ApiException(msg ?? 'Errore di rete', status: status, data: data),
+              error: ApiException(
+                msg ?? 'Errore di rete',
+                status: status,
+                data: data,
+              ),
             ),
           );
         },
@@ -68,9 +75,11 @@ class ApiClient {
     } on DioException catch (e) {
       throw (e.error is ApiException)
           ? e.error as ApiException
-          : ApiException(e.message ?? 'Errore',
-            status: e.response?.statusCode,
-            data: e.response?.data);
+          : ApiException(
+              e.message ?? 'Errore',
+              status: e.response?.statusCode,
+              data: e.response?.data,
+            );
     }
   }
 
@@ -81,9 +90,11 @@ class ApiClient {
     } on DioException catch (e) {
       throw (e.error is ApiException)
           ? e.error as ApiException
-          : ApiException(e.message ?? 'Errore',
-            status: e.response?.statusCode,
-            data: e.response?.data);
+          : ApiException(
+              e.message ?? 'Errore',
+              status: e.response?.statusCode,
+              data: e.response?.data,
+            );
     }
   }
 
@@ -94,9 +105,11 @@ class ApiClient {
     } on DioException catch (e) {
       throw (e.error is ApiException)
           ? e.error as ApiException
-          : ApiException(e.message ?? 'Errore',
-            status: e.response?.statusCode,
-            data: e.response?.data);
+          : ApiException(
+              e.message ?? 'Errore',
+              status: e.response?.statusCode,
+              data: e.response?.data,
+            );
     }
   }
 
@@ -107,9 +120,11 @@ class ApiClient {
     } on DioException catch (e) {
       throw (e.error is ApiException)
           ? e.error as ApiException
-          : ApiException(e.message ?? 'Errore',
-            status: e.response?.statusCode,
-          data: e.response?.data);
+          : ApiException(
+              e.message ?? 'Errore',
+              status: e.response?.statusCode,
+              data: e.response?.data,
+            );
     }
   }
 }

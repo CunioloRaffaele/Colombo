@@ -1,10 +1,11 @@
+import 'package:colombo/ui/features/home.dart';
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:flutter/cupertino.dart';
 
-import '../../data/services/auth_service.dart';
-import '../widgets/input_field.dart';
-import '../widgets/notification_overlay.dart';
+import '../../../widgets/input_field.dart';
+import '../../../widgets/notification_overlay.dart';
+import '../viewmodels/login_viewmodel.dart';
 import 'registration.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,6 +16,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _viewModel = LoginViewModel();
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -125,23 +128,27 @@ class _LoginPageState extends State<LoginPage> {
                                 ).withOpacity(0.6),
                               ),
                               onPressed: () async {
-                                // Handle login action
-                                final email = _emailController.text;
-                                final password = _passwordController.text;
-
-                                if (email.isEmpty || password.isEmpty) {
+                                final error = await _viewModel.login(
+                                  email: _emailController.text,
+                                  password: _passwordController.text,
+                                );
+                                if (error == null) {
                                   NotificationOverlay.show(
-                                    'Per effettuare l\'accesso compila tutti i campi.',
+                                    "Login effettuato con successo!",
+                                    Colors.greenAccent,
+                                  );
+                                  Navigator.push(
+                                    context,
+                                    CupertinoPageRoute(
+                                      builder: (context) => const HomeScreen(),
+                                    ),
+                                  );
+                                } else {
+                                  NotificationOverlay.show(
+                                    error,
                                     Colors.redAccent,
                                   );
-                                  return;
                                 }
-
-                                final result = AuthService().login(
-                                  email: email,
-                                  password: password,
-                                );
-
                               },
                               child: const Text(
                                 'Accedi',

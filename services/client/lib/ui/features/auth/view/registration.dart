@@ -1,8 +1,8 @@
-import 'package:colombo/data/services/auth_service.dart';
+import 'package:colombo/ui/features/auth/viewmodels/registration_viewmodel.dart'; // Importa il ViewModel
 import 'package:flutter/material.dart';
 
-import '../widgets/notification_overlay.dart';
-import '../widgets/input_field.dart';
+import '../../../widgets/notification_overlay.dart';
+import '../../../widgets/input_field.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -12,13 +12,17 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _viewModel = RegistrationViewModel();
+
   final _nomeController = TextEditingController();
   final _cognomeController = TextEditingController();
   final _bithDateController = TextEditingController();
   final _comuneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  late bool? _isChecked = false;
+
+  bool _termsAccepted = false;
+  bool _privacyAccepted = false;
 
   @override
   void dispose() {
@@ -40,10 +44,14 @@ class _RegisterPageState extends State<RegisterPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.vertical,
+                minHeight:
+                    MediaQuery.of(context).size.height -
+                    MediaQuery.of(context).padding.vertical,
               ),
               child: IntrinsicHeight(
                 child: Column(
@@ -118,18 +126,21 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: <Widget>[
                         Text(
                           'Accetto termini e condizioni ',
-                          style: TextStyle(fontSize: 20.0, color: Colors.white.withOpacity(0.5)),
+                          style: TextStyle(
+                            fontSize: 20.0,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
                         ),
                         Transform.scale(
                           scale: 1.3,
-                        child: Checkbox(
-                          value: _isChecked,
-                          onChanged: (bool? newValue) {
-                            setState(() {
-                              _isChecked = newValue;
-                            });
-                          },
-                        ),
+                          child: Checkbox(
+                            value: _termsAccepted, // Usa variabile specifica
+                            onChanged: (bool? newValue) {
+                              setState(() {
+                                _termsAccepted = newValue ?? false;
+                              });
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -139,15 +150,18 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: <Widget>[
                         Text(
                           'Accetto politica sulla privacy ',
-                          style: TextStyle(fontSize: 20.0, color: Colors.white.withOpacity(0.5)),
+                          style: TextStyle(
+                            fontSize: 20.0,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
                         ),
                         Transform.scale(
                           scale: 1.3,
                           child: Checkbox(
-                            value: _isChecked,
+                            value: _privacyAccepted, // Usa variabile specifica
                             onChanged: (bool? newValue) {
                               setState(() {
-                                _isChecked = newValue;
+                                _privacyAccepted = newValue ?? false;
                               });
                             },
                           ),
@@ -161,41 +175,39 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1EAE98),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 90, vertical: 16),
+                            horizontal: 90,
+                            vertical: 16,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           elevation: 6,
                           shadowColor: const Color(0xFF1EAE98).withOpacity(0.6),
                         ),
-                        onPressed: () {
-                          // Get values
-                          final nome = _nomeController.text.toUpperCase();
-                          final cognome = _cognomeController.text.toUpperCase();
-                          final birthDate = _bithDateController.text;
-                          final email = _emailController.text;
-                          final password = _passwordController.text;
-                          // final comune = _comuneController.text;
-                          if (nome.isEmpty || cognome.isEmpty || birthDate.isEmpty || email.isEmpty || password.isEmpty) {
-                            // Show error
-                            NotificationOverlay.show('Per procedere con la registrazione è necessario compilare tutti i campi richiesti.', Colors.redAccent);
-                            return;
-                          }
-                          if (_isChecked != true) {
-                            // Show error
-                            NotificationOverlay.show('Per procedere con la registrazione è necessario accettare i termini e condizioni e la politica sulla privacy.', Colors.redAccent);
-                            return;
-                          }
-
-                          AuthService().register(
-                            nameSurname: '$nome $cognome',
-                            email: email,
-                            password: password,
-                            birthDate: DateTime.parse(birthDate),
-                            // municipality: comune,
+                        onPressed: () async {
+                          final error = await _viewModel.register(
+                            nome: _nomeController.text,
+                            cognome: _cognomeController.text,
+                            email: _emailController.text,
+                            password: _passwordController.text,
+                            birthDate: _bithDateController.text,
+                            termsAccepted: _termsAccepted,
+                            privacyAccepted: _privacyAccepted,
                           );
-                          Navigator.pop(context);
 
+                          if (!context.mounted) return;
+
+                          if (error == null) {
+                            // Successo
+                            NotificationOverlay.show(
+                              'Registrazione avvenuta con successo! Effettua il login.',
+                              Colors.greenAccent,
+                            );
+                            Navigator.pop(context);
+                          } else {
+                            // Errore (validazione o server)
+                            NotificationOverlay.show(error, Colors.redAccent);
+                          }
                         },
                         child: const Text(
                           'Registrati',

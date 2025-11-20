@@ -14,7 +14,6 @@ class SensorsDebugPage extends StatefulWidget {
 }
 
 class _SensorsDebugPageState extends State<SensorsDebugPage> {
-
   Elm327Driver driver = Elm327Driver();
   bool _isConnected = false;
   bool _permissionsGranted = false;
@@ -29,10 +28,7 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
   void displaySnackbar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: Duration(seconds: 2),
-      ),
+      SnackBar(content: Text(message), duration: Duration(seconds: 2)),
     );
   }
 
@@ -44,7 +40,7 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
     double? fuelRate;
     double? engineExhaustFlow;
     double? odometer;
-    double ? fuelLevel;
+    double? fuelLevel;
     if (true) {
       try {
         rpm = await driver.rpm();
@@ -110,7 +106,6 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
     }
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -129,12 +124,13 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
         _permissionsGranted = true;
       });
     } else {
-
       print("Bluetooth permissions were denied.");
     }
   }
 
-  Future<void> _showDeviceSelectionDialog(List<Map<String, String>> devices) async {
+  Future<void> _showDeviceSelectionDialog(
+    List<Map<String, String>> devices,
+  ) async {
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -169,7 +165,7 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
 
     if (!mounted) return;
     if (!bluetoothStatus) {
-      showDialog <void>(
+      showDialog<void>(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
@@ -186,7 +182,6 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
           );
         },
       );
-
     } else if (_permissionsGranted) {
       final devices = await driver.getPairedDevices();
       await _showDeviceSelectionDialog(devices);
@@ -210,9 +205,7 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text('Stato della connessione con l\'ELM327:'),
-            Text(
-              _isConnected ? 'Connesso' : 'Disconnesso',
-            ),
+            Text(_isConnected ? 'Connesso' : 'Disconnesso'),
             const SizedBox(height: 24),
             Text(
               _rpm != null ? 'RPM: $_rpm' : 'RPM: --',
@@ -225,27 +218,37 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              _throttlePosition != null ? 'Posizione Acceleratore: ${_throttlePosition!.toStringAsFixed(1)}%' : 'Posizione Acceleratore: --%',
+              _throttlePosition != null
+                  ? 'Posizione Acceleratore: ${_throttlePosition!.toStringAsFixed(1)}%'
+                  : 'Posizione Acceleratore: --%',
               style: const TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 16),
             Text(
-              _fuelRate != null ? 'Fuel Rate: ${_fuelRate!.toStringAsFixed(2)} L/h' : 'Fuel Rate: -- L/h',
+              _fuelRate != null
+                  ? 'Fuel Rate: ${_fuelRate!.toStringAsFixed(2)} L/h'
+                  : 'Fuel Rate: -- L/h',
               style: const TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 16),
             Text(
-              _engineExhaustFlow != null ? 'Engine Exhaust Flow: ${_engineExhaustFlow!.toStringAsFixed(2)} g/s' : 'Engine Exhaust Flow: -- g/s',
+              _engineExhaustFlow != null
+                  ? 'Engine Exhaust Flow: ${_engineExhaustFlow!.toStringAsFixed(2)} g/s'
+                  : 'Engine Exhaust Flow: -- g/s',
               style: const TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 16),
             Text(
-              _odometer != null ? 'Odometer: ${_odometer!.toStringAsFixed(2)} km' : 'Odometer: -- km',
+              _odometer != null
+                  ? 'Odometer: ${_odometer!.toStringAsFixed(2)} km'
+                  : 'Odometer: -- km',
               style: const TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 16),
             Text(
-              _fuelLevel != null ? 'Fuel Level: ${_fuelLevel!.toStringAsFixed(1)}%' : 'Fuel Level: --%',
+              _fuelLevel != null
+                  ? 'Fuel Level: ${_fuelLevel!.toStringAsFixed(1)}%'
+                  : 'Fuel Level: --%',
               style: const TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 32),
@@ -274,15 +277,18 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
               },
               child: const Text('Leggi versione ELM327 e scrivi in log'),
             ),
-            MaterialButton(onPressed: _startUpdates, child: const Text('Start Updates') ),
+            MaterialButton(
+              onPressed: _startUpdates,
+              child: const Text('Start Updates'),
+            ),
           ],
         ),
       ),
-      /*floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _connect(),
         tooltip: 'connect',
         child: const Icon(Icons.link),
-      ),*/
+      ),
     );
   }
 }

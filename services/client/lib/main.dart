@@ -1,18 +1,18 @@
-import 'package:colombo/ui/screens/login.dart';
+import 'package:colombo/ui/features/auth/view/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'ui/screens/sensors_debug.dart';
-import 'ui/screens/login.dart';
-import 'ui/screens/error_page.dart';
+import 'ui/features/sensors_debug.dart';
+import 'ui/features/auth/view/login.dart';
+import 'ui/features/error_page.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/health_service.dart';
-import 'ui/screens/home.dart';
+import 'ui/features/home.dart';
 import 'package:colombo/ui/widgets/loading_overlay.dart'; // Importa il nuovo widget
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -32,7 +32,11 @@ void main() async{
 class MyApp extends StatelessWidget {
   final bool initialOnline;
   final bool initialLoggedIn;
-  const MyApp({super.key, required this.initialOnline, required this.initialLoggedIn});
+  const MyApp({
+    super.key,
+    required this.initialOnline,
+    required this.initialLoggedIn,
+  });
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -43,9 +47,7 @@ class MyApp extends StatelessWidget {
       ),
       // Use the LoadingOverlay to wrap the entire app
       builder: (context, child) {
-        return LoadingOverlay(
-          child: child ?? const SizedBox.shrink(),
-        );
+        return LoadingOverlay(child: child ?? const SizedBox.shrink());
       },
       home: !initialOnline
           ? const ServerErrorPage()

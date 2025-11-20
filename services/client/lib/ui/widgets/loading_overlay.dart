@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../main.dart';
-
 // Global ValueNorifier to track the number of active loading requests.
 /// This allows us to show or hide the loading overlay based on network activity.
 final ValueNotifier<int> loadingRequestCount = ValueNotifier(0);
@@ -29,9 +27,7 @@ class LoadingOverlay extends StatelessWidget {
               Container(
                 color: Colors.black.withOpacity(0.35),
                 child: const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
+                  child: CircularProgressIndicator(color: Colors.white),
                 ),
               ),
           ],

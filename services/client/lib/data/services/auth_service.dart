@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../ui/widgets/notification_overlay.dart';
 import '../models/login_request_dto.dart';
 import '../models/registration_request_dto.dart';
 import '../../core/api/api_client.dart';
@@ -12,7 +10,7 @@ class AuthService {
 
   Future<void> init() async {
     final token = await _storage.read(key: 'jwt_token');
-    if(await isLoggedIn()) {
+    if (await isLoggedIn()) {
       _api.setAuthToken(token);
       return;
     }
@@ -44,33 +42,28 @@ class AuthService {
       //municipality: municipality,
     );
     try {
-      final data = await _api.post<Map<String, dynamic>>('auth/user', body: req.toJson());
-      print (data);
-      NotificationOverlay.show('Registrazione avvenuta con successo!', Colors.green);
+      await _api.post<Map<String, dynamic>>('auth/user', body: req.toJson());
       return true;
     } catch (e) {
-      print('Error registering user: $e');
-      NotificationOverlay.show('Registrazione fallita.', Colors.redAccent);
-      return false;
+      throw Exception('Errore durante la registrazione: $e');
     }
   }
 
   Future<bool> login({required String email, required String password}) async {
     final req = LoginRequestDto(email: email, password: password);
     try {
-      final data = await _api.post<Map<String, dynamic>>('auth/login/user', body: req.toJson()
+      final data = await _api.post<Map<String, dynamic>>(
+        'auth/login/user',
+        body: req.toJson(),
       );
       final token = data['token'] as String?;
       if (token != null) {
         await _saveToken(token);
-        NotificationOverlay.show('Login effettuato con successo!', Colors.green);
         return true;
       }
       return false;
     } catch (e) {
-      NotificationOverlay.show('Login fallito. Controlla le tue credenziali.', Colors.redAccent);
-      print('Error logging in user: $e');
-      return false;
+      throw Exception('Errore durante il login: $e');
     }
   }
 
