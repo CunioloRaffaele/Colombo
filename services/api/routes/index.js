@@ -1,8 +1,6 @@
 var express = require('express');
 var routes = express.Router();
-const { DateTime } = require('luxon'); 
 
-// Import all routers
 var userRouter = require('./users/index');
 routes.use('/auth', userRouter);
 
