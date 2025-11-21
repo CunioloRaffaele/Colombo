@@ -1,0 +1,69 @@
+.comunal-admin-login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 16px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%); /* Sfumatura verde chiaro */
+}
+
+.comunal-admin-login-card {
+  width: 100%;
+  max-width: 360px; 
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.comunal-admin-login-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.2em;
+  margin-bottom: 20px;
+  color: #2e7d32; /* Verde scuro per il titolo */
+}
+
+.error-message {
+  margin-top: 12px;
+  color: #e53935;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9em;
+}
+
+.comunal-admin-login-links {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.comunal-admin-login-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #388e3c; /* Verde per i link */
+  text-decoration: none;
+  font-size: 1em;
+}
+
+.comunal-admin-login-link:hover {
+  color: #1b5e20; /* Verde più scuro per hover */
+  text-decoration: underline;
+}
+
+.comunal-admin-login-link mat-icon {
+  font-size: 18px;
+}
+
+button[mat-raised-button][color="primary"] {
+  background-color: #4caf50; /* Verde principale per il pulsante */
+  color: white;
+}
+

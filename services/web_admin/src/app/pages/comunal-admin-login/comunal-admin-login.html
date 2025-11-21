@@ -1,0 +1,51 @@
+<div class="comunal-admin-login-container">
+  <mat-card class="comunal-admin-login-card">
+    <mat-card-content>
+      <div class="comunal-admin-login-title">
+        <mat-icon>comunal-admin-login</mat-icon>
+        Accedi al sistema
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" required />
+          <mat-icon matPrefix>mail</mat-icon>
+          <mat-error *ngIf="loginForm.get('email')?.hasError('required')">
+            L'email è obbligatoria
+          </mat-error>
+          <mat-error *ngIf="loginForm.get('email')?.hasError('email')">
+            Inserisci un indirizzo email valido
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input matInput formControlName="password" type="password" required />
+          <mat-icon matPrefix>lock</mat-icon>
+          <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
+            La password è obbligatoria
+          </mat-error>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" class="full-width" type="submit" [disabled]="loginForm.invalid || loading">
+          <span *ngIf="!loading">Accedi</span>
+          <mat-progress-spinner *ngIf="loading" diameter="20" mode="indeterminate"></mat-progress-spinner>
+        </button>
+
+        <div *ngIf="error" class="error-message">
+          <mat-icon color="warn">error</mat-icon>
+          {{ error }}
+        </div>
+      </form>
+
+      <div class="comunal-admin-login-links">
+        <a routerLink="/comunal-admin-registration" class="comunal-admin-login-link">
+          <mat-icon>person_add</mat-icon>
+          Registrati
+        </a>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+

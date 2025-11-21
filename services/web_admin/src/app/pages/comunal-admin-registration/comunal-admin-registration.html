@@ -1,0 +1,75 @@
+<div class="registration-container">
+  <mat-card class="registration-card">
+    <mat-card-content>
+      <div class="registration-title">
+        Registrati come amministratore comunale
+      </div>
+      <form [formGroup]="registrationForm" (ngSubmit)="onRegister()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome</mat-label>
+          <input matInput formControlName="nome" required />
+          <mat-icon matPrefix>person</mat-icon>
+          <mat-error *ngIf="registrationForm.get('nome')?.hasError('required')">
+            Il nome è obbligatorio
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Provincia</mat-label>
+          <input matInput formControlName="provincia" required />
+          <mat-icon matPrefix>person</mat-icon>
+          <mat-error *ngIf="registrationForm.get('provincia')?.hasError('required')">
+            Il nome della provincia è obbligatorio
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Regione</mat-label>
+          <input matInput formControlName="regione" required />
+          <mat-icon matPrefix>person</mat-icon>
+          <mat-error *ngIf="registrationForm.get('regione')?.hasError('required')">
+            Il nome della regione è obbligatorio
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" required />
+          <mat-icon matPrefix>mail</mat-icon>
+          <mat-error *ngIf="registrationForm.get('email')?.hasError('required')">
+            L'email è obbligatoria
+          </mat-error>
+          <mat-error *ngIf="registrationForm.get('email')?.hasError('email')">
+            Inserisci un indirizzo email valido
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input matInput formControlName="password" type="password" required />
+          <mat-icon matPrefix>lock</mat-icon>
+          <mat-error *ngIf="registrationForm.get('password')?.hasError('required')">
+            La password è obbligatoria
+          </mat-error>
+          <mat-error *ngIf="registrationForm.get('password')?.hasError('minlength')">
+            Minimo 6 caratteri
+          </mat-error>
+        </mat-form-field>
+        <button mat-raised-button color="primary" class="full-width" type="submit" [disabled]="registrationForm.invalid || loading">
+          <span *ngIf="!loading">Registrati</span>
+          <mat-progress-spinner *ngIf="loading" diameter="20" mode="indeterminate"></mat-progress-spinner>
+        </button>
+        <div *ngIf="error" class="error-message">
+          <mat-icon color="warn">error</mat-icon>
+          {{ error }}
+        </div>
+        <div *ngIf="success" class="success-message">
+          <mat-icon color="primary">check_circle</mat-icon>
+          {{ success }}
+        </div>
+      </form>
+      <div class="registration-links">
+        <a routerLink="/comunal-admin-login" class="registration-link">
+          <mat-icon>arrow_back</mat-icon>
+          Torna al login
+        </a>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
