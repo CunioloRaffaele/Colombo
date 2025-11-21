@@ -25,8 +25,11 @@
     "morgan": "~1.10.1",
     "pg": "^8.16.3",
     "prisma": "^6.18.0",
-    "puppeteer": "^24.27.0",
-    "qrcode": "^1.5.4"
+    "protobufjs": "^7.5.4",
+    "puppeteer": "^24.29.1",
+    "qrcode": "^1.5.4",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

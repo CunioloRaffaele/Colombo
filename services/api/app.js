@@ -4,6 +4,8 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 if (process.env.NODE_ENV !== 'production') {
   // Load .env only in non-production environments
   const result = require('dotenv').config();
@@ -29,8 +31,46 @@ app.use(cookieParser());
 
 app.use('/v1', routesV1);
 
+// Swagger definition
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Colombo API',
+      version: '1.0.0',
+      description: 'API documentation for the Colombo GreenDrive project',
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000/v1',
+        description: 'Development server',
+      },
+      {
+        url: 'https://greendrive.duckdns.org/api/v1',
+        description: 'Production server',
+      }
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+  },
+  // Path to the API docs
+  apis: ['./routes/**/*.js'],
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Requested endpoint is not matched by any route
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.status(404);
   res.json({
     status: 404,

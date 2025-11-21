@@ -9,7 +9,7 @@ Colombo api infrastructure per hosting su VPS.
 
 1. Navigate to the server directory:
 ```bash
-cd backend
+cd services/api
 ```
 
 2. Install dependencies:
@@ -17,7 +17,7 @@ cd backend
 npm install
 ```
 
-3. Generate Prisma schema:
+3. Generate Prisma schema (if needed):
 ```bash
 npx prisma db pull
 ```
@@ -38,3 +38,4 @@ npm run debug
 This will start the server in debug mode with hot reloading enabled.
 
 The Express server will be running on http://localhost:3000 by default.
+The swagger documentation will be available at http://localhost:3000/api-docs.
