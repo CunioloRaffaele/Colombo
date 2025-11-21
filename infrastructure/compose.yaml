@@ -16,7 +16,7 @@ services:
     working_dir: /app
     volumes:
       - ../api:/app
-    command: sh -c "npm ci && npm run easyStart"
+    command: sh -c "npm install && npm run easyStart"
     environment:
       NODE_ENV: production
       PRISMA_DATABASE_URL: ${PRISMA_DATABASE_URL}
