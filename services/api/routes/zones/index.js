@@ -24,7 +24,12 @@ const validateJsonRequest = require('../../middleware/validateJsonRequest');
  *             type: array
  *             items:
  *               type: number
- *           example: [[12.4924, 41.8902], [12.4964, 41.8902], [12.4964, 41.8862], [12.4924, 41.8862], [12.4924, 41.8902]]
+ *           example:
+ *             - [12.4924, 41.8902]
+ *             - [12.4964, 41.8902]
+ *             - [12.4964, 41.8862]
+ *             - [12.4924, 41.8862]
+ *             - [12.4924, 41.8902]
  *     ZoneResponse:
  *       type: object
  *       properties:
