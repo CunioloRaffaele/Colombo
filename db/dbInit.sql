@@ -53,7 +53,7 @@ CREATE TABLE rilevazioni (
 
 -- ================= POPOLAMENTO =================
 
-\copy comuni FROM './comuni.csv' WITH (FORMAT csv)
+\copy comuni FROM '/docker-entrypoint-initdb.d/comuni.csv' WITH (FORMAT csv)
 
 INSERT INTO tipologie_zone VALUES
     ('generica'),
