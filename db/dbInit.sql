@@ -3,29 +3,6 @@ CREATE EXTENSION postgis;
 
 -- ================= TABELLE =================
 
-CREATE TABLE cittadini (
-    email    varchar PRIMARY KEY,
-    password varchar NOT NULL,
-    nome     varchar NOT NULL,
-    cognome  varchar NOT NULL
-);
-
-CREATE TABLE vetture (
-    proprietario varchar  NOT NULL REFERENCES cittadini(email) ON DELETE CASCADE ON UPDATE CASCADE,
-    vin          char(17) PRIMARY KEY
-);
-
-CREATE TABLE sessioni (
-    id      serial   PRIMARY KEY,
-    vettura char(17) NOT NULL REFERENCES vetture(vin) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CREATE TABLE rilevazioni (
-    sessione  int      NOT NULL REFERENCES sessioni(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    punto     geometry NOT NULL,
-    punteggio real     NOT NULL
-);
-
 CREATE TABLE comuni (
     istat     int     PRIMARY KEY,
     citta     varchar NOT NULL,
@@ -47,6 +24,30 @@ CREATE TABLE zone (
     comune    int      NOT NULL REFERENCES comuni_registrati(comune) ON DELETE CASCADE ON UPDATE CASCADE,
     tipologia varchar  NOT NULL REFERENCES tipologie_zone(nome) DEFAULT 'generica',
     poligono  geometry NOT NULL
+);
+
+CREATE TABLE cittadini (
+    email     varchar PRIMARY KEY,
+    password  varchar NOT NULL,
+    nome      varchar NOT NULL,
+    cognome   varchar NOT NULL,
+    residenza int NOT NULL REFERENCES comuni(istat)
+);
+
+CREATE TABLE vetture (
+    proprietario varchar  NOT NULL REFERENCES cittadini(email) ON DELETE CASCADE ON UPDATE CASCADE,
+    vin          char(17) PRIMARY KEY
+);
+
+CREATE TABLE sessioni (
+    id      serial   PRIMARY KEY,
+    vettura char(17) NOT NULL REFERENCES vetture(vin) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE rilevazioni (
+    sessione  int      NOT NULL REFERENCES sessioni(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    punto     geometry NOT NULL,
+    punteggio real     NOT NULL
 );
 
 
