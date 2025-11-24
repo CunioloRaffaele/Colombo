@@ -10,6 +10,7 @@
     "debug": "nodemon DEBUG=backend:* npm start"
   },
   "dependencies": {
+    "@cardog/corgi": "^1.2.2",
     "@prisma/client": "^6.18.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "~1.4.7",

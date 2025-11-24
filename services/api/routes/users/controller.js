@@ -1,6 +1,7 @@
 const { generateToken } = require('../../utils/jwt');
 const bcrypt = require('bcrypt');
 const prisma = require('../../utils/prisma');
+const createDecoder = require('@cardog/corgi').createDecoder;
 
 // Registrazione cittadino
 /**
@@ -148,6 +149,42 @@ exports.loginUser = async (req, res) => {
   const token = generateToken({ email: user.email, type: 'cittadino', nome: user.nome });
   res.status(200).json({ message: 'Login successful', token });
 };
+
+//Modifica info cittadino
+exports.updateUser = async (req, res) => {
+  try {
+    const userEmail = req.userToken.email;
+    const {email, password, nome, cognome, residenza } = req.body;
+
+    // Check required fields
+    if (!nome || !cognome || !residenza || !email || !password) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Update the user
+    const updatedUser = await prisma.cittadini.update({
+      where: { email: userEmail },
+      data: {
+        nome: nome,
+        cognome: cognome,
+        residenza: residenza,
+        email: email,
+        password: hashedPassword
+      }
+    });
+
+    return res.status(200).json({
+      message: 'User information updated successfully',
+      user: updatedUser
+    });
+
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 // Registrazione comune
 /**
@@ -423,4 +460,77 @@ exports.getComuneAccountInfo = async (req, res) => {
   });
   if (!comune) return res.status(404).json({ error: 'Comune not found' });
   res.json(comune);
+};
+
+exports.addCarToUser = async (req, res) => {
+  try {
+    const userEmail = req.userToken.email;
+    const { vin } = req.body;
+    
+    if(vin.length !== 17) {
+      return res.status(400).json({ error: 'Invalid VIN length. VIN must be 17 characters long.' });
+    }
+
+    // Find the user
+    const user = await prisma.cittadini.findUnique({
+      where: { email: userEmail }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User (email) not found' });
+    }
+
+    // Add car to user
+    const newCar = await prisma.vetture.create({
+      data: {
+        proprietario: user.email,
+        vin: vin,
+      }
+    });
+
+    return res.status(201).json({
+      message: 'Car added successfully',
+      car: newCar
+    });
+
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+exports.getCarInfo = async (req, res) => {
+  try {
+    const vin = req.query.query;
+
+    if(!vin || vin.length !== 17) {
+      return res.status(400).json({ error: 'Invalid or missing VIN. VIN must be 17 characters long.' });
+    }
+
+    // Get cars of the user
+    const cars = await prisma.vetture.findMany({
+      where: { vin: vin }
+    });
+
+    if(!cars || cars.length === 0) {
+      return res.status(404).json({ error: 'No cars found with the provided VIN' });
+    }
+
+    const decoder = await createDecoder();
+    const result = await decoder.decode(cars[0].vin);
+    await decoder.close();
+
+        console.log("getCarInfo result:", result);
+
+    return res.status(200).json({
+      message: 'Car info retrieved successfully via VIN',
+      car: {
+        vin: cars[0].vin,
+        details: result.components.vehicle
+      }
+    });
+
+  } catch (err) {
+    console.error("getCarInfo error:", err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 };
