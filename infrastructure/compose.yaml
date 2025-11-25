@@ -12,7 +12,7 @@ services:
       - "5432:5432"
 
   api:
-    image: docker.io/library/node:latest
+    image: docker.io/library/node:22
     working_dir: /app
     volumes:
       - ../api:/app
