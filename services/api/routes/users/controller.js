@@ -4,48 +4,6 @@ const prisma = require('../../utils/prisma');
 const createDecoder = require('@cardog/corgi').createDecoder;
 
 // Registrazione cittadino
-/**
- * @swagger
- * /api/v1/auth/user
- *   post:
- *     summary: Register a new citizen
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - nome
- *               - cognome
- *               - email
- *               - password
- *               - residenza
- *             properties:
- *               nome:
- *                 type: string
- *                 example: Marco
- *               cognome:
- *                 type: string
- *                 example: Rossi
- *               email:
- *                 type: string
- *                 example: marco@gmail.com
- *               password:
- *                 type: string
- *                 example: 123123
- *               residenza:
- *                 type: integer
- *                 example: 18007
- *     responses:
- *       201:
- *         description: Citizen account created
- *       400:
- *         description: Missing or invalid fields
- *       500:
- *         description: Server error
- */
 exports.registerUser = async (req, res) => {
   try {
     const { nome, cognome, email, password, residenza } = req.body;
@@ -103,36 +61,6 @@ exports.registerUser = async (req, res) => {
 
 
 // Login cittadino
-/**
- * @swagger
- * /api/v1/auth/login/user:
- *   post:
- *     summary: Login a citizen
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 example: marco@gmail.com
- *               password:
- *                 type: string
- *                 example: 123123
- *     responses:
- *       200:
- *         description: Login successful
- *       400:
- *         description: Missing fields, invalid email or wrong credentials
- *       500:
- *         description: Server error
- */
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Missing required fields' });
@@ -187,43 +115,6 @@ exports.updateUser = async (req, res) => {
 
 
 // Registrazione comune
-/**
- * @swagger
- * /api/v1/auth/comune:
- *   post:
- *     summary: Register a municipality
- *     tags: [Comuni]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - comune
- *               - email
- *               - password
- *             properties:
- *               comune:
- *                 type: integer
- *                 description: ISTAT code of the municipality
- *                 example: 10010
- *               email:
- *                 type: string
- *                 example: comune.italiano@email.com
- *               password:
- *                 type: string
- *                 example: superpassword
- *     responses:
- *       201:
- *         description: Municipality registered
- *       400:
- *         description: Missing or invalid fields
- *       404:
- *         description: ISTAT code not found
- *       500:
- *         description: Server error
- */
 exports.registerComune = async (req, res) => {
   try {
     const { comune, email, password } = req.body;
@@ -288,36 +179,6 @@ exports.registerComune = async (req, res) => {
 
 
 // Login comune
-/**
- * @swagger
- * /api/v1/auth/login/comune:
- *   post:
- *     summary: Login a municipality
- *     tags: [Comuni]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 example: comune.italiano@email.com
- *               password:
- *                 type: string
- *                 example: 123123
- *     responses:
- *       200:
- *         description: Login successful
- *       400:
- *         description: Missing fields, invalid email or wrong password
- *       500:
- *         description: Server error
- */
 exports.loginComune = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Missing required fields' });
@@ -337,18 +198,6 @@ exports.loginComune = async (req, res) => {
 };
 
 // Ottenere tutti i comuni
-/**
- * @swagger
- * /api/v1/auth/comuni:
- *   get:
- *     summary: Get all registered municipalities
- *     tags: [Comuni]
- *     responses:
- *       200:
- *         description: List of registered municipalities
- *       500:
- *         description: Server error
- */
 exports.getAllComuni = async (req, res) => {
   try {
     const comuni = await prisma.comuni_registrati.findMany({
@@ -361,26 +210,6 @@ exports.getAllComuni = async (req, res) => {
 };
 
 // Ottenere una lista di comuni in base a filtro di ricerca
-/**
- * @swagger
- * /api/v1/auth/comuni/subset:
- *   get:
- *     summary: Search municipalities by name prefix
- *     tags: [Comuni]
- *     parameters:
- *       - in: query
- *         name: query
- *         schema:
- *           type: string
- *         required: true
- *         example: Bagn
- *         description: Start of the municipality name
- *     responses:
- *       200:
- *         description: Matching municipalities
- *       500:
- *         description: Server error
- */
 exports.searchComuni = async (req, res) => {
  try {
     const query = req.query.query;
@@ -408,22 +237,6 @@ exports.searchComuni = async (req, res) => {
 };
 
 // Informazioni account cittadino
-/**
- * @swagger
- * /api/v1/auth/user:
- *   get:
- *     summary: Get authenticated citizen account info
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Citizen account info
- *       404:
- *         description: User not found
- *       401:
- *         description: Unauthorized
- */
 exports.getUserAccountInfo = async (req, res) => {
   const userEmail = req.userToken.email; 
 
@@ -436,22 +249,6 @@ exports.getUserAccountInfo = async (req, res) => {
 };
 
 // Informazioni account comune
-/**
- * @swagger
- * /api/v1/auth/comune
- *   get:
- *     summary: Get authenticated municipality account info
- *     tags: [Comuni]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Municipality account info
- *       404:
- *         description: Municipality not found
- *       401:
- *         description: Unauthorized
- */
 exports.getComuneAccountInfo = async (req, res) => {
   const comuneEmail = req.userToken.email; 
   const comune = await prisma.comuni_registrati.findUnique({
