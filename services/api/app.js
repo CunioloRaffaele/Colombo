@@ -60,8 +60,8 @@ const swaggerOptions = {
       },
     },
   },
-  // Path to the API docs
-  apis: ['./routes/**/*.js'],
+  // Path to the API docs - centralized in swagger/definitions.js
+  apis: ['./swagger/definitions.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
