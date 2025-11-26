@@ -7,8 +7,8 @@ const validateJsonRequest = require('../../middleware/validateJsonRequest');
 
 // Vetture
 vehiclesRouter.get('/car/details/:vin', authMiddleware, controller.getCarInfo);
-vehiclesRouter.delete('/car/:vin', validateJsonRequest, authMiddleware, controller.removeCarFromUser);
+vehiclesRouter.delete('/car/:vin', authMiddleware, controller.removeCarFromUser);
 vehiclesRouter.post('/car', validateJsonRequest, authMiddleware, controller.addCarToUser);
-vehiclesRouter.get('/cars', validateJsonRequest, authMiddleware, controller.listUserCars);
+vehiclesRouter.get('/cars', authMiddleware, controller.listUserCars);
 
 module.exports = vehiclesRouter;

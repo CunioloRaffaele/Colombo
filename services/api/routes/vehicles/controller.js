@@ -77,19 +77,19 @@ exports.getCarInfo = async (req, res) => {
         }
 
         // Find the car by VIN and return it if it belongs to the requesting user
-        const car = await prisma.vetture.findUnique({
+        const car = await prisma.vetture.findFirst({
             where: { 
                 vin: vin, 
                 proprietario: req.userToken.email
             },
         });
         
-        if (!cars || cars.length === 0) {
+        if (!car) {
             return res.status(404).json({ error: 'No cars found with the provided VIN' });
         }
 
         const decoder = await createDecoder();
-        const result = await decoder.decode(cars[0].vin);
+        const result = await decoder.decode(car.vin);
         await decoder.close();
 
         console.log("getCarInfo result:", result);
@@ -97,7 +97,7 @@ exports.getCarInfo = async (req, res) => {
         return res.status(200).json({
             message: 'Car info retrieved successfully via VIN',
             car: {
-                vin: cars[0].vin,
+                vin: car.vin,
                 details: result
             }
         });

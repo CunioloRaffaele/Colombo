@@ -153,7 +153,7 @@ exports.registerComune = async (req, res) => {
 
     // Check if comune ISTAT exists in the comuni table
     const datiComune = await prisma.comuni.findUnique({
-      where: { istat: comune }
+      where: { istat: parseInt(comune) }
     });
 
     if (!datiComune) {
@@ -166,7 +166,7 @@ exports.registerComune = async (req, res) => {
     // Create auth entry for comune
     const comuneRecord = await prisma.comuni_registrati.create({
       data: {
-        comune: comune,       // ISTAT
+        comune: parseInt(comune),       // ISTAT
         email,
         password: hashedPassword
       }
