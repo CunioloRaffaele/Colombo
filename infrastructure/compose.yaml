@@ -8,6 +8,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB_NAME}
     volumes:
       - ../db/init:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
@@ -50,3 +51,6 @@ services:
 networks:
   default:
     driver: bridge
+
+volumes:
+  postgres_data:
