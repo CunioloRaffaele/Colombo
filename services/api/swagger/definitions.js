@@ -346,6 +346,35 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *   delete:
+ *     summary: Delete citizen account
+ *     description: Deletes the authenticated citizen's account permanently
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User account deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User account deleted successfully
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 
 /**
@@ -563,7 +592,7 @@
 
 /**
  * @swagger
- * /auth/car:
+ * /vehicles/car:
  *   post:
  *     summary: Add a car to user account
  *     description: Associates a vehicle with the authenticated user's account using its VIN
@@ -624,7 +653,60 @@
 
 /**
  * @swagger
- * /auth/car/info:
+ * /vehicles/cars:
+ *   get:
+ *     summary: List all user's cars
+ *     description: Retrieves all vehicles associated with the authenticated user's account
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User cars retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User cars retrieved successfully
+ *                 cars:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       proprietario:
+ *                         type: string
+ *                         description: Owner's email
+ *                         example: marco@gmail.com
+ *                       vin:
+ *                         type: string
+ *                         description: Vehicle Identification Number
+ *                         example: WVWZZZ3CZWE123456
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /vehicles/car/details/{vin}:
  *   get:
  *     summary: Get car information by VIN
  *     description: Retrieves detailed vehicle information using the VIN decoder
@@ -632,8 +714,8 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: query
+ *       - in: path
+ *         name: vin
  *         schema:
  *           type: string
  *         required: true
@@ -666,6 +748,60 @@
  *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: No cars found with the provided VIN
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /vehicles/car/{vin}:
+ *   delete:
+ *     summary: Remove a car from user account
+ *     description: Removes a vehicle from the authenticated user's account using its VIN
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: vin
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Vehicle Identification Number (VIN) - must be exactly 17 characters
+ *         example: WVWZZZ3CZWE123456
+ *     responses:
+ *       200:
+ *         description: Car removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Car removed successfully
+ *       400:
+ *         description: Invalid VIN length (must be 17 characters)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Car not found or does not belong to the user
  *         content:
  *           application/json:
  *             schema:
