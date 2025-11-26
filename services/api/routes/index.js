@@ -4,6 +4,9 @@ var routes = express.Router();
 var userRouter = require('./users/index');
 routes.use('/auth', userRouter);
 
+var vehiclesRouter = require('./vehicles/index');
+routes.use('/vehicles', vehiclesRouter);
+
 var zoneRouter = require('./zones/index');
 routes.use('/zones', zoneRouter);
 

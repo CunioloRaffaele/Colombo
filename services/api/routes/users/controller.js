@@ -59,7 +59,6 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-
 // Login cittadino
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -113,6 +112,20 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+// Elimina account cittadino
+exports.deleteUser = async (req, res) => {
+  try {
+    const userEmail = req.userToken.email;
+    
+    // Delete the user
+    await prisma.cittadini.delete({
+      where: { email: userEmail }
+    });
+    return res.status(200).json({ message: 'User account deleted successfully' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 // Registrazione comune
 exports.registerComune = async (req, res) => {
@@ -176,7 +189,6 @@ exports.registerComune = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 
 // Login comune
 exports.loginComune = async (req, res) => {
@@ -257,77 +269,4 @@ exports.getComuneAccountInfo = async (req, res) => {
   });
   if (!comune) return res.status(404).json({ error: 'Comune not found' });
   res.json(comune);
-};
-
-exports.addCarToUser = async (req, res) => {
-  try {
-    const userEmail = req.userToken.email;
-    const { vin } = req.body;
-    
-    if(vin.length !== 17) {
-      return res.status(400).json({ error: 'Invalid VIN length. VIN must be 17 characters long.' });
-    }
-
-    // Find the user
-    const user = await prisma.cittadini.findUnique({
-      where: { email: userEmail }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User (email) not found' });
-    }
-
-    // Add car to user
-    const newCar = await prisma.vetture.create({
-      data: {
-        proprietario: user.email,
-        vin: vin,
-      }
-    });
-
-    return res.status(201).json({
-      message: 'Car added successfully',
-      car: newCar
-    });
-
-  } catch (err) {
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.getCarInfo = async (req, res) => {
-  try {
-    const vin = req.query.query;
-
-    if(!vin || vin.length !== 17) {
-      return res.status(400).json({ error: 'Invalid or missing VIN. VIN must be 17 characters long.' });
-    }
-
-    // Get cars of the user
-    const cars = await prisma.vetture.findMany({
-      where: { vin: vin }
-    });
-
-    if(!cars || cars.length === 0) {
-      return res.status(404).json({ error: 'No cars found with the provided VIN' });
-    }
-
-    const decoder = await createDecoder();
-    const result = await decoder.decode(cars[0].vin);
-    await decoder.close();
-
-        console.log("getCarInfo result:", result);
-
-    return res.status(200).json({
-      message: 'Car info retrieved successfully via VIN',
-      car: {
-        vin: cars[0].vin,
-        details: result.components.vehicle
-      }
-    });
-
-  } catch (err) {
-    console.error("getCarInfo error:", err);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
 };
