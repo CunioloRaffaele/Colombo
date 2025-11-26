@@ -254,7 +254,7 @@ exports.getUserAccountInfo = async (req, res) => {
 
   const user = await prisma.cittadini.findUnique({
     where: { email: userEmail },
-    select: { nome: true, cognome: true, email: true, password: true, residenza: true }
+    select: { nome: true, cognome: true, email: true, residenza: true }
   });
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json(user);

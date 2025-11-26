@@ -16,7 +16,7 @@ userRouter.delete('/user', validateJsonRequest, authMiddleware, controller.delet
 userRouter.post('/comune', validateJsonRequest, controller.registerComune);
 userRouter.post('/login/comune', validateJsonRequest, controller.loginComune);
 userRouter.get('/comuni', controller.getAllComuni);
-userRouter.get('/comuni/subset', controller.searchComuni);
+userRouter.get('/comuni/search', controller.searchComuni);
 
 // Informazioni account
 userRouter.get('/user', authMiddleware, controller.getUserAccountInfo);

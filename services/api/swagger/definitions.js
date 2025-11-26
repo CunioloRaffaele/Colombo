@@ -552,7 +552,7 @@
 
 /**
  * @swagger
- * /auth/comuni/subset:
+ * /auth/comuni/search:
  *   get:
  *     summary: Search municipalities by name prefix
  *     description: Returns municipalities whose names start with the provided query string (case-insensitive, max 20 results)
