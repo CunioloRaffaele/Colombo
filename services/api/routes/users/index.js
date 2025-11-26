@@ -21,3 +21,5 @@ userRouter.get('/comuni/subset', controller.searchComuni);
 // Informazioni account
 userRouter.get('/user', authMiddleware, controller.getUserAccountInfo);
 userRouter.get('/comune', authMiddleware, controller.getComuneAccountInfo);
+
+module.exports = userRouter;
