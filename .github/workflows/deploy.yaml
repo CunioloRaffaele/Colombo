@@ -62,19 +62,35 @@ jobs:
           echo "Starting API for smoke tests..."
           docker compose -f compose.yaml -p colombo up -d api db
       
-      - name: Wait for API to be ready
+      - name: Wait for API to be ready (Healthcheck)
         run: |
-          echo "Waiting for API to be ready..."
-          sleep 30
+          echo "Waiting for API to respond..."
+          # Tries to reach the API endpoint with retries
+          # (Waits up to 75 seconds, checking every 5 seconds)
           
-      - name: Check API Status
+          RETRIES=15
+          until curl -s -f http://localhost:3000/v1/ping || [ $RETRIES -eq 0 ]; do
+            echo "Waiting for API server... ($RETRIES retries left)"
+            RETRIES=$((RETRIES-1))
+            sleep 5
+          done
+
+          if [ $RETRIES -eq 0 ]; then
+            echo "❌ Timeout: API server did not start in time."
+            docker logs colombo-api-1
+            exit 1
+          fi
+          
+          echo "✅ API is responding!"
+
+      - name: Check API Status (Final Verification)
         run: |
           if [ $(docker inspect -f '{{.State.Running}}' colombo-api-1) = "true" ]; then
-            echo "✅ All good: API server is running."
+            echo "✅ All good: API server is running and stable."
             docker logs colombo-api-1
             exit 0
           else
-            echo "❌ Test Failed: The server crashed on startup."
+            echo "❌ Test Failed: The server crashed."
             docker logs colombo-api-1
             exit 1
           fi
