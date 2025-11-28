@@ -79,7 +79,7 @@ jobs:
             exit 1
           fi
 
-jobs:
+
   deploy:
     needs: smoke-test-api
     runs-on: ubuntu-latest
