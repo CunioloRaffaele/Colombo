@@ -13,7 +13,75 @@ on:
       - '.github/workflows/deploy.yaml'
 
 jobs:
+  smoke-test-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # This test uses docker compose to start only the API and DB services
+      
+      - name: Copy API files (Backend)
+        run: |
+          mkdir -p dist/api
+          cp -r services/api/* dist/api
+
+      - name: Copy docker files
+        run: |
+          mkdir -p dist/infrastructure
+          cp -r infrastructure/* dist/infrastructure/
+
+      - name: Copy database init files 
+        run: |
+          mkdir -p dist/db/init
+          cp -r db/* dist/db/init/
+
+      - name: Set env variables for TEST
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB_NAME: test_db
+          API_PORT: 3000
+          API_JWT_SECRET: test_secret
+          API_JWT_EXPIRATION: 1d
+          PRISMA_DATABASE_URL: "postgresql://test_user:test_password@db:5432/test_db?schema=public"
+        run: |
+          cd dist/infrastructure
+          echo "Creating .env for testing..."
+          echo "POSTGRES_USER=$POSTGRES_USER" >> .env
+          echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> .env
+          echo "POSTGRES_DB_NAME=$POSTGRES_DB_NAME" >> .env
+          echo "API_PORT=$API_PORT" >> .env
+          echo "API_JWT_SECRET=$API_JWT_SECRET" >> .env
+          echo "API_JWT_EXPIRATION=$API_JWT_EXPIRATION" >> .env
+          echo "PRISMA_DATABASE_URL=$PRISMA_DATABASE_URL" >> .env
+
+      - name: Start api for smoke tests
+        working-directory: dist/infrastructure
+        run: |
+          echo "Starting API for smoke tests..."
+          docker compose -f compose.yaml -p colombo up -d api db
+      
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API to be ready..."
+          sleep 30
+          
+      - name: Check API Status
+        run: |
+          if [ $(docker inspect -f '{{.State.Running}}' colombo-api-1) = "true" ]; then
+            echo "✅ All good: API server is running."
+            docker logs colombo-api-1
+            exit 0
+          else
+            echo "❌ Test Failed: The server crashed on startup."
+            docker logs colombo-api-1
+            exit 1
+          fi
+
+jobs:
   deploy:
+    needs: smoke-test-api
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
