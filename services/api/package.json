@@ -27,7 +27,8 @@
     "prisma": "^6.18.0",
     "protobufjs": "^7.5.4",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "universal-vin-decoder": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

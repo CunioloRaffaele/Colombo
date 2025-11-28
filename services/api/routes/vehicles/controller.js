@@ -1,5 +1,6 @@
 const prisma = require('../../utils/prisma');
 const createDecoder = require('@cardog/corgi').createDecoder;
+const vinDecoder = require('../../utils/vin');
 
 // Aggiungi una vettura all'utente
 exports.addCarToUser = async (req, res) => {
@@ -88,20 +89,16 @@ exports.getCarInfo = async (req, res) => {
             return res.status(404).json({ error: 'No cars found with the provided VIN' });
         }
 
-        const decoder = await createDecoder();
-        const result = await decoder.decode(car.vin);
-        await decoder.close();
+        const result = vinDecoder.getVIN(car.vin);
 
         console.log("getCarInfo result:", result);
 
         return res.status(200).json({
             message: 'Car info retrieved successfully via VIN',
-            car: {
-                vin: car.vin,
-                details: result
-            }
+            result
         });
     } catch (err) {
+        console.error("Error in getCarInfo:", err);
         return res.status(500).json({ error: 'Internal server error' });
     }
 };

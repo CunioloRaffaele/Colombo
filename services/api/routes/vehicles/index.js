@@ -1,6 +1,7 @@
 var express = require('express');
 var vehiclesRouter = express.Router();
 const controller = require('./controller');
+const vinDecoder = require('universal-vin-decoder');
 
 const authMiddleware = require('../../middleware/auth');
 const validateJsonRequest = require('../../middleware/validateJsonRequest');

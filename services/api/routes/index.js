@@ -10,8 +10,12 @@ routes.use('/vehicles', vehiclesRouter);
 var zoneRouter = require('./zones/index');
 routes.use('/zones', zoneRouter);
 
+var reportsRouter = require('./reports/index');
+routes.use('/reports', reportsRouter);
+
 routes.get('/ping', function(req, res) {
   res.status(200).json({ message: 'pong' });
 });
+
 
 module.exports = routes;
