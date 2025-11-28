@@ -60,7 +60,7 @@ jobs:
         working-directory: dist/infrastructure
         run: |
           echo "Starting API for smoke tests..."
-          docker compose -f compose.yaml -p colombo up -d api db
+          docker compose -f compose-smoke.yaml -p colombo up -d api-smoke db-smoke
       
       - name: Wait for API to be ready (Healthcheck)
         run: |
