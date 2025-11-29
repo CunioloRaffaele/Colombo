@@ -32,7 +32,7 @@ model comuni_registrati {
   email    String @unique @db.VarChar
   password String @db.VarChar
   comuni   comuni @relation(fields: [comune], references: [istat], onDelete: NoAction, onUpdate: NoAction)
-  zone     zone[] @ignore
+  zone     zone[]
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -48,7 +48,7 @@ model rilevazioni {
 model sessioni {
   id          Int           @id @default(autoincrement())
   vettura     String        @db.Char(17)
-  rilevazioni rilevazioni[] @ignore
+  rilevazioni rilevazioni[]
   vetture     vetture       @relation(fields: [vettura], references: [vin], onDelete: Cascade)
 }
 
@@ -63,7 +63,7 @@ model spatial_ref_sys {
 
 model tipologie_zone {
   nome String @id @db.VarChar
-  zone zone[] @ignore
+  zone zone[]
 }
 
 model vetture {

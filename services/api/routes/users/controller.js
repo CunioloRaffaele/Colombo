@@ -1,7 +1,6 @@
 const { generateToken } = require('../../utils/jwt');
 const bcrypt = require('bcrypt');
 const prisma = require('../../utils/prisma');
-const createDecoder = require('@cardog/corgi').createDecoder;
 
 // Registrazione cittadino
 exports.registerUser = async (req, res) => {

@@ -1,5 +1,4 @@
 const prisma = require('../../utils/prisma');
-const createDecoder = require('@cardog/corgi').createDecoder;
 const vinDecoder = require('../../utils/vin');
 
 // Aggiungi una vettura all'utente

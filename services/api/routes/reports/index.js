@@ -5,10 +5,13 @@ const controller = require('./controller');
 const authMiddleware = require('../../middleware/auth');
 const validateJsonRequest = require('../../middleware/validateJsonRequest');
 
+//Ecoscore totale comune
+reportsRouter.get('/comune/:istat/ecoscore', authMiddleware, controller.ecoscoreComune);
 
-//reportsRouter.get()
+//Ecoscore totale sessione - cittadino
+reportsRouter.get('/session/:id/summary', authMiddleware, controller.ecoscoreSessione);
 
-// Utenti cittadini
-
+//Ecoscore totale cittadino
+reportsRouter.get('/user/:email/summary', authMiddleware, controller.ecoscoreUtente);
 
 module.exports = reportsRouter;
