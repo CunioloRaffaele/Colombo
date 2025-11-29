@@ -20,9 +20,11 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Password</mat-label>
-          <input matInput formControlName="password" type="password" required />
+          <mat-label>Password</mat-label><input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required />
           <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" [attr.aria-label]="'Nascondi password'" [attr.aria-pressed]="hidePassword" type="button">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
           <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
             La password è obbligatoria
           </mat-error>

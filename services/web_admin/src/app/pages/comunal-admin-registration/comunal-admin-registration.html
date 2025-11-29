@@ -6,27 +6,11 @@
       </div>
       <form [formGroup]="registrationForm" (ngSubmit)="onRegister()">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="nome" required />
+          <mat-label>Codice ISTAT del comune</mat-label>
+          <input matInput formControlName="comune" required />
           <mat-icon matPrefix>person</mat-icon>
-          <mat-error *ngIf="registrationForm.get('nome')?.hasError('required')">
-            Il nome è obbligatorio
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Provincia</mat-label>
-          <input matInput formControlName="provincia" required />
-          <mat-icon matPrefix>person</mat-icon>
-          <mat-error *ngIf="registrationForm.get('provincia')?.hasError('required')">
-            Il nome della provincia è obbligatorio
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Regione</mat-label>
-          <input matInput formControlName="regione" required />
-          <mat-icon matPrefix>person</mat-icon>
-          <mat-error *ngIf="registrationForm.get('regione')?.hasError('required')">
-            Il nome della regione è obbligatorio
+          <mat-error *ngIf="registrationForm.get('comune')?.hasError('required')">
+            Il comune è obbligatorio
           </mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full-width">
@@ -42,8 +26,11 @@
         </mat-form-field>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Password</mat-label>
-          <input matInput formControlName="password" type="password" required />
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required />
           <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" [attr.aria-label]="'Nascondi password'" [attr.aria-pressed]="hidePassword" type="button">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
           <mat-error *ngIf="registrationForm.get('password')?.hasError('required')">
             La password è obbligatoria
           </mat-error>
