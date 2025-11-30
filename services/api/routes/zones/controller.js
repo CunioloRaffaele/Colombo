@@ -1,23 +1,10 @@
-require('dotenv').config({ path: '.env.postgis' }); 
-const { Pool } = require('pg');
+const prisma = require('../../utils/prisma');
 
-const pool = new Pool({
-  connectionString: process.env.POSTGIS_URL
-});
-
-// helper: valida coordinate array [[lng, lat], ...]
-function isValidCoordinatesArray(coords) {
-  return Array.isArray(coords) &&
-         coords.length >= 3 &&
-         coords.every(c => Array.isArray(c) &&
-                           c.length === 2 &&
-                           typeof c[0] === 'number' &&
-                           typeof c[1] === 'number');
-}
+const { isValidCoordinatesArray } = require('../../utils/coordinates');
 
 // Salva zona
 exports.saveZone = async (req, res) => {
-  if (!req.userToken || req.userToken.type !== 'comune' || typeof req.userToken.comune !== 'number') {
+  if (req.userToken.type !== 'comune' || typeof req.userToken.comune !== 'number') {
     return res.status(403).json({ error: 'Accesso riservato ai comuni autenticati' });
   }
 
@@ -41,7 +28,10 @@ exports.saveZone = async (req, res) => {
       INSERT INTO zone (poligono, comune, tipologia)
       VALUES (ST_GeomFromText($1, 4326), $2, $3)
     `;
-    await pool.query(sql, [poligonoWKT, comune, tipologia || 'generica']);
+    await prisma.$executeRaw`
+      INSERT INTO zone (poligono, comune, tipologia)
+      VALUES (ST_GeomFromText(${poligonoWKT}, 4326), ${comune}, ${tipologia || 'generica'})
+    `;
     return res.status(201).json({ message: 'Zona salvata correttamente' });
   } catch (err) {
     console.error('saveZone error:', err.stack);
@@ -51,14 +41,11 @@ exports.saveZone = async (req, res) => {
 
 // Verifica punto
 exports.checkPointInZone = async (req, res) => {
-  if (!req.userToken) {
-    return res.status(403).json({ error: 'Accesso riservato agli utenti autenticati' });
-  }
 
-  const { comune, tipologia, point } = req.body;
+  const { comune, point } = req.body;
 
-  if (typeof comune === 'undefined' || !tipologia || !Array.isArray(point) || point.length !== 2) {
-    return res.status(400).json({ error: 'Missing required fields: comune, tipologia, point([lng,lat])' });
+    if (typeof comune === 'undefined' || !Array.isArray(point) || point.length !== 2) {
+      return res.status(400).json({ error: 'Missing required fields: comune, point ([lng,lat])' });
   }
 
   const [lng, lat] = point;
@@ -69,15 +56,16 @@ exports.checkPointInZone = async (req, res) => {
   const pointWKT = `POINT(${lng} ${lat})`;
 
   try {
-    const sql = `
-      SELECT EXISTS (
-        SELECT 1 FROM zone
-        WHERE comune = $2 AND tipologia = $3
-          AND ST_Intersects(poligono, ST_GeomFromText($1, 4326))
-      ) AS contains;
-    `;
-    const result = await pool.query(sql, [pointWKT, comune, tipologia]);
-    return res.json({ contains: result.rows[0].contains });
+      const sql = `
+        SELECT EXISTS (SELECT 1 FROM zone WHERE comune = $2 AND ST_Contains(poligono, ST_GeomFromText($1, 4326))) AS contains
+      `;
+      const result = await prisma.$queryRaw`
+        SELECT EXISTS (
+          SELECT 1 FROM zone
+          WHERE comune = ${Number(comune)} AND ST_Contains(ST_SetSRID(poligono, 4326), ST_GeomFromText(${pointWKT}, 4326))
+        ) AS contains
+      `;
+    return res.json({ contains: result[0].contains });
   } catch (err) {
     console.error('checkPointInZone error:', err.stack);
     return res.status(500).json({ success: false, error: 'Errore nella verifica del punto', details: err.message });
@@ -86,7 +74,7 @@ exports.checkPointInZone = async (req, res) => {
 
 // Elimina zone
 exports.deleteZones = async (req, res) => {
-  if (!req.userToken || req.userToken.type !== 'comune' || typeof req.userToken.comune !== 'number') {
+  if (req.userToken.type !== 'comune' || typeof req.userToken.comune !== 'number') {
     return res.status(403).json({ error: 'Accesso riservato ai comuni autenticati' });
   }
 
@@ -98,7 +86,9 @@ exports.deleteZones = async (req, res) => {
   }
 
   try {
-    const result = await pool.query('DELETE FROM zone WHERE comune = $1 AND tipologia = ANY($2)', [comuneId, tipologie]);
+    const result = await prisma.$executeRaw`
+      DELETE FROM zone WHERE comune = ${comuneId} AND tipologia = ANY(${tipologie})
+    `;
     if (result.rowCount === 0) {
       return res.status(200).json({ message: 'Nessuna zona trovata con la tipologia richiesta' });
     }
@@ -111,9 +101,6 @@ exports.deleteZones = async (req, res) => {
 
 // Zone vicine a un punto
 exports.getZonesNearPoint = async (req, res) => {
-  if (!req.userToken) {
-    return res.status(403).json({ error: 'Accesso riservato agli utenti autenticati' });
-  }
 
   const { lng, lat, distance } = req.body;
 
@@ -133,8 +120,16 @@ exports.getZonesNearPoint = async (req, res) => {
         $2
       );
     `;
-    const result = await pool.query(sql, [pointWKT, distance]);
-    return res.json({ zones: result.rows });
+    const result = await prisma.$queryRaw`
+      SELECT comune, tipologia
+      FROM zone
+      WHERE ST_DWithin(
+        poligono::geography,
+        ST_GeomFromText(${pointWKT}, 4326)::geography,
+        ${distance}
+      )
+    `;
+    return res.json({ zones: result });
   } catch (err) {
     console.error('getZonesNearPoint error:', err.stack);
     return res.status(500).json({ success: false, error: 'Errore nel recupero delle zone vicine', details: err.message });
