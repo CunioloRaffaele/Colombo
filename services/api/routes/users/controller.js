@@ -225,6 +225,9 @@ exports.getAllComuni = async (req, res) => {
 exports.searchComuni = async (req, res) => {
  try {
     const query = req.query.query;
+    if (!query || query.trim() === "") {
+      return res.status(400).json({ error: "Query parameter is required" });
+    }
     const comuni = await prisma.comuni.findMany({
       where: {
         citta: {
