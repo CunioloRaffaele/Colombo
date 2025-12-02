@@ -1,5 +1,8 @@
-import 'package:colombo/ui/features/auth/viewmodels/registration_viewmodel.dart'; // Importa il ViewModel
+import 'package:colombo/core/constants/api_constants.dart';
+import 'package:colombo/data/services/municipality_service.dart';
+import 'package:colombo/ui/features/auth/viewmodels/registration_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../widgets/notification_overlay.dart';
 import '../../../widgets/input_field.dart';
@@ -16,10 +19,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
   final _nomeController = TextEditingController();
   final _cognomeController = TextEditingController();
-  final _bithDateController = TextEditingController();
-  final _comuneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _municipalityController = TextEditingController();
+
+  int _selectedResidenzaId = 0;
 
   bool _termsAccepted = false;
   bool _privacyAccepted = false;
@@ -28,10 +32,9 @@ class _RegisterPageState extends State<RegisterPage> {
   void dispose() {
     _nomeController.dispose();
     _cognomeController.dispose();
-    _bithDateController.dispose();
-    _comuneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _municipalityController.dispose();
     super.dispose();
   }
 
@@ -92,16 +95,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 20),
 
                     InputField(
-                      icon: Icons.cake_outlined,
-                      hint: 'Data di nascita (AAAA-MM-GG)',
-                      controller: _bithDateController,
-                    ),
-                    const SizedBox(height: 20),
-
-                    InputField(
                       icon: Icons.location_city_outlined,
                       hint: 'Comune',
-                      controller: _comuneController,
+                      controller: _municipalityController,
                     ),
                     const SizedBox(height: 20),
 
@@ -124,17 +120,32 @@ class _RegisterPageState extends State<RegisterPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Text(
-                          'Accetto termini e condizioni ',
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.white.withOpacity(0.5),
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: () async {
+                              final Uri url = Uri.parse(
+                                DocumentsApiConstants.termsOfServiceUrl,
+                              );
+                              if (!await launchUrl(url)) {
+                                debugPrint('Could not launch $url');
+                              }
+                            },
+                            child: Text(
+                              'Accetto termini e condizioni ',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20.0,
+                                color: Colors.white.withOpacity(0.5),
+                                decoration: TextDecoration.underline,
+                                decorationColor: Colors.white.withOpacity(0.5),
+                              ),
+                            ),
                           ),
                         ),
                         Transform.scale(
                           scale: 1.3,
                           child: Checkbox(
-                            value: _termsAccepted, // Usa variabile specifica
+                            value: _termsAccepted,
                             onChanged: (bool? newValue) {
                               setState(() {
                                 _termsAccepted = newValue ?? false;
@@ -148,17 +159,32 @@ class _RegisterPageState extends State<RegisterPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Text(
-                          'Accetto politica sulla privacy ',
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.white.withOpacity(0.5),
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: () async {
+                              final Uri url = Uri.parse(
+                                DocumentsApiConstants.privacyPolicyUrl,
+                              );
+                              if (!await launchUrl(url)) {
+                                debugPrint('Could not launch $url');
+                              }
+                            },
+                            child: Text(
+                              'Accetto politica sul trattamento dei dati ',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20.0,
+                                color: Colors.white.withOpacity(0.5),
+                                decoration: TextDecoration.underline,
+                                decorationColor: Colors.white.withOpacity(0.5),
+                              ),
+                            ),
                           ),
                         ),
                         Transform.scale(
                           scale: 1.3,
                           child: Checkbox(
-                            value: _privacyAccepted, // Usa variabile specifica
+                            value: _privacyAccepted,
                             onChanged: (bool? newValue) {
                               setState(() {
                                 _privacyAccepted = newValue ?? false;
@@ -185,27 +211,40 @@ class _RegisterPageState extends State<RegisterPage> {
                           shadowColor: const Color(0xFF1EAE98).withOpacity(0.6),
                         ),
                         onPressed: () async {
+                          final municipalities =
+                              await MunicipalityService.searchComuni(
+                                _municipalityController.text,
+                              );
+                          if (municipalities != 0) {
+                            _selectedResidenzaId = municipalities;
+                          } else {
+                            _selectedResidenzaId = 0;
+                            NotificationOverlay.show(
+                              'Comune non trovato. Controlla l\'ortografia.',
+                              Colors.redAccent,
+                            );
+                          }
                           final error = await _viewModel.register(
                             nome: _nomeController.text,
                             cognome: _cognomeController.text,
                             email: _emailController.text,
                             password: _passwordController.text,
-                            birthDate: _bithDateController.text,
+                            residenzaId: _selectedResidenzaId,
                             termsAccepted: _termsAccepted,
                             privacyAccepted: _privacyAccepted,
                           );
 
+                          print(error);
+
                           if (!context.mounted) return;
 
                           if (error == null) {
-                            // Successo
                             NotificationOverlay.show(
                               'Registrazione avvenuta con successo! Effettua il login.',
                               Colors.greenAccent,
                             );
                             Navigator.pop(context);
                           } else {
-                            // Errore (validazione o server)
                             NotificationOverlay.show(error, Colors.redAccent);
                           }
                         },

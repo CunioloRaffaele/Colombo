@@ -41,6 +41,7 @@ dependencies:
   glow_bottom_app_bar: ^1.5.2
   json_annotation: ^4.9.0
   jwt_decoder: ^2.0.1
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   build_runner: ^2.10.3

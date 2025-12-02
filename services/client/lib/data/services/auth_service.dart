@@ -1,3 +1,4 @@
+import 'package:colombo/core/constants/api_constants.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/login_request_dto.dart';
 import '../models/registration_request_dto.dart';
@@ -28,21 +29,24 @@ class AuthService {
   }
 
   Future<bool> register({
-    required String nameSurname,
+    required String nome,
+    required String cognome,
     required String email,
     required String password,
-    required DateTime birthDate,
-    //required String municipality,
+    required int municipality,
   }) async {
     final req = RegistrationRequestDto(
-      nome: nameSurname,
+      nome: nome,
+      cognome: cognome,
       email: email,
       password: password,
-      data_nascita: birthDate,
-      //municipality: municipality,
+      residenza: municipality,
     );
     try {
-      await _api.post<Map<String, dynamic>>('auth/user', body: req.toJson());
+      await _api.post<Map<String, dynamic>>(
+        ApiConstants.registerEndpoint,
+        body: req.toJson(),
+      );
       return true;
     } catch (e) {
       throw Exception('Errore durante la registrazione: $e');
@@ -53,7 +57,7 @@ class AuthService {
     final req = LoginRequestDto(email: email, password: password);
     try {
       final data = await _api.post<Map<String, dynamic>>(
-        'auth/login/user',
+        ApiConstants.loginEndpoint,
         body: req.toJson(),
       );
       final token = data['token'] as String?;
