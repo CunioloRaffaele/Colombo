@@ -4,6 +4,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../../services/auth.service';
 
 // Material
 import { MatCardModule } from '@angular/material/card';
@@ -43,29 +44,20 @@ export class ComunalAdminLogin {
   loading = false;
   // Messaggio di errore da visualizzare in caso di fallimento del comunal-admin-login.
   error: string | null = null;
+  // Variabile per gestire la visibilità della password.
+  hidePassword = true;
 
-  constructor(private fb: FormBuilder, private http: HttpClient, private router: Router) {
+  constructor(
+    private fb: FormBuilder, 
+    private http: HttpClient, 
+    private router: Router,
+    private authService: AuthService // Inietta il servizio
+  ) {
     // Inizializzazione del form con i campi 'email' and 'password' e i relativi validatori.
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
-  }
-
-  /**
-   * Estrae il ruolo dell'utente dal payload di un token JWT.
-   * @param token Il token JWT da cui estrarre il ruolo.
-   * @returns Il ruolo come numero, o null se il token non è valido.
-   */
-  private getTypeFromToken(token: string): string | null {
-    try {
-      // Decodifica la parte del payload (la seconda parte del token)
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.type;
-    } catch {
-      // Ritorna null se si verifica un errore durante la decodifica.
-      return null;
-    }
   }
 
   /**
@@ -95,7 +87,7 @@ export class ComunalAdminLogin {
         this.loading = false;
 
         // Estrae il tipo dal token e reindirizza l'utente.
-        const type = this.getTypeFromToken(res.token);
+        const type = this.authService.getTypeFromToken(res.token);
         if (type === 'comune') {  // Se il tipo è 1 (admin)
           this.router.navigate(['/comunal-admin-dashboard']);
         }

@@ -37,12 +37,13 @@ model comuni_registrati {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model rilevazioni {
+  id        Int                     @id @default(autoincrement())
   sessione  Int
   punto     Unsupported("geometry")
   punteggio Float                   @db.Real
   sessioni  sessioni                @relation(fields: [sessione], references: [id], onDelete: Cascade)
 
-  @@ignore
+  //@@ignore
 }
 
 model sessioni {
@@ -75,6 +76,7 @@ model vetture {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model zone {
+  id                Int                     @id @default(autoincrement())
   comune            Int
   tipologia         String                  @default("generica") @db.VarChar
   poligono          Unsupported("geometry")

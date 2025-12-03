@@ -21,10 +21,12 @@ CREATE TABLE tipologie_zone (
 );
 
 CREATE TABLE zone (
+    id        serial   PRIMARY KEY,
     comune    int      NOT NULL REFERENCES comuni_registrati(comune) ON DELETE CASCADE ON UPDATE CASCADE,
     tipologia varchar  NOT NULL REFERENCES tipologie_zone(nome) DEFAULT 'generica',
     poligono  geometry NOT NULL
 );
+
 
 CREATE TABLE cittadini (
     email     varchar PRIMARY KEY,
@@ -45,6 +47,7 @@ CREATE TABLE sessioni (
 );
 
 CREATE TABLE rilevazioni (
+    id        serial   PRIMARY KEY,
     sessione  int      NOT NULL REFERENCES sessioni(id) ON DELETE CASCADE ON UPDATE CASCADE,
     punto     geometry NOT NULL,
     punteggio real     NOT NULL

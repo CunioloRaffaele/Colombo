@@ -1,0 +1,34 @@
+services:
+  db-smoke:
+    image: docker.io/postgis/postgis:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+    volumes:
+      - ../db/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+  api-smoke:
+    image: docker.io/library/node:22
+    working_dir: /app
+    volumes:
+      - ../api:/app
+    command: sh -c "npm install && npm run easyStart"
+    environment:
+      NODE_ENV: production
+      PRISMA_DATABASE_URL: ${PRISMA_DATABASE_URL}
+      JWT_SECRET: ${API_JWT_SECRET}
+      JWT_EXPIRATION: ${API_JWT_EXPIRATION}
+      PORT: ${API_PORT}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db-smoke
+
+networks:
+  default:
+    driver: bridge
+    

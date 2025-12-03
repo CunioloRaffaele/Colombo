@@ -4,6 +4,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../../services/auth.service'; // Importa il servizio
 
 // Material
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +14,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+/**
+ * Componente per la pagina di registrazione dell'amministratore comunale.
+ * Gestisce il form di registrazione, la validazione dei dati, la comunicazione con il server
+ * per la creazione del nuovo account e il reindirizzamento post-registrazione.
+ */
 @Component({
   selector: 'app-comunal-admin-registration',
   imports: [
@@ -35,30 +41,37 @@ export class ComunalAdminRegistration {
   loading = false;
   error: string | null = null;
   success: string | null = null;
+  hidePassword = true;
 
+  /**
+   * Costruttore del componente.
+   * Inizializza il form di registrazione con i campi richiesti e i relativi validatori.
+   * 
+   * @param fb - FormBuilder per la creazione del form reattivo
+   * @param http - HttpClient per effettuare le chiamate API
+   * @param router - Router per la navigazione tra le pagine
+   * @param authService - AuthService per la gestione dell'autenticazione
+   */
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
-    private router: Router 
+    private router: Router,
+    private authService: AuthService // Inietta il servizio
   ) {
     this.registrationForm = this.fb.group({
-      nome: ['', Validators.required],
-      provincia: ['', Validators.required],
-      regione: ['', Validators.required],
+      comune: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
-  private getTypeFromToken(token: string): string | null {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.type;
-    } catch {
-      return null;
-    }
-  }
-
+  /**
+   * Gestisce l'invio del form di registrazione.
+   * 1. Verifica la validità del form.
+   * 2. Invia una richiesta POST all'endpoint di registrazione.
+   * 3. In caso di successo: salva il token, verifica il tipo utente e reindirizza alla dashboard.
+   * 4. In caso di errore: gestisce e visualizza il messaggio di errore appropriato.
+   */
   onRegister() {
     if (this.registrationForm.invalid) return;
     this.loading = true;
@@ -72,7 +85,10 @@ export class ComunalAdminRegistration {
     ).subscribe({
       next: (res) => {
         localStorage.setItem('jwt_token', res.token);
-        const type = this.getTypeFromToken(res.token);
+        
+        // Usa il metodo del servizio
+        const type = this.authService.getTypeFromToken(res.token);
+        
         this.loading = false;
         if (type === 'comune') {
           this.router.navigate(['/comunal-admin-dashboard']);
