@@ -43,7 +43,7 @@ model rilevazioni {
   punteggio Float                   @db.Real
   sessioni  sessioni                @relation(fields: [sessione], references: [id], onDelete: Cascade)
 
-  @@ignore
+  //@@ignore
 }
 
 model sessioni {

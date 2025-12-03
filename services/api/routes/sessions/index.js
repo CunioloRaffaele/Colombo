@@ -6,7 +6,7 @@ const authMiddleware = require('../../middleware/auth');
 const validateJsonRequest = require('../../middleware/validateJsonRequest');
 
 //Avvia sessione
-reportsRouter.post('/start', authMiddleware, controller.startSession);
+reportsRouter.post('/start/:vin', authMiddleware, controller.startSession);
 
 //Invia rilevazione
 reportsRouter.post('/:id/readings', authMiddleware, controller.sendReadings);

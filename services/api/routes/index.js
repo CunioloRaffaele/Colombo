@@ -14,7 +14,7 @@ var reportsRouter = require('./reports/index');
 routes.use('/reports', reportsRouter);
 
 var sessionRouter = require('./sessions/index');
-routes.use('/telemetry/session', sessionRouter);
+routes.use('/telemetry/sessions', sessionRouter);
 
 routes.get('/ping', function(req, res) {
   res.status(200).json({ message: 'pong' });
