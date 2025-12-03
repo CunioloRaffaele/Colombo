@@ -11,6 +11,10 @@
  *     description: Vehicle management
  *   - name: Zones
  *     description: Geographic zone management
+ *   - name: Reports
+ *     description: Ecoscore reports and analytics
+ *   - name: Sessions
+ *     description: Telemetry session management
  */
 
 /**
@@ -220,6 +224,60 @@
  *           minItems: 2
  *           maxItems: 2
  *           example: [7.455, 45.075]
+ *     EcoscoreResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Response message
+ *           example: Ecoscore retrieved successfully
+ *         ecoscore:
+ *           type: number
+ *           description: Calculated ecoscore value (-1 if not found)
+ *           example: 75.5
+ *     SessionStart:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Session started
+ *         sessionId:
+ *           type: integer
+ *           description: ID of the created session
+ *           example: 42
+ *     TelemetryReading:
+ *       type: object
+ *       properties:
+ *         punto:
+ *           type: object
+ *           description: GeoJSON point object representing the location
+ *           properties:
+ *             type:
+ *               type: string
+ *               example: Point
+ *             coordinates:
+ *               type: array
+ *               items:
+ *                 type: number
+ *               example: [7.455, 45.075]
+ *         punteggio:
+ *           type: number
+ *           description: Score for this reading
+ *           example: 85.5
+ *     TelemetryReadingsResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Rilevazioni scaricate con successo
+ *         sessionId:
+ *           type: integer
+ *           description: Session ID
+ *           example: 42
+ *         rilevazioni:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/TelemetryReading'
  */
 
 // ==================== HEALTH ENDPOINTS ====================
@@ -889,6 +947,309 @@
  *               format: binary
  *       400:
  *         description: Missing required fields or invalid point format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+// ==================== REPORTS ENDPOINTS ====================
+
+/**
+ * @swagger
+ * /reports/comune/{istat}/ecoscore:
+ *   get:
+ *     summary: Get ecoscore for a municipality
+ *     description: Retrieves the aggregated ecoscore for a specific municipality using its ISTAT code. Requires municipality authentication.
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: istat
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ISTAT code of the municipality
+ *         example: 18007
+ *     responses:
+ *       200:
+ *         description: Ecoscore retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EcoscoreResponse'
+ *       400:
+ *         description: Invalid ISTAT code format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Municipality with this email and/or ISTAT code doesn't exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /reports/session/{id}/summary:
+ *   get:
+ *     summary: Get ecoscore for a session
+ *     description: Retrieves the ecoscore for a specific telemetry session
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Session ID
+ *         example: 42
+ *     responses:
+ *       200:
+ *         description: Ecoscore retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EcoscoreResponse'
+ *       400:
+ *         description: Invalid session ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /reports/user/{email}/summary:
+ *   get:
+ *     summary: Get ecoscore for a user
+ *     description: Retrieves the aggregated ecoscore for a specific user. Users can only access their own ecoscore.
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         schema:
+ *           type: string
+ *           format: email
+ *         required: true
+ *         description: User's email address
+ *         example: marco@gmail.com
+ *     responses:
+ *       200:
+ *         description: Ecoscore retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EcoscoreResponse'
+ *       400:
+ *         description: Invalid email format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - You can only access your own ecoscore
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User with this email doesn't exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+// ==================== SESSION (TELEMETRY) ENDPOINTS ====================
+
+/**
+ * @swagger
+ * /telemetry/sessions/start/{vin}:
+ *   post:
+ *     summary: Start a new telemetry session
+ *     description: Initiates a new telemetry session for a specific vehicle identified by its VIN. The vehicle must be associated with the authenticated user.
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: vin
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Vehicle Identification Number (VIN) - must be exactly 17 characters
+ *         example: WVWZZZ3CZWE123456
+ *     responses:
+ *       201:
+ *         description: Session started successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SessionStart'
+ *       400:
+ *         description: Invalid VIN length or missing email in token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found or car not found/does not belong to the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /telemetry/sessions/{id}/readings:
+ *   post:
+ *     summary: Send telemetry readings to a session
+ *     description: Sends telemetry data readings to an active session. Currently returns a dummy response.
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Session ID
+ *         example: 42
+ *     responses:
+ *       200:
+ *         description: Dummy return (endpoint under development)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Dummy return
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /telemetry/sessions/{id}:
+ *   get:
+ *     summary: Download telemetry readings from a session
+ *     description: Retrieves all telemetry readings from a specific session. Returns GeoJSON points with associated scores.
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Session ID
+ *         example: 42
+ *     responses:
+ *       200:
+ *         description: Readings retrieved successfully or no readings found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - $ref: '#/components/schemas/TelemetryReadingsResponse'
+ *                 - type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Nessuna rilevazione per questa sessione (sessione vuota o eliminata)
+ *       400:
+ *         description: Invalid session ID or missing email in token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
  *         content:
  *           application/json:
  *             schema:
