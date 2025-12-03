@@ -13,5 +13,9 @@ zoneRouter.post('/contains', validateJsonRequest, authMiddleware, controller.che
 zoneRouter.delete('/', validateJsonRequest, authMiddleware, controller.deleteZones);
 // Restituisce la lista di zone vicine a un punto
 zoneRouter.post('/near-point', validateJsonRequest, authMiddleware, controller.getZonesNearPoint);
+// Restituisce tutti gli id delle zone del comune autenticato
+zoneRouter.get('/ids', authMiddleware, controller.getZoneIdsByComune);
+// Restituisce la geometria di una zona dato l'id
+zoneRouter.get('/geometry/:id', authMiddleware, controller.getZoneGeometryById);
 
 module.exports = zoneRouter;
