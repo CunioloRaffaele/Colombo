@@ -41,11 +41,10 @@ exports.saveZone = async (req, res) => {
 
 // Verifica punto
 exports.checkPointInZone = async (req, res) => {
+  const { point } = req.body;
 
-  const { comune, point } = req.body;
-
-    if (typeof comune === 'undefined' || !Array.isArray(point) || point.length !== 2) {
-      return res.status(400).json({ error: 'Missing required fields: comune, point ([lng,lat])' });
+  if (!Array.isArray(point) || point.length !== 2) {
+    return res.status(400).json({ error: 'Missing required field: point ([lng,lat])' });
   }
 
   const [lng, lat] = point;
@@ -56,82 +55,19 @@ exports.checkPointInZone = async (req, res) => {
   const pointWKT = `POINT(${lng} ${lat})`;
 
   try {
-      const sql = `
-        SELECT EXISTS (SELECT 1 FROM zone WHERE comune = $2 AND ST_Contains(poligono, ST_GeomFromText($1, 4326))) AS contains
-      `;
-      const result = await prisma.$queryRaw`
-        SELECT EXISTS (
-          SELECT 1 FROM zone
-          WHERE comune = ${Number(comune)} AND ST_Contains(ST_SetSRID(poligono, 4326), ST_GeomFromText(${pointWKT}, 4326))
-        ) AS contains
-      `;
-    return res.json({ contains: result[0].contains });
-  } catch (err) {
-    console.error('checkPointInZone error:', err.stack);
-    return res.status(500).json({ success: false, error: 'Errore nella verifica del punto', details: err.message });
-  }
-};
-
-// Elimina zone
-exports.deleteZones = async (req, res) => {
-  if (req.userToken.type !== 'comune' || typeof req.userToken.comune !== 'number') {
-    return res.status(403).json({ error: 'Accesso riservato ai comuni autenticati' });
-  }
-
-  const comuneId = req.userToken.comune;
-  const { tipologie } = req.body;
-
-  if (!Array.isArray(tipologie) || tipologie.length === 0) {
-    return res.status(400).json({ error: 'tipologie deve essere un array non vuoto' });
-  }
-
-  try {
-    const result = await prisma.$executeRaw`
-      DELETE FROM zone WHERE comune = ${comuneId} AND tipologia = ANY(${tipologie})
-    `;
-    if (result.rowCount === 0) {
-      return res.status(200).json({ message: 'Nessuna zona trovata con la tipologia richiesta' });
-    }
-    return res.status(200).json({ message: 'Zone eliminate' });
-  } catch (err) {
-    console.error('deleteZones error:', err.stack);
-    return res.status(500).json({ success: false, error: "Errore nell'eliminazione delle zone", details: err.message });
-  }
-};
-
-// Zone vicine a un punto
-exports.getZonesNearPoint = async (req, res) => {
-
-  const { lng, lat, distance } = req.body;
-
-  if (typeof lng !== 'number' || typeof lat !== 'number' || typeof distance !== 'number') {
-    return res.status(400).json({ error: 'lng, lat e distance devono essere numeri (distance in metri)' });
-  }
-
-  const pointWKT = `POINT(${lng} ${lat})`;
-
-  try {
-    const sql = `
-      SELECT comune, tipologia
-      FROM zone
-      WHERE ST_DWithin(
-        poligono::geography,
-        ST_GeomFromText($1, 4326)::geography,
-        $2
-      );
-    `;
+    // Cerca la prima zona che contiene il punto e restituisce anche il nome del comune
     const result = await prisma.$queryRaw`
-      SELECT comune, tipologia
-      FROM zone
-      WHERE ST_DWithin(
-        poligono::geography,
-        ST_GeomFromText(${pointWKT}, 4326)::geography,
-        ${distance}
-      )
+      SELECT c.citta as nome_comune FROM zone z
+      JOIN comuni c ON z.comune = c.istat
+      WHERE ST_Covers(ST_SetSRID(z.poligono, 4326), ST_GeomFromText(${pointWKT}, 4326))
+      LIMIT 1
     `;
-    return res.json({ zones: result });
+    if (result.length > 0) {
+      return res.json({ contains: true, comune: result[0].nome_comune });
+    } else {
+      return res.json({ contains: false, comune: null });
+    }
   } catch (err) {
-    console.error('getZonesNearPoint error:', err.stack);
-    return res.status(500).json({ success: false, error: 'Errore nel recupero delle zone vicine', details: err.message });
+    res.status(500).json({ error: 'Errore nella verifica del punto' });
   }
 };
