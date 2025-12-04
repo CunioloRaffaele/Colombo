@@ -278,6 +278,53 @@
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/TelemetryReading'
+ *     ZoneDelete:
+ *       type: object
+ *       required:
+ *         - tipologie
+ *       properties:
+ *         tipologie:
+ *           type: array
+ *           description: Array of zone types to delete
+ *           items:
+ *             type: string
+ *           example: ["generica", "ztl"]
+ *     ZoneNearPoint:
+ *       type: object
+ *       required:
+ *         - lng
+ *         - lat
+ *         - distance
+ *       properties:
+ *         lng:
+ *           type: number
+ *           description: Longitude coordinate
+ *           example: 7.455
+ *         lat:
+ *           type: number
+ *           description: Latitude coordinate
+ *           example: 45.075
+ *         distance:
+ *           type: number
+ *           description: Search radius in meters
+ *           example: 1000
+ *     ZoneNearPointResponse:
+ *       type: object
+ *       properties:
+ *         zones:
+ *           type: array
+ *           description: List of zones within the specified distance
+ *           items:
+ *             type: object
+ *             properties:
+ *               comune:
+ *                 type: integer
+ *                 description: Municipality ISTAT code
+ *                 example: 18007
+ *               tipologia:
+ *                 type: string
+ *                 description: Zone type
+ *                 example: generica
  */
 
 // ==================== HEALTH ENDPOINTS ====================
@@ -959,6 +1006,114 @@
  *               $ref: '#/components/schemas/Error'
  */
 
+/**
+ * @swagger
+ * /zones:
+ *   delete:
+ *     summary: Delete zones by type
+ *     description: Deletes one or more zones belonging to the authenticated municipality based on their type. Only accessible to authenticated municipalities.
+ *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ZoneDelete'
+ *     responses:
+ *       200:
+ *         description: Zones deleted successfully or no zones found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Zone eliminate
+ *       400:
+ *         description: Invalid input - tipologie must be a non-empty array
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Access reserved for authenticated municipalities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Accesso riservato ai comuni autenticati
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nell'eliminazione delle zone
+ *                 details:
+ *                   type: string
+ */
+
+/**
+ * @swagger
+ * /zones/near-point:
+ *   post:
+ *     summary: Get zones near a point
+ *     description: Retrieves all zones within a specified distance from a geographic point
+ *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ZoneNearPoint'
+ *     responses:
+ *       200:
+ *         description: Zones retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ZoneNearPointResponse'
+ *       400:
+ *         description: Invalid input - lng, lat and distance must be numbers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: lng, lat e distance devono essere numeri (distance in metri)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nel recupero delle zone vicine
+ *                 details:
+ *                   type: string
+ */
+
 // ==================== REPORTS ENDPOINTS ====================
 
 /**
@@ -998,7 +1153,7 @@
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       404:
- *         description: Municipality with this email and/or ISTAT code doesn't exist
+ *         description: Comune with this email and/or istat doesn't exist
  *         content:
  *           application/json:
  *             schema:
