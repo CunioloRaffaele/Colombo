@@ -43,7 +43,9 @@ CREATE TABLE vetture (
 
 CREATE TABLE sessioni (
     id      serial   PRIMARY KEY,
-    vettura char(17) NOT NULL REFERENCES vetture(vin) ON DELETE CASCADE ON UPDATE CASCADE
+    vettura char(17) NOT NULL REFERENCES vetture(vin) ON DELETE CASCADE ON UPDATE CASCADE,
+    km      real     NOT NULL,      -- km percorsi
+    co2     real     NOT NULL       -- CO2 emessa
 );
 
 CREATE TABLE rilevazioni (
