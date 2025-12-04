@@ -189,13 +189,8 @@
  *     ZoneSave:
  *       type: object
  *       required:
- *         - id_comune
  *         - coordinates
  *       properties:
- *         id_comune:
- *           type: integer
- *           description: ISTAT code of the municipality
- *           example: 10010
  *         coordinates:
  *           type: array
  *           description: Array of coordinate pairs [longitude, latitude] defining the polygon (minimum 3 points)
@@ -206,16 +201,20 @@
  *             minItems: 2
  *             maxItems: 2
  *           example: [[7.45, 45.07], [7.46, 45.07], [7.46, 45.08], [7.45, 45.08]]
+ *         tipologia:
+ *           type: string
+ *           description: Type of the zone (optional, defaults to 'generica')
+ *           example: ztl
  *     ZoneContainsCheck:
  *       type: object
  *       required:
- *         - areaId
+ *         - comune
  *         - point
  *       properties:
- *         areaId:
+ *         comune:
  *           type: integer
- *           description: ID of the zone/area to check
- *           example: 1
+ *           description: ISTAT code of the municipality
+ *           example: 18007
  *         point:
  *           type: array
  *           description: Point coordinates [longitude, latitude]
@@ -926,8 +925,10 @@
  * /zones:
  *   post:
  *     summary: Save a zone of interest
- *     description: Saves a geographic polygon zone associated with a municipality. Supports both JSON and Protocol Buffer responses.
+ *     description: Saves a geographic polygon zone associated with the authenticated municipality. The municipality is identified from the JWT token.
  *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -945,22 +946,41 @@
  *                 message:
  *                   type: string
  *                   example: Zona salvata correttamente
- *           application/x-protobuf:
- *             schema:
- *               type: string
- *               format: binary
  *       400:
- *         description: Missing required fields or invalid coordinates (minimum 3 points required)
+ *         description: Invalid coordinates - must be an array of at least 3 coordinate pairs
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: coordinates deve essere un array di almeno 3 coppie [lng, lat] numeriche
+ *       403:
+ *         description: Forbidden - Access reserved for authenticated municipalities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Accesso riservato ai comuni autenticati
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nel salvataggio della zona
+ *                 details:
+ *                   type: string
  */
 
 /**
@@ -968,8 +988,10 @@
  * /zones/contains:
  *   post:
  *     summary: Check if a point is inside a zone
- *     description: Verifies whether a given geographic point falls within a specified zone. Supports both JSON and Protocol Buffer responses.
+ *     description: Verifies whether a given geographic point falls within any zone of a specified municipality
  *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -986,24 +1008,33 @@
  *               properties:
  *                 contains:
  *                   type: boolean
- *                   description: Whether the point is inside the zone
+ *                   description: Whether the point is inside any zone of the specified municipality
  *                   example: true
- *           application/x-protobuf:
- *             schema:
- *               type: string
- *               format: binary
  *       400:
  *         description: Missing required fields or invalid point format
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Missing required fields: comune, point ([lng,lat])"
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nella verifica del punto
+ *                 details:
+ *                   type: string
  */
 
 /**
