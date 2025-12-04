@@ -11,6 +11,10 @@
  *     description: Vehicle management
  *   - name: Zones
  *     description: Geographic zone management
+ *   - name: Reports
+ *     description: Ecoscore reports and analytics
+ *   - name: Sessions
+ *     description: Telemetry session management
  */
 
 /**
@@ -185,13 +189,8 @@
  *     ZoneSave:
  *       type: object
  *       required:
- *         - id_comune
  *         - coordinates
  *       properties:
- *         id_comune:
- *           type: integer
- *           description: ISTAT code of the municipality
- *           example: 10010
  *         coordinates:
  *           type: array
  *           description: Array of coordinate pairs [longitude, latitude] defining the polygon (minimum 3 points)
@@ -202,16 +201,20 @@
  *             minItems: 2
  *             maxItems: 2
  *           example: [[7.45, 45.07], [7.46, 45.07], [7.46, 45.08], [7.45, 45.08]]
+ *         tipologia:
+ *           type: string
+ *           description: Type of the zone (optional, defaults to 'generica')
+ *           example: ztl
  *     ZoneContainsCheck:
  *       type: object
  *       required:
- *         - areaId
+ *         - comune
  *         - point
  *       properties:
- *         areaId:
+ *         comune:
  *           type: integer
- *           description: ID of the zone/area to check
- *           example: 1
+ *           description: ISTAT code of the municipality
+ *           example: 18007
  *         point:
  *           type: array
  *           description: Point coordinates [longitude, latitude]
@@ -220,6 +223,107 @@
  *           minItems: 2
  *           maxItems: 2
  *           example: [7.455, 45.075]
+ *     EcoscoreResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Response message
+ *           example: Ecoscore retrieved successfully
+ *         ecoscore:
+ *           type: number
+ *           description: Calculated ecoscore value (-1 if not found)
+ *           example: 75.5
+ *     SessionStart:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Session started
+ *         sessionId:
+ *           type: integer
+ *           description: ID of the created session
+ *           example: 42
+ *     TelemetryReading:
+ *       type: object
+ *       properties:
+ *         punto:
+ *           type: object
+ *           description: GeoJSON point object representing the location
+ *           properties:
+ *             type:
+ *               type: string
+ *               example: Point
+ *             coordinates:
+ *               type: array
+ *               items:
+ *                 type: number
+ *               example: [7.455, 45.075]
+ *         punteggio:
+ *           type: number
+ *           description: Score for this reading
+ *           example: 85.5
+ *     TelemetryReadingsResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Rilevazioni scaricate con successo
+ *         sessionId:
+ *           type: integer
+ *           description: Session ID
+ *           example: 42
+ *         rilevazioni:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/TelemetryReading'
+ *     ZoneDelete:
+ *       type: object
+ *       required:
+ *         - tipologie
+ *       properties:
+ *         tipologie:
+ *           type: array
+ *           description: Array of zone types to delete
+ *           items:
+ *             type: string
+ *           example: ["generica", "ztl"]
+ *     ZoneNearPoint:
+ *       type: object
+ *       required:
+ *         - lng
+ *         - lat
+ *         - distance
+ *       properties:
+ *         lng:
+ *           type: number
+ *           description: Longitude coordinate
+ *           example: 7.455
+ *         lat:
+ *           type: number
+ *           description: Latitude coordinate
+ *           example: 45.075
+ *         distance:
+ *           type: number
+ *           description: Search radius in meters
+ *           example: 1000
+ *     ZoneNearPointResponse:
+ *       type: object
+ *       properties:
+ *         zones:
+ *           type: array
+ *           description: List of zones within the specified distance
+ *           items:
+ *             type: object
+ *             properties:
+ *               comune:
+ *                 type: integer
+ *                 description: Municipality ISTAT code
+ *                 example: 18007
+ *               tipologia:
+ *                 type: string
+ *                 description: Zone type
+ *                 example: generica
  */
 
 // ==================== HEALTH ENDPOINTS ====================
@@ -821,8 +925,10 @@
  * /zones:
  *   post:
  *     summary: Save a zone of interest
- *     description: Saves a geographic polygon zone associated with a municipality. Supports both JSON and Protocol Buffer responses.
+ *     description: Saves a geographic polygon zone associated with the authenticated municipality. The municipality is identified from the JWT token.
  *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -840,22 +946,41 @@
  *                 message:
  *                   type: string
  *                   example: Zona salvata correttamente
- *           application/x-protobuf:
- *             schema:
- *               type: string
- *               format: binary
  *       400:
- *         description: Missing required fields or invalid coordinates (minimum 3 points required)
+ *         description: Invalid coordinates - must be an array of at least 3 coordinate pairs
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: coordinates deve essere un array di almeno 3 coppie [lng, lat] numeriche
+ *       403:
+ *         description: Forbidden - Access reserved for authenticated municipalities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Accesso riservato ai comuni autenticati
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nel salvataggio della zona
+ *                 details:
+ *                   type: string
  */
 
 /**
@@ -863,8 +988,10 @@
  * /zones/contains:
  *   post:
  *     summary: Check if a point is inside a zone
- *     description: Verifies whether a given geographic point falls within a specified zone. Supports both JSON and Protocol Buffer responses.
+ *     description: Verifies whether a given geographic point falls within any zone of a specified municipality
  *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -881,14 +1008,434 @@
  *               properties:
  *                 contains:
  *                   type: boolean
- *                   description: Whether the point is inside the zone
+ *                   description: Whether the point is inside any zone of the specified municipality
  *                   example: true
- *           application/x-protobuf:
- *             schema:
- *               type: string
- *               format: binary
  *       400:
  *         description: Missing required fields or invalid point format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Missing required fields: comune, point ([lng,lat])"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nella verifica del punto
+ *                 details:
+ *                   type: string
+ */
+
+/**
+ * @swagger
+ * /zones:
+ *   delete:
+ *     summary: Delete zones by type
+ *     description: Deletes one or more zones belonging to the authenticated municipality based on their type. Only accessible to authenticated municipalities.
+ *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ZoneDelete'
+ *     responses:
+ *       200:
+ *         description: Zones deleted successfully or no zones found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Zone eliminate
+ *       400:
+ *         description: Invalid input - tipologie must be a non-empty array
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Access reserved for authenticated municipalities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Accesso riservato ai comuni autenticati
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nell'eliminazione delle zone
+ *                 details:
+ *                   type: string
+ */
+
+/**
+ * @swagger
+ * /zones/near-point:
+ *   post:
+ *     summary: Get zones near a point
+ *     description: Retrieves all zones within a specified distance from a geographic point
+ *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ZoneNearPoint'
+ *     responses:
+ *       200:
+ *         description: Zones retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ZoneNearPointResponse'
+ *       400:
+ *         description: Invalid input - lng, lat and distance must be numbers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: lng, lat e distance devono essere numeri (distance in metri)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nel recupero delle zone vicine
+ *                 details:
+ *                   type: string
+ */
+
+// ==================== REPORTS ENDPOINTS ====================
+
+/**
+ * @swagger
+ * /reports/comune/{istat}/ecoscore:
+ *   get:
+ *     summary: Get ecoscore for a municipality
+ *     description: Retrieves the aggregated ecoscore for a specific municipality using its ISTAT code. Requires municipality authentication.
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: istat
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ISTAT code of the municipality
+ *         example: 18007
+ *     responses:
+ *       200:
+ *         description: Ecoscore retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EcoscoreResponse'
+ *       400:
+ *         description: Invalid ISTAT code format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Comune with this email and/or istat doesn't exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /reports/session/{id}/summary:
+ *   get:
+ *     summary: Get ecoscore for a session
+ *     description: Retrieves the ecoscore for a specific telemetry session
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Session ID
+ *         example: 42
+ *     responses:
+ *       200:
+ *         description: Ecoscore retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EcoscoreResponse'
+ *       400:
+ *         description: Invalid session ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /reports/user/{email}/summary:
+ *   get:
+ *     summary: Get ecoscore for a user
+ *     description: Retrieves the aggregated ecoscore for a specific user. Users can only access their own ecoscore.
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         schema:
+ *           type: string
+ *           format: email
+ *         required: true
+ *         description: User's email address
+ *         example: marco@gmail.com
+ *     responses:
+ *       200:
+ *         description: Ecoscore retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EcoscoreResponse'
+ *       400:
+ *         description: Invalid email format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - You can only access your own ecoscore
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User with this email doesn't exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+// ==================== SESSION (TELEMETRY) ENDPOINTS ====================
+
+/**
+ * @swagger
+ * /telemetry/sessions/start/{vin}:
+ *   post:
+ *     summary: Start a new telemetry session
+ *     description: Initiates a new telemetry session for a specific vehicle identified by its VIN. The vehicle must be associated with the authenticated user.
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: vin
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Vehicle Identification Number (VIN) - must be exactly 17 characters
+ *         example: WVWZZZ3CZWE123456
+ *     responses:
+ *       201:
+ *         description: Session started successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SessionStart'
+ *       400:
+ *         description: Invalid VIN length or missing email in token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found or car not found/does not belong to the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /telemetry/sessions/{id}/readings:
+ *   post:
+ *     summary: Send telemetry readings to a session
+ *     description: Sends telemetry data readings to an active session. Currently returns a dummy response.
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Session ID
+ *         example: 42
+ *     responses:
+ *       200:
+ *         description: Dummy return (endpoint under development)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Dummy return
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /telemetry/sessions/{id}:
+ *   get:
+ *     summary: Download telemetry readings from a session
+ *     description: Retrieves all telemetry readings from a specific session. Returns GeoJSON points with associated scores.
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Session ID
+ *         example: 42
+ *     responses:
+ *       200:
+ *         description: Readings retrieved successfully or no readings found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - $ref: '#/components/schemas/TelemetryReadingsResponse'
+ *                 - type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Nessuna rilevazione per questa sessione (sessione vuota o eliminata)
+ *       400:
+ *         description: Invalid session ID or missing email in token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
  *         content:
  *           application/json:
  *             schema:
