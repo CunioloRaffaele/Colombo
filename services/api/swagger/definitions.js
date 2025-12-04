@@ -186,6 +186,7 @@
  *         details:
  *           type: object
  *           description: Decoded vehicle details from VIN
+
  *     ZoneSave:
  *       type: object
  *       required:
@@ -193,28 +194,24 @@
  *       properties:
  *         coordinates:
  *           type: array
- *           description: Array of coordinate pairs [longitude, latitude] defining the polygon (minimum 3 points)
+ *           description: Array of coordinate pairs [longitude, latitude] defining the polygon (minimum 3 points, closed)
  *           items:
  *             type: array
  *             items:
  *               type: number
  *             minItems: 2
  *             maxItems: 2
- *           example: [[7.45, 45.07], [7.46, 45.07], [7.46, 45.08], [7.45, 45.08]]
+ *           example: [[9.1900, 45.4642], [9.1910, 45.4642], [9.1910, 45.4652], [9.1900, 45.4652], [9.1900, 45.4642]]
  *         tipologia:
  *           type: string
- *           description: Type of the zone (optional, defaults to 'generica')
- *           example: ztl
+ *           description: Zone type (optional, default 'generica')
+ *           example: generica
+
  *     ZoneContainsCheck:
  *       type: object
  *       required:
- *         - comune
  *         - point
  *       properties:
- *         comune:
- *           type: integer
- *           description: ISTAT code of the municipality
- *           example: 18007
  *         point:
  *           type: array
  *           description: Point coordinates [longitude, latitude]
@@ -222,72 +219,20 @@
  *             type: number
  *           minItems: 2
  *           maxItems: 2
- *           example: [7.455, 45.075]
- *     EcoscoreResponse:
- *       type: object
- *       properties:
- *         message:
- *           type: string
- *           description: Response message
- *           example: Ecoscore retrieved successfully
- *         ecoscore:
- *           type: number
- *           description: Calculated ecoscore value (-1 if not found)
- *           example: 75.5
- *     SessionStart:
- *       type: object
- *       properties:
- *         message:
- *           type: string
- *           example: Session started
- *         sessionId:
- *           type: integer
- *           description: ID of the created session
- *           example: 42
- *     TelemetryReading:
- *       type: object
- *       properties:
- *         punto:
- *           type: object
- *           description: GeoJSON point object representing the location
- *           properties:
- *             type:
- *               type: string
- *               example: Point
- *             coordinates:
- *               type: array
- *               items:
- *                 type: number
- *               example: [7.455, 45.075]
- *         punteggio:
- *           type: number
- *           description: Score for this reading
- *           example: 85.5
- *     TelemetryReadingsResponse:
- *       type: object
- *       properties:
- *         message:
- *           type: string
- *           example: Rilevazioni scaricate con successo
- *         sessionId:
- *           type: integer
- *           description: Session ID
- *           example: 42
- *         rilevazioni:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/TelemetryReading'
+ *           example: [9.1905, 45.4647]
+
  *     ZoneDelete:
  *       type: object
  *       required:
- *         - tipologie
+ *         - id
  *       properties:
- *         tipologie:
+ *         id:
  *           type: array
- *           description: Array of zone types to delete
+ *           description: Array of zone ids to delete
  *           items:
- *             type: string
- *           example: ["generica", "ztl"]
+ *             type: integer
+ *           example: [3, 5]
+
  *     ZoneNearPoint:
  *       type: object
  *       required:
@@ -297,33 +242,33 @@
  *       properties:
  *         lng:
  *           type: number
- *           description: Longitude coordinate
- *           example: 7.455
+ *           description: Longitude of the point
+ *           example: 9.1925
  *         lat:
  *           type: number
- *           description: Latitude coordinate
- *           example: 45.075
+ *           description: Latitude of the point
+ *           example: 45.4665
  *         distance:
  *           type: number
- *           description: Search radius in meters
- *           example: 1000
- *     ZoneNearPointResponse:
+ *           description: Distance in meters
+ *           example: 50
+
+ *     ZoneIdsResponse:
  *       type: object
  *       properties:
- *         zones:
+ *         ids:
  *           type: array
- *           description: List of zones within the specified distance
+ *           description: Array of zone ids
  *           items:
- *             type: object
- *             properties:
- *               comune:
- *                 type: integer
- *                 description: Municipality ISTAT code
- *                 example: 18007
- *               tipologia:
- *                 type: string
- *                 description: Zone type
- *                 example: generica
+ *             type: integer
+ *           example: [1, 2, 3]
+
+ *     ZoneGeometryResponse:
+ *       type: object
+ *       properties:
+ *         geometry:
+ *           type: object
+ *           description: GeoJSON geometry object
  */
 
 // ==================== HEALTH ENDPOINTS ====================
@@ -920,12 +865,13 @@
 
 // ==================== ZONE ENDPOINTS ====================
 
+
 /**
  * @swagger
  * /zones:
  *   post:
  *     summary: Save a zone of interest
- *     description: Saves a geographic polygon zone associated with the authenticated municipality. The municipality is identified from the JWT token.
+ *     description: Saves a geographic polygon zone associated with the authenticated municipality.
  *     tags: [Zones]
  *     security:
  *       - bearerAuth: []
@@ -937,7 +883,7 @@
  *             $ref: '#/components/schemas/ZoneSave'
  *     responses:
  *       201:
- *         description: Zone saved successfully
+ *         description: Zona salvata correttamente
  *         content:
  *           application/json:
  *             schema:
@@ -947,7 +893,7 @@
  *                   type: string
  *                   example: Zona salvata correttamente
  *       400:
- *         description: Invalid coordinates - must be an array of at least 3 coordinate pairs
+ *         description: Campi mancanti o coordinate non valide (minimo 3 punti)
  *         content:
  *           application/json:
  *             schema:
@@ -967,7 +913,7 @@
  *                   type: string
  *                   example: Accesso riservato ai comuni autenticati
  *       500:
- *         description: Internal server error
+ *         description: Errore interno
  *         content:
  *           application/json:
  *             schema:
@@ -988,7 +934,7 @@
  * /zones/contains:
  *   post:
  *     summary: Check if a point is inside a zone
- *     description: Verifies whether a given geographic point falls within any zone of a specified municipality
+ *     description: Checks if a geographic point is contained in any zone of the authenticated municipality. Also returns the municipality name.
  *     tags: [Zones]
  *     security:
  *       - bearerAuth: []
@@ -997,10 +943,18 @@
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ZoneContainsCheck'
+ *             type: object
+ *             properties:
+ *               point:
+ *                 type: array
+ *                 items:
+ *                   type: number
+ *                 minItems: 2
+ *                 maxItems: 2
+ *                 example: [9.1905, 45.4647]
  *     responses:
  *       200:
- *         description: Point containment check completed
+ *         description: Risultato della verifica
  *         content:
  *           application/json:
  *             schema:
@@ -1008,53 +962,46 @@
  *               properties:
  *                 contains:
  *                   type: boolean
- *                   description: Whether the point is inside any zone of the specified municipality
- *                   example: true
+ *                   description: True se il punto è dentro o sul bordo della zona
+ *                 comune:
+ *                   type: string
+ *                   description: Nome del comune di appartenenza (se presente)
  *       400:
- *         description: Missing required fields or invalid point format
+ *         description: Campi mancanti o formato punto non valido
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Missing required fields: comune, point ([lng,lat])"
+ *               $ref: '#/components/schemas/Error'
  *       500:
- *         description: Internal server error
+ *         description: Errore interno
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 error:
- *                   type: string
- *                   example: Errore nella verifica del punto
- *                 details:
- *                   type: string
+ *               $ref: '#/components/schemas/Error'
  */
 
 /**
  * @swagger
  * /zones:
  *   delete:
- *     summary: Delete zones by type
- *     description: Deletes one or more zones belonging to the authenticated municipality based on their type. Only accessible to authenticated municipalities.
+ *     summary: Delete one or more zones
+ *     description: Deletes the specified zones by id, only if they belong to the authenticated municipality.
  *     tags: [Zones]
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ZoneDelete'
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [3, 5]
  *     responses:
  *       200:
- *         description: Zones deleted successfully or no zones found
+ *         description: Zone eliminate
  *         content:
  *           application/json:
  *             schema:
@@ -1063,8 +1010,64 @@
  *                 message:
  *                   type: string
  *                   example: Zone eliminate
+ *       404:
+ *         description: Nessuna zona trovata con gli id richiesti
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Errore interno
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /zones/near-point:
+ *   post:
+ *     summary: Get zones near a point
+ *     description: Returns all zones within a certain distance from the specified point.
+ *     tags: [Zones]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               lng:
+ *                 type: number
+ *                 example: 9.1925
+ *               lat:
+ *                 type: number
+ *                 example: 45.4665
+ *               distance:
+ *                 type: number
+ *                 example: 50
+ *     responses:
+ *       200:
+ *         description: Zone trovate
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 zones:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       comune:
+ *                         type: string
+ *                       tipologia:
+ *                         type: string
  *       400:
- *         description: Invalid input - tipologie must be a non-empty array
+ *         description: Parametri non validi
  *         content:
  *           application/json:
  *             schema:
@@ -1441,7 +1444,85 @@
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       500:
- *         description: Internal server error
+ *         description: Errore interno
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /zones/ids:
+ *   get:
+ *     summary: Get all zone ids of the authenticated municipality
+ *     description: Returns an array of zone ids belonging to the authenticated municipality.
+ *     tags: [Zones]
+ *     responses:
+ *       200:
+ *         description: Id delle zone trovati
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ids:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *       403:
+ *         description: Accesso riservato ai comuni autenticati
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Errore interno
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /zones/geometry/{id}:
+ *   get:
+ *     summary: Get the geometry of a zone
+ *     description: Returns the geometry (GeoJSON) of the zone with the specified id, only if it belongs to the authenticated municipality.
+ *     tags: [Zones]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Id della zona
+ *     responses:
+ *       200:
+ *         description: Geometria della zona trovata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 geometry:
+ *                   type: object
+ *                   description: Oggetto GeoJSON della geometria
+ *       400:
+ *         description: Id zona non valido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Zona non trovata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Errore interno
  *         content:
  *           application/json:
  *             schema:
