@@ -2,30 +2,49 @@ import 'package:colombo/ui/features/auth/view/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'ui/features/sensors_debug.dart';
-import 'ui/features/auth/view/login.dart';
 import 'ui/features/error_page.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/health_service.dart';
-import 'ui/features/home.dart';
-import 'package:colombo/ui/widgets/loading_overlay.dart'; // Importa il nuovo widget
+import 'ui/features/main_layout.dart';
+import 'package:colombo/ui/widgets/loading_overlay.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
       systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarDividerColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
+
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  final online = await HealthService().isBackendOnline();
+  bool online = false;
+  for (int i = 0; i < 5; i++) {
+    try {
+      online = await HealthService().isBackendOnline();
+      if (online) {
+        break;
+      }
+    } catch (e) {
+      debugPrint("Tentativo connessione $i fallito: $e");
+    }
+    if (i < 4) await Future.delayed(const Duration(seconds: 1));
+  }
   final loggedIn = await AuthService().isLoggedIn();
-  await AuthService().init();
+  await AuthService()
+      .init(); // This is needed and initializes the token in ApiClient
+  // All Dio requests will have the token after this call
   runApp(MyApp(initialOnline: online, initialLoggedIn: loggedIn));
 }
 
@@ -51,7 +70,7 @@ class MyApp extends StatelessWidget {
       },
       home: !initialOnline
           ? const ServerErrorPage()
-          : (initialLoggedIn ? const HomeScreen() : const LoginPage()),
+          : (initialLoggedIn ? const MainLayout() : const LoginPage()),
     );
   }
 }

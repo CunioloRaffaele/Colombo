@@ -1,4 +1,4 @@
-import 'package:colombo/ui/features/home.dart';
+import 'package:colombo/ui/features/main_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:flutter/cupertino.dart';
@@ -137,11 +137,12 @@ class _LoginPageState extends State<LoginPage> {
                                     "Login effettuato con successo!",
                                     Colors.greenAccent,
                                   );
-                                  Navigator.push(
+                                  Navigator.pushAndRemoveUntil(
                                     context,
                                     CupertinoPageRoute(
-                                      builder: (context) => const HomeScreen(),
+                                      builder: (context) => const MainLayout(),
                                     ),
+                                    (route) => false,
                                   );
                                 } else {
                                   NotificationOverlay.show(

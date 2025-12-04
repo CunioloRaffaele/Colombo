@@ -36,6 +36,16 @@ class ApiClient {
     dio.interceptors.add(LoadingInterceptor()); // show loading overlay
 
     dio.interceptors.add(
+      LogInterceptor(
+        request: true,
+        requestBody: true,
+        responseHeader: false,
+        responseBody: true,
+        error: true,
+      ),
+    );
+
+    dio.interceptors.add(
       InterceptorsWrapper(
         onError: (e, handler) {
           final status = e.response?.statusCode;

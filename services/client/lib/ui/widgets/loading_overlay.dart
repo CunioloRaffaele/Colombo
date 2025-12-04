@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 // Global ValueNorifier to track the number of active loading requests.
 /// This allows us to show or hide the loading overlay based on network activity.
+/// Variable initialized in a lazy manner when first accessed.
 final ValueNotifier<int> loadingRequestCount = ValueNotifier(0);
 
 /// A widget that wraps the application and shows a loading overlay
