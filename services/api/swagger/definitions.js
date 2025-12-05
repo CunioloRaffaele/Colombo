@@ -980,6 +980,8 @@
  *     summary: Delete one or more zones
  *     description: Deletes the specified zones by id, only if they belong to the authenticated municipality.
  *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -1024,6 +1026,8 @@
  *     summary: Get zones near a point
  *     description: Returns all zones within a certain distance from the specified point.
  *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -1099,6 +1103,8 @@
  *     summary: Get all zone ids of the authenticated municipality
  *     description: Returns an array of zone ids belonging to the authenticated municipality.
  *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Id delle zone trovati
@@ -1132,6 +1138,8 @@
  *     summary: Get the geometry of a zone
  *     description: Returns the geometry (GeoJSON) of the zone with the specified id, only if it belongs to the authenticated municipality.
  *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
