@@ -186,7 +186,6 @@
  *         details:
  *           type: object
  *           description: Decoded vehicle details from VIN
-
  *     ZoneSave:
  *       type: object
  *       required:
@@ -206,7 +205,6 @@
  *           type: string
  *           description: Zone type (optional, default 'generica')
  *           example: generica
-
  *     ZoneContainsCheck:
  *       type: object
  *       required:
@@ -220,7 +218,6 @@
  *           minItems: 2
  *           maxItems: 2
  *           example: [9.1905, 45.4647]
-
  *     ZoneDelete:
  *       type: object
  *       required:
@@ -232,7 +229,6 @@
  *           items:
  *             type: integer
  *           example: [3, 5]
-
  *     ZoneNearPoint:
  *       type: object
  *       required:
@@ -252,7 +248,6 @@
  *           type: number
  *           description: Distance in meters
  *           example: 50
-
  *     ZoneIdsResponse:
  *       type: object
  *       properties:
@@ -262,7 +257,6 @@
  *           items:
  *             type: integer
  *           example: [1, 2, 3]
-
  *     ZoneGeometryResponse:
  *       type: object
  *       properties:
@@ -865,7 +859,6 @@
 
 // ==================== ZONE ENDPOINTS ====================
 
-
 /**
  * @swagger
  * /zones:
@@ -1101,51 +1094,80 @@
 
 /**
  * @swagger
- * /zones/near-point:
- *   post:
- *     summary: Get zones near a point
- *     description: Retrieves all zones within a specified distance from a geographic point
+ * /zones/ids:
+ *   get:
+ *     summary: Get all zone ids of the authenticated municipality
+ *     description: Returns an array of zone ids belonging to the authenticated municipality.
  *     tags: [Zones]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/ZoneNearPoint'
  *     responses:
  *       200:
- *         description: Zones retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ZoneNearPointResponse'
- *       400:
- *         description: Invalid input - lng, lat and distance must be numbers
+ *         description: Id delle zone trovati
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 error:
- *                   type: string
- *                   example: lng, lat e distance devono essere numeri (distance in metri)
+ *                 ids:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *       403:
+ *         description: Accesso riservato ai comuni autenticati
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
- *         description: Internal server error
+ *         description: Errore interno
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /zones/geometry/{id}:
+ *   get:
+ *     summary: Get the geometry of a zone
+ *     description: Returns the geometry (GeoJSON) of the zone with the specified id, only if it belongs to the authenticated municipality.
+ *     tags: [Zones]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Id della zona
+ *     responses:
+ *       200:
+ *         description: Geometria della zona trovata
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 error:
- *                   type: string
- *                   example: Errore nel recupero delle zone vicine
- *                 details:
- *                   type: string
+ *                 geometry:
+ *                   type: object
+ *                   description: Oggetto GeoJSON della geometria
+ *       400:
+ *         description: Id zona non valido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Zona non trovata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Errore interno
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 
 // ==================== REPORTS ENDPOINTS ====================
@@ -1439,84 +1461,6 @@
  *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Errore interno
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-
-/**
- * @swagger
- * /zones/ids:
- *   get:
- *     summary: Get all zone ids of the authenticated municipality
- *     description: Returns an array of zone ids belonging to the authenticated municipality.
- *     tags: [Zones]
- *     responses:
- *       200:
- *         description: Id delle zone trovati
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 ids:
- *                   type: array
- *                   items:
- *                     type: integer
- *       403:
- *         description: Accesso riservato ai comuni autenticati
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Errore interno
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-
-/**
- * @swagger
- * /zones/geometry/{id}:
- *   get:
- *     summary: Get the geometry of a zone
- *     description: Returns the geometry (GeoJSON) of the zone with the specified id, only if it belongs to the authenticated municipality.
- *     tags: [Zones]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: Id della zona
- *     responses:
- *       200:
- *         description: Geometria della zona trovata
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 geometry:
- *                   type: object
- *                   description: Oggetto GeoJSON della geometria
- *       400:
- *         description: Id zona non valido
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Zona non trovata
  *         content:
  *           application/json:
  *             schema:
