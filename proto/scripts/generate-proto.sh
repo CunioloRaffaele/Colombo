@@ -4,7 +4,7 @@ set -euo pipefail
 # Script per generare i proto in output per i servizi.
 # Usa `buf` se presente, altrimenti prova `protoc` (richiede i plugin installati).
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PROTO_DIR="$ROOT_DIR/proto"
 
 echo "Generating protos from $PROTO_DIR"

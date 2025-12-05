@@ -1,9 +1,23 @@
 version: v1
 plugins:
-  - name: buf.build/protocolbuffers/plugins/protoc-gen-dart:v0.1.0
+  # Generazione per Flutter (Dart)
+  # Usa "dart" -> buf cercherà "protoc-gen-dart"
+  - plugin: dart
     out: ../services/client/lib/src/generated
-  - name: buf.build/grpc-ecosystem/plugins/grpc-web:v1.0.0
+    opt:
+      - grpc
+
+  # Generazione per Angular (TypeScript)
+  # Usa "ts" -> buf cercherà "protoc-gen-ts"
+  - plugin: ts
     out: ../services/web_admin/src/app/proto
-    opt: --grpc-web_out=import_style=typescript,mode=grpcwebtext
-  - name: buf.build/grpc-ecosystem/plugins/protoc-gen-ts:v1.0.0
-    out: ../services/api/src/generated
+    opt:
+      - service=grpc-web
+  
+  # Generazione per gRPC-Web
+  # Usa "grpc-web" -> buf cercherà "protoc-gen-grpc-web"
+  - plugin: grpc-web
+    out: ../services/web_admin/src/app/proto
+    opt:
+      - import_style=typescript
+      - mode=grpcwebtext

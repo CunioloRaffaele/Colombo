@@ -1,3 +1,9 @@
 version: v1
-name: colombo/proto
-deps: []
+# Rimuovi o commenta la riga seguente:
+# name: colombo/proto
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE

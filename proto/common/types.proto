@@ -2,9 +2,55 @@ syntax = "proto3";
 
 package colombo.common;
 
-message Car {
-  string id = 1;
-  string model = 2;
-  string plate = 3;
-  int32 year = 4;
+// Import necessario per gestire le date/ore standard
+import "google/protobuf/timestamp.proto";
+
+// Rappresenta una singola lettura istantanea dai sensori
+message TelemetryReading {
+  // Metadati temporali e spaziali
+  google.protobuf.Timestamp timestamp = 1;
+  double latitude = 2;
+  double longitude = 3;
+
+  // Dati OBD-II (Mappati da driver_elm327.dart)
+  
+  // Da driver.rpm() -> int
+  int32 rpm = 4; 
+  
+  // Da driver.speed() -> int
+  int32 speed = 5; 
+  
+  // Da driver.throttlePosition() -> double (0-100%)
+  float throttle_position = 6; 
+  
+  // Da driver.coolantTemp() -> int
+  int32 coolant_temp = 7; 
+  
+  // Da driver.fuelRate() -> double (L/h)
+  float fuel_rate = 8; 
+  
+  // Da driver.odometer() -> double (km)
+  double odometer = 9; 
+  
+  // Da driver.engineExhaustFlow() -> double (g/s)
+  float engine_exhaust_flow = 10; 
+  
+  // Da driver.fuelTankLevel() -> double (0-100%)
+  float fuel_tank_level = 11;
+}
+
+// Messaggio per inviare un blocco di letture (Batch)
+message TelemetryBatchRequest {
+  // L'ID della sessione potrebbe essere passato nell'URL REST, 
+  // ma averlo qui può essere utile per ridondanza o gRPC puro.
+  int32 session_id = 1;
+  
+  repeated TelemetryReading readings = 2;
+}
+
+// Risposta del server dopo il salvataggio
+message TelemetryResponse {
+  bool success = 1;
+  string message = 2;
+  int32 readings_processed = 3;
 }
