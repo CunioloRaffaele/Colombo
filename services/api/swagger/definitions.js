@@ -263,6 +263,52 @@
  *         geometry:
  *           type: object
  *           description: GeoJSON geometry object
+ *     EcoscoreResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Status message
+ *           example: Ecoscore retrieved successfully
+ *         ecoscore:
+ *           type: number
+ *           description: The ecoscore value (-1 if no data available)
+ *           example: 85.5
+ *     SessionStart:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Status message
+ *           example: Session started
+ *         sessionId:
+ *           type: integer
+ *           description: The ID of the newly created session
+ *           example: 42
+ *     TelemetryReadingsResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Status message
+ *           example: Readings downloaded successfully
+ *         sessionId:
+ *           type: integer
+ *           description: The session ID
+ *           example: 42
+ *         rilevazioni:
+ *           type: array
+ *           description: Array of telemetry readings with GeoJSON points and scores
+ *           items:
+ *             type: object
+ *             properties:
+ *               punto:
+ *                 type: object
+ *                 description: GeoJSON point object
+ *               punteggio:
+ *                 type: number
+ *                 description: Score for this reading
+ *                 example: 85.5
  */
 
 // ==================== HEALTH ENDPOINTS ====================
@@ -618,7 +664,7 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Comuni trovati
+ *                   example: Municipalities found
  *                 response:
  *                   type: array
  *                   items:
@@ -876,7 +922,7 @@
  *             $ref: '#/components/schemas/ZoneSave'
  *     responses:
  *       201:
- *         description: Zona salvata correttamente
+ *         description: Zone saved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -884,9 +930,9 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Zona salvata correttamente
+ *                   example: Zone saved successfully
  *       400:
- *         description: Campi mancanti o coordinate non valide (minimo 3 punti)
+ *         description: Missing fields or invalid coordinates (minimum 3 points required)
  *         content:
  *           application/json:
  *             schema:
@@ -894,7 +940,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: coordinates deve essere un array di almeno 3 coppie [lng, lat] numeriche
+ *                   example: coordinates must be an array of at least 3 numeric [lng, lat] pairs
  *       403:
  *         description: Forbidden - Access reserved for authenticated municipalities
  *         content:
@@ -904,9 +950,9 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: Accesso riservato ai comuni autenticati
+ *                   example: Access reserved for authenticated municipalities
  *       500:
- *         description: Errore interno
+ *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
@@ -917,7 +963,7 @@
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: Errore nel salvataggio della zona
+ *                   example: Error saving the zone
  *                 details:
  *                   type: string
  */
@@ -947,7 +993,7 @@
  *                 example: [9.1905, 45.4647]
  *     responses:
  *       200:
- *         description: Risultato della verifica
+ *         description: Verification result
  *         content:
  *           application/json:
  *             schema:
@@ -955,18 +1001,18 @@
  *               properties:
  *                 contains:
  *                   type: boolean
- *                   description: True se il punto è dentro o sul bordo della zona
+ *                   description: True if the point is inside or on the border of the zone
  *                 comune:
  *                   type: string
- *                   description: Nome del comune di appartenenza (se presente)
+ *                   description: Name of the municipality (if present)
  *       400:
- *         description: Campi mancanti o formato punto non valido
+ *         description: Missing fields or invalid point format
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       500:
- *         description: Errore interno
+ *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
@@ -996,7 +1042,7 @@
  *                 example: [3, 5]
  *     responses:
  *       200:
- *         description: Zone eliminate
+ *         description: Zones deleted successfully
  *         content:
  *           application/json:
  *             schema:
@@ -1004,15 +1050,15 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Zone eliminate
+ *                   example: Zones deleted
  *       404:
- *         description: Nessuna zona trovata con gli id richiesti
+ *         description: No zones found with the requested ids
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       500:
- *         description: Errore interno
+ *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
@@ -1046,7 +1092,7 @@
  *                 example: 50
  *     responses:
  *       200:
- *         description: Zone trovate
+ *         description: Zones found
  *         content:
  *           application/json:
  *             schema:
@@ -1064,7 +1110,7 @@
  *                       tipologia:
  *                         type: string
  *       400:
- *         description: Parametri non validi
+ *         description: Invalid parameters
  *         content:
  *           application/json:
  *             schema:
@@ -1078,7 +1124,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: Accesso riservato ai comuni autenticati
+ *                   example: Access reserved for authenticated municipalities
  *       500:
  *         description: Internal server error
  *         content:
@@ -1091,7 +1137,7 @@
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: Errore nell'eliminazione delle zone
+ *                   example: Error deleting zones
  *                 details:
  *                   type: string
  */
@@ -1107,7 +1153,7 @@
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Id delle zone trovati
+ *         description: Zone ids found
  *         content:
  *           application/json:
  *             schema:
@@ -1118,13 +1164,13 @@
  *                   items:
  *                     type: integer
  *       403:
- *         description: Accesso riservato ai comuni autenticati
+ *         description: Access reserved for authenticated municipalities
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       500:
- *         description: Errore interno
+ *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
@@ -1146,10 +1192,10 @@
  *         schema:
  *           type: integer
  *         required: true
- *         description: Id della zona
+ *         description: Zone ID
  *     responses:
  *       200:
- *         description: Geometria della zona trovata
+ *         description: Zone geometry found
  *         content:
  *           application/json:
  *             schema:
@@ -1157,21 +1203,21 @@
  *               properties:
  *                 geometry:
  *                   type: object
- *                   description: Oggetto GeoJSON della geometria
+ *                   description: GeoJSON geometry object
  *       400:
- *         description: Id zona non valido
+ *         description: Invalid zone id
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       404:
- *         description: Zona non trovata
+ *         description: Zone not found
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       500:
- *         description: Errore interno
+ *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
@@ -1217,7 +1263,7 @@
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       404:
- *         description: Comune with this email and/or istat doesn't exist
+ *         description: Municipality with this email and/or istat doesn't exist
  *         content:
  *           application/json:
  *             schema:
@@ -1454,7 +1500,7 @@
  *                   properties:
  *                     message:
  *                       type: string
- *                       example: Nessuna rilevazione per questa sessione (sessione vuota o eliminata)
+ *                       example: No readings for this session (session empty or deleted)
  *       400:
  *         description: Invalid session ID or missing email in token
  *         content:
@@ -1474,7 +1520,7 @@
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       500:
- *         description: Errore interno
+ *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
