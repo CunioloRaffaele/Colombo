@@ -45,10 +45,9 @@ CREATE TABLE sessioni (
     id      serial   PRIMARY KEY,
     vettura char(17) NOT NULL REFERENCES vetture(vin) ON DELETE CASCADE ON UPDATE CASCADE,
     km      real     NOT NULL,      -- km percorsi
-    co2     real     NOT NULL       -- CO2 emessa
+    co2     real     NOT NULL DEFAULT 0,       -- CO2 emessa
+    inizio   bigint  NOT NULL   -- timestamp unix epoch (momento di avvio sessione)
 );
-
-CREATE TABLE rilevazioni (
     id        serial   PRIMARY KEY,
     sessione  int      NOT NULL REFERENCES sessioni(id) ON DELETE CASCADE ON UPDATE CASCADE,
     punto     geometry NOT NULL,
