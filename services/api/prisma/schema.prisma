@@ -49,6 +49,8 @@ model rilevazioni {
 model sessioni {
   id          Int           @id @default(autoincrement())
   vettura     String        @db.Char(17)
+  co2         Float         @default(0) @db.Real
+  inizio      BigInt        @default(0)
   rilevazioni rilevazioni[]
   vetture     vetture       @relation(fields: [vettura], references: [vin], onDelete: Cascade)
 }
