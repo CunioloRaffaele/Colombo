@@ -1,3 +1,5 @@
+import 'package:colombo/ui/features/sensors_debug.dart';
+import 'package:colombo/ui/widgets/notification_overlay.dart';
 import 'package:flutter/material.dart';
 import '../../../widgets/glass_card.dart';
 import '../viewmodels/settings_viewmodel.dart';
@@ -27,7 +29,7 @@ class _SettingsPageState extends State<SettingsPage> {
       listenable: _viewModel,
       builder: (context, child) {
         return Scaffold(
-          backgroundColor: const Color(0xFF0E1116),
+          backgroundColor: Colors.transparent,
           body: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -37,8 +39,6 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
-
                   // Greeting
                   Text(
                     'Ciao ${_viewModel.userName} 👋',
@@ -217,6 +217,39 @@ class _SettingsPageState extends State<SettingsPage> {
                             color: Colors.white12,
                             height: 28,
                             thickness: 1,
+                          ),
+                          _buildSectionTitle('Impostazioni avanzate'),
+                          const SizedBox(height: 8),
+                          _buildSettingTile(
+                            icon: Icons.troubleshoot_rounded,
+                            title: 'Strumenti di debug',
+                            subtitle:
+                                'Opzioni per verificare il funzionamento del dispositivo di raccolta dati della vettura',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SensorsDebugPage(
+                                  title: 'Strumenti di debug',
+                                ),
+                              ),
+                            ),
+                          ),
+                          const Divider(
+                            color: Colors.white12,
+                            height: 28,
+                            thickness: 1,
+                          ),
+                          _buildSectionTitle('Impostazioni di sicurezza'),
+                          const SizedBox(height: 8),
+                          _buildSettingTile(
+                            icon: Icons.mode_edit_outline,
+                            title: 'Modifica dati personali',
+                            subtitle:
+                                'Aggiorna le informazioni associate al tuo account',
+                            onTap: () => NotificationOverlay.show(
+                              "Funzionalità non ancora disponibile.",
+                              Colors.redAccent,
+                            ),
                           ),
                           _buildSettingTile(
                             icon: Icons.logout,

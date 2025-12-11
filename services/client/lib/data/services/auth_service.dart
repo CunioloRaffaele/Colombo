@@ -104,7 +104,7 @@ class AuthService {
       await _api.delete<Map<String, dynamic>>(
         ApiConstants.deleteAccountEndpoint,
       );
-      //await _deleteToken();
+      await _deleteToken();
       return true;
     } catch (e) {
       throw Exception('Errore durante la cancellazione dell\'account: $e');

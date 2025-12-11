@@ -5,6 +5,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/connector/driver_elm327.dart';
 
+// SEZIONE DI DEBUG PER I SENSORI OBD-II
+// Implementazione senza servizio e senza stato... Non è una soluzione buona
+// ma la teniamo per debug (ereditato da test app)
 class SensorsDebugPage extends StatefulWidget {
   const SensorsDebugPage({super.key, required this.title});
   final String title;
@@ -204,6 +207,12 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            const Divider(),
+            const Text(
+              'Questa pagina è scollegata dal resto dell\'app. Non usarla se risulta una pipe già aperta con l\'ELM327. L\'implemtazione è diversa da quella del resto dell\'app e potrebbe causare conflitti.',
+              textAlign: TextAlign.center,
+            ),
+            const Divider(),
             const Text('Stato della connessione con l\'ELM327:'),
             Text(_isConnected ? 'Connesso' : 'Disconnesso'),
             const SizedBox(height: 24),
