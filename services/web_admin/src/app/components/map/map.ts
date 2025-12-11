@@ -2,6 +2,7 @@ import { Component, AfterViewInit } from '@angular/core';
 import * as L from 'leaflet';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { PolygonService } from '../../services/polygon.service';
 
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -17,56 +18,63 @@ L.Icon.Default.mergeOptions({
   templateUrl: './map.html',
   styleUrls: ['./map.css'],
 })
-
 export class MapComponent implements AfterViewInit {
   private map!: L.Map;
+  private zoneColors = [
+    '#e53935', // rosso
+    '#8e24aa', // viola
+    '#3949ab', // blu
+    '#00897b', // verde acqua
+    '#43a047', // verde
+    '#fbc02d', // giallo
+    '#fb8c00', // arancione
+    '#6d4c41', // marrone
+    '#757575', // grigio
+    '#d81b60', // rosa
+  ];
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private polygonService: PolygonService) { }
 
   ngAfterViewInit(): void {
-    this.map = L.map('map').setView([45.4642, 9.19], 5);
+    // Limiti geografici Italia: [SudOvest, NordEst]
+    const italyBounds = L.latLngBounds(
+      [36.0, 6.6],   // SudOvest: Sicilia
+      [47.1, 18.5]   // NordEst: Alto Adige/Friuli
+    );
+
+    this.map = L.map('map', {
+      maxBounds: italyBounds,         // Limita lo spostamento
+      maxBoundsViscosity: 1.0,        // Rimbalzo ai bordi
+      minZoom: 6,                     // Zoom minimo per non vedere il mondo intero
+      maxZoom: 18                     // Zoom massimo
+    });
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(this.map);
 
-    this.loadAirports();
-  }
+    this.map.fitBounds(italyBounds);
 
-  private loadAirports(): void {
-    const url = `${environment.apiUrl}/api/navigate/airports/`;
-
-    // Set map bounds
-    const southWest = L.latLng(-60, -170);
-    const northEast = L.latLng(85, 190);
-    const bounds = L.latLngBounds(southWest, northEast);
-
-    this.map.setMaxBounds(bounds);
-    this.map.on('drag', () => {
-      this.map.panInsideBounds(bounds, { animate: false });
-    });
-    this.map.options.minZoom = 2;
-    this.http.get<any>(url).subscribe({
-      next: (response) => {
-        if (response.airports) {
-          response.airports.forEach((airport: any) => {
-            if (airport.lat && airport.lan) {
-              const localTime = new Date().toLocaleTimeString('en-US', {
-                timeZone: airport.time_zone,
-                hour: '2-digit',
-                minute: '2-digit',
-                day: '2-digit',
-                month: '2-digit',
-                hour12: false
-              });
-              L.marker([airport.lat, airport.lan])
-                .addTo(this.map)
-                .bindPopup(`<b>${airport.name}</b><br>${airport.city}, ${airport.country}<br> ${airport.time_zone}<br>Local Time: ${localTime}`);
-            }
-          });
-        }
-      },
-      error: (err) => {
-        console.error('Failed to load airports:', err);
+    // Carica i poligoni dal backend e assegna un colore diverso a ciascuno
+    this.polygonService.getAllPolygons().subscribe(polygons => {
+      const bounds = L.latLngBounds([]);
+      polygons.forEach((geometryData, idx) => {
+        const color = this.zoneColors[idx % this.zoneColors.length];
+        const geoJsonLayer = L.geoJSON(geometryData, {
+      style: {
+        color: color,
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.5
+      }
+      }).addTo(this.map);
+        geoJsonLayer.bindPopup(`Zona ${idx + 1}`);
+        // Estendi i bounds con quelli del poligono
+        bounds.extend(geoJsonLayer.getBounds());
+      });
+      // Zoom automatico su tutte le zone del comune
+      if (bounds.isValid()) {
+        this.map.fitBounds(bounds.pad(0.1));
       }
     });
   }
