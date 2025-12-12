@@ -291,7 +291,7 @@
  *         message:
  *           type: string
  *           description: Status message
- *           example: Readings downloaded successfully
+ *           example: Rilevazioni scaricate con successo
  *         sessionId:
  *           type: integer
  *           description: The session ID
@@ -1404,7 +1404,7 @@
  *             schema:
  *               $ref: '#/components/schemas/SessionStart'
  *       400:
- *         description: Invalid VIN length or missing email in token
+ *         description: Invalid VIN length (must be 17 characters) or invalid/missing email in token
  *         content:
  *           application/json:
  *             schema:
@@ -1500,9 +1500,9 @@
  *                   properties:
  *                     message:
  *                       type: string
- *                       example: No readings for this session (session empty or deleted)
+ *                       example: Nessuna rilevazione per questa sessione (sessione vuota o eliminata)
  *       400:
- *         description: Invalid session ID or missing email in token
+ *         description: Invalid session or id length, or missing email in token
  *         content:
  *           application/json:
  *             schema:
