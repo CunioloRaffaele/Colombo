@@ -4,10 +4,10 @@ const prisma = require('../../utils/prisma');
 
 
 exports.startSession = async (req, res) => {
-    try{
-       // Leggi email dal token e vin dalla query string
+    try {
+        // Leggi email dal token e vin dalla query string
         const email = req.userToken.email;
-        const vin  = req.params.vin;
+        const vin = req.params.vin;
 
         // Validazione email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,25 +37,27 @@ exports.startSession = async (req, res) => {
             }
         });
 
-         if (!car) {
+        if (!car) {
             return res.status(404).json({ error: 'Car not found or does not belong to the user' });
         }
 
         // Crea sessione collegandola alla vettura esistente
         const sessione = await prisma.sessioni.create({
             data: {
+                km: 0,
+                co2: 0,
                 vetture: {
                     connect: {
-                        vin: vin
+                        vin: req.params.vin
                     }
                 },
                 inizio: BigInt(Math.floor(Date.now() / 1000))
             }
-        });
+        })
 
         res.status(201).json({ message: 'Session started', sessionId: sessione.id });
 
-    }catch(error){
+    } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
@@ -74,65 +76,65 @@ exports.sendReadings = async (req, res) => {
 exports.downloadReadings = async (req, res) => {
     try {
         // Leggi email dal token e vin dalla query string
-            const email = req.userToken.email;
-            const sessioneId = parseInt(req.params.id);
+        const email = req.userToken.email;
+        const sessioneId = parseInt(req.params.id);
 
-            // Validazione email
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!email || !emailRegex.test(email)) {
-                return res.status(400).json({ error: 'Invalid or missing email in token' });
-            }
+        // Validazione email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Invalid or missing email in token' });
+        }
 
-            // Validazione id
-            if (!sessioneId || isNaN(sessioneId)) {
-                return res.status(400).json({ error: 'Invalid session or id length' });
-            }
+        // Validazione id
+        if (!sessioneId || isNaN(sessioneId)) {
+            return res.status(400).json({ error: 'Invalid session or id length' });
+        }
 
-            // Verifica esistenza utente
-            const user = await prisma.cittadini.findUnique({
-                where: { email }
-            });
+        // Verifica esistenza utente
+        const user = await prisma.cittadini.findUnique({
+            where: { email }
+        });
 
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-            // Trova l'ultima sessione per questa vettura
-            const sessione = await prisma.sessioni.findFirst({
-                where: {
+        // Trova l'ultima sessione per questa vettura
+        const sessione = await prisma.sessioni.findFirst({
+            where: {
                 id: sessioneId
-                },
-                orderBy: {
+            },
+            orderBy: {
                 id: 'desc'
-                }
-            });
-
-            if (!sessione) {
-                return res.status(200).json({ message: 'Nessuna rilevazione per questa sessione (sessione vuota o eliminata)' });
             }
+        });
 
-            // Scarica le rilevazioni
-            const rilevazioni = await prisma.$queryRaw`
+        if (!sessione) {
+            return res.status(200).json({ message: 'Nessuna rilevazione per questa sessione (sessione vuota o eliminata)' });
+        }
+
+        // Scarica le rilevazioni
+        const rilevazioni = await prisma.$queryRaw`
                 SELECT ST_AsGeoJSON(punto) as punto, punteggio
                 FROM rilevazioni
                 WHERE sessione = ${sessione.id}
             `;
 
-            if (rilevazioni.length === 0) {
-                return res.status(200).json({ message: 'Nessuna rilevazione per questa sessione (sessione vuota o eliminata)' });
-            }
+        if (rilevazioni.length === 0) {
+            return res.status(200).json({ message: 'Nessuna rilevazione per questa sessione (sessione vuota o eliminata)' });
+        }
 
-            // Il campo 'punto' è una stringa GeoJSON, quindi la parsifichiamo
-            const processedRilevazioni = rilevazioni.map(r => ({
-                ...r,
-                punto: JSON.parse(r.punto)
-            }));
+        // Il campo 'punto' è una stringa GeoJSON, quindi la parsifichiamo
+        const processedRilevazioni = rilevazioni.map(r => ({
+            ...r,
+            punto: JSON.parse(r.punto)
+        }));
 
-            res.status(200).json({
-                message:"Rilevazioni scaricate con successo",
-                sessionId: sessione.id,
-                rilevazioni: processedRilevazioni
-            });
+        res.status(200).json({
+            message: "Rilevazioni scaricate con successo",
+            sessionId: sessione.id,
+            rilevazioni: processedRilevazioni
+        });
 
     } catch (error) {
         console.error(error);

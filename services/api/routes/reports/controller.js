@@ -5,19 +5,19 @@ const prisma = require('../../utils/prisma');
 
 
 exports.ecoscoreComune = async (req, res) => {
-    try{
+    try {
         const istat = parseInt(req.params.istat, 10);
-        if(!istat || isNaN(istat) || !/^\d+$/.test(req.params.istat) ){
+        if (!istat || isNaN(istat) || !/^\d+$/.test(req.params.istat)) {
             return res.status(400).json({ error: 'Invalid ISTAT code' });
         }
 
-        const comuneEmail = req.userToken.email; 
+        const comuneEmail = req.userToken.email;
         // Check if a comune with this email already exists (in the auth table)
         const existingComune = await prisma.comuni_registrati.findUnique({
-          where: { email: comuneEmail, comune: istat },
+            where: { email: comuneEmail, comune: istat },
         });
         if (!existingComune) {
-          return res.status(404).json({ error: 'Comune with this email and/or istat doesn\'t exist' });
+            return res.status(404).json({ error: 'Comune with this email and/or istat doesn\'t exist' });
         }
 
         // Fetch ecoscore data for the given ISTAT code
@@ -30,7 +30,7 @@ exports.ecoscoreComune = async (req, res) => {
     }
     return res.status(200).json({message: "Ecoscore retrieved successfully", ecoscore: ecoscoreComune[0].ecoscore });
 
-    }catch(error){
+    } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
@@ -45,10 +45,10 @@ exports.ecoscoreSessione = async (req, res) => {
         const ret = await prisma.$queryRaw`
         SELECT ecoscore_sessione(${id}::int) AS ecoscore`;
         const ecoscore = ret[0].ecoscore;
-        if(ecoscore === null){
-            return res.status(200).json({message: "No ecoscore found for this session", ecoscore: -1 });
+        if (ecoscore === null) {
+            return res.status(200).json({ message: "No ecoscore found for this session", ecoscore: -1 });
         }
-        return res.status(200).json({message: "Ecoscore retrieved successfully", ecoscore: ecoscore });
+        return res.status(200).json({ message: "Ecoscore retrieved successfully", ecoscore: ecoscore });
 
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
@@ -59,10 +59,10 @@ exports.ecoscoreSessione = async (req, res) => {
 exports.ecoscoreUtente = async (req, res) => {
     try {
         const email = req.params.email;
-        const userEmail = req.userToken.email; 
+        const userEmail = req.userToken.email;
 
         //Controlli sull'email (token e param)
-        if (!email|| typeof email !== 'string') {
+        if (!email || typeof email !== 'string') {
             return res.status(400).json({ error: 'Invalid email' });
         }
         if (email !== userEmail) {
@@ -77,13 +77,23 @@ exports.ecoscoreUtente = async (req, res) => {
         }
 
         const ret = await prisma.$queryRaw`
-        SELECT ecoscore_cittadino(${email}::text) AS ecoscore`;
-        const ecoscore = ret[0].ecoscore;
+            SELECT 
+                ecoscore_cittadino(${email}::text) AS ecoscore,
+                (
+                    SELECT COUNT(r.id)
+                    FROM cittadini c
+                    JOIN vetture v ON c.email = v.proprietario
+                    JOIN sessioni s ON v.vin = s.vettura
+                    JOIN rilevazioni r ON s.id = r.sessione
+                    WHERE c.email = ${email}::text
+                )::int AS "numeroRilevazioni"
+        `;
+        const { ecoscore, numeroRilevazioni } = ret[0];
 
-        if(ecoscore === null){
-            return res.status(200).json({message: "No ecoscore found for this user", ecoscore: -1 });
+        if (ecoscore === null) {
+            return res.status(200).json({ message: "No ecoscore found for this user", ecoscore: -1, numeroRilevazioni: 0 });
         }
-        return res.status(200).json({message: "Ecoscore retrieved successfully", ecoscore: ecoscore });
+        return res.status(200).json({ message: "Ecoscore retrieved successfully", ecoscore: ecoscore, numeroRilevazioni: numeroRilevazioni });
 
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });

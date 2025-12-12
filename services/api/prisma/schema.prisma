@@ -42,8 +42,6 @@ model rilevazioni {
   punto     Unsupported("geometry")
   punteggio Float                   @db.Real
   sessioni  sessioni                @relation(fields: [sessione], references: [id], onDelete: Cascade)
-
-  //@@ignore
 }
 
 model sessioni {
