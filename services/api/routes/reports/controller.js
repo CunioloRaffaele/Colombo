@@ -25,10 +25,10 @@ exports.ecoscoreComune = async (req, res) => {
         SELECT ecoscore_comune(${existingComune.comune}::int) AS ecoscore;
 `;
 
-        if (ecoscoreComune[0].ecoscore === null) {
-            return res.status(200).json({ message: "No ecoscore found for this comune", ecoscore: -1 });
-        }
-        return res.status(200).json({ message: "Ecoscore retrieved successfully", ecoscore: ecoscoreComune[0].ecoscore });
+    if(ecoscoreComune[0].ecoscore=== null){
+        return res.status(200).json({message: "No ecoscore found for this comune", ecoscore: -1 });
+    }
+    return res.status(200).json({message: "Ecoscore retrieved successfully", ecoscore: ecoscoreComune[0].ecoscore });
 
     } catch (error) {
         console.error(error);

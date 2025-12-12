@@ -7,6 +7,16 @@
 
 L’applicazione proposta mira a promuovere una guida sostenibile attraverso la raccolta e l’analisi dei dati estratti in tempo reale dall’unità di controllo delle autovetture tramite interfaccia OBD-II (standard per la diagnostica dei veicoli,) con il microcontroller ELM327, collegato a smartphone con Bluetooth o WiFi.
 
+## Team di Sviluppo
+
+| Collaboratore | Attività di pertinenza | Mansioni dettagliate |
+| :--- | :--- | :--- |
+| **Alberto Barison** | Backend | - Responsabile dello sviluppo backend <br>- Attività documentale <br>- Definizione e implementazione algoritmo di eco score |
+| **Riccardo Brollo** | Backend | - Sviluppo backend <br>- Attività documentale |
+| **Gabriele Bute** | Frontend Admin | - Responsabile dello sviluppo dashboard amministrativa <br>- Attività documentale |
+| **Raffaele Cuniolo** | Team Leader <br>DevOps <br>Frontend Android | - Team Leader <br>- Responsabile dello sviluppo client android <br>- Responsabile server di deployment e automazione CI/CD <br>- Code review per backend e web admin dashboard |
+| **Alessandro Derevytskyy** | Database <br>Documentazione | - Responsabile della definizione della base di dati <br>- Responsabile della attività documentale|
+
 # Colombo Monorepo
 
 Repository monorepo per il progetto "Green Drive" codenamed Colombo: 
@@ -39,21 +49,18 @@ Lo scopo è fornire un repository organizzato per sviluppare, testare e distribu
 	- `ssh-deploy.sh` — script di deploy via SSH
 - `proto/` — file .proto per API gRPC
 - `.github/workflows/` — CI/CD workflows (build, test, deploy)
-- `docs/` — documentazione progetto
+- `docs/` — documentazione progetto e politiche privacy e termini di servizio
 
 ## Flusso
-
-1. Build & test (GitHub Actions)
-	 - Angular: `npm ci`, `ng build --configuration=production`, upload artifact `dist/`.
-	 - Backend: build Docker image e push su registry.
-	 - Flutter: build artefatti per beta.
-
-2. Deploy (GitHub Actions -> VPS via SSH)
+- Deploy Web Admin e Api (GitHub Actions -> VPS via SSH)
+	- Smoke test pre-deploy; ferma attività di deploy se fallisce.
 	 - Job di deploy scarica artifact e si connette al VPS usando `SSH_PRIVATE_KEY`.
 	 - Trasferisce l'artifact (rsync/scp) in `/srv/colombo/releases/<timestamp>`.
 	 - Sul server: aggiorna symlink `current` -> nuova release esegue `docker-compose pull && docker-compose up -d`.
 	 - Esegue migrations (da container o script) prima del cutover quando necessario.
-	 - Health-check post-deploy; rollback automatico o manuale se fallisce.
+
+- Deploy Client Mobile
+	- Build su GitHub Actions quando viene creato un tag di rilascio.
 
 ## Segreti e configurazioni (GitHub Secrets)
 

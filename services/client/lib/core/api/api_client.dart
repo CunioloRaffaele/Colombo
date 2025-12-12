@@ -29,11 +29,22 @@ class ApiClient {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'User-Agent': 'Colombo-App-Android',
         },
       ),
     );
 
     dio.interceptors.add(LoadingInterceptor()); // show loading overlay
+
+    dio.interceptors.add(
+      LogInterceptor(
+        request: true,
+        requestBody: true,
+        responseHeader: false,
+        responseBody: true,
+        error: true,
+      ),
+    );
 
     dio.interceptors.add(
       InterceptorsWrapper(

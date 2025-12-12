@@ -1,4 +1,5 @@
 import 'package:colombo/core/constants/api_constants.dart';
+import 'package:colombo/data/models/user_dto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/login_request_dto.dart';
 import '../models/registration_request_dto.dart';
@@ -86,4 +87,27 @@ class AuthService {
   }
 
   Future<String?> getToken() => _storage.read(key: 'jwt_token');
+
+  Future<UserDto> getUserInfo() async {
+    try {
+      final userMap = await _api.get<Map<String, dynamic>>(
+        ApiConstants.userInfoEndpoint,
+      );
+      return UserDto.fromJson(userMap);
+    } catch (e) {
+      throw Exception('Errore durante il recupero delle info utente: $e');
+    }
+  }
+
+  Future<bool> deleteAccount() async {
+    try {
+      await _api.delete<Map<String, dynamic>>(
+        ApiConstants.deleteAccountEndpoint,
+      );
+      await _deleteToken();
+      return true;
+    } catch (e) {
+      throw Exception('Errore durante la cancellazione dell\'account: $e');
+    }
+  }
 }

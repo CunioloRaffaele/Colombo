@@ -6,6 +6,9 @@
     <!-- Request new Bluetooth permissions on Android 12+ -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <uses-permission android:name="android.permission.INTERNET" /> 
+
     <application
         android:label="GreenDrive"
         android:name="${applicationName}"

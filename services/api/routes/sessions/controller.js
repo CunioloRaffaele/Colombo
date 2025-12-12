@@ -50,7 +50,8 @@ exports.startSession = async (req, res) => {
                     connect: {
                         vin: req.params.vin
                     }
-                }
+                },
+                inizio: BigInt(Math.floor(Date.now() / 1000))
             }
         })
 
