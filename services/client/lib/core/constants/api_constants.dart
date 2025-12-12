@@ -17,4 +17,6 @@ class DocumentsApiConstants {
       'https://raw.githubusercontent.com/CunioloRaffaele/Colombo/refs/heads/main/docs/TERMS_AND_CONDITIONS.md';
   static const String privacyPolicyUrl =
       'https://raw.githubusercontent.com/CunioloRaffaele/Colombo/refs/heads/main/docs/PRIVACY_POLICY.md';
+  static const String ecoTipsList =
+      'https://cdn.jsdelivr.net/gh/CunioloRaffaele/Colombo@main/db/ecoTips.json'; //Used jsDelivr for raw JSON files because GitHub raw URLs have auth issues
 }

@@ -29,6 +29,7 @@ class ApiClient {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'User-Agent': 'Colombo-App-Android',
         },
       ),
     );
