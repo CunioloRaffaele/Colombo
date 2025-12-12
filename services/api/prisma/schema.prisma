@@ -42,13 +42,13 @@ model rilevazioni {
   punto     Unsupported("geometry")
   punteggio Float                   @db.Real
   sessioni  sessioni                @relation(fields: [sessione], references: [id], onDelete: Cascade)
-
-  //@@ignore
 }
 
 model sessioni {
   id          Int           @id @default(autoincrement())
   vettura     String        @db.Char(17)
+  km          Float         @db.Real
+  co2         Float         @db.Real
   rilevazioni rilevazioni[]
   vetture     vetture       @relation(fields: [vettura], references: [vin], onDelete: Cascade)
 }
