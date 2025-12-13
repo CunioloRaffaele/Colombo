@@ -40,8 +40,21 @@ exports.ecoscoreComune = async (req, res) => {
 exports.ecoscoreSessione = async (req, res) => {
   try {
     const id = req.params.id;
+    const userEmail = req.userToken.email;
     if (!id || isNaN(id)) {
       return res.status(400).json({ error: 'Invalid session ID' });
+    }
+    const session = await prisma.sessioni.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        vetture: true,
+      },
+    });
+    if (!session) {
+      return res.status(404).json({ error: 'Codice sessione non trovato' });
+    }
+    if (session.vetture.proprietario !== userEmail) {
+      return res.status(403).json({ error: 'Non hai il permesso di accedere a questa sessione' });
     }
     const ret = await prisma.$queryRaw`
         SELECT ecoscore_sessione(${id}::int) AS ecoscore`;
