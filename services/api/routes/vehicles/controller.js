@@ -94,8 +94,8 @@ exports.getCarInfo = async (req, res) => {
         // Aggiungi stime emissioni basate sull'anno del modello
         console.log("Car model year:", result.modelYear);
         if (result && result.modelYear) {
-            result['co2/km'] = emissions.co2PerKm(result.modelYear);
-            result['pm/km'] = emissions.pmPerKm(result.modelYear);
+            result['co2Perkm'] = emissions.co2PerKm(result.modelYear);
+            result['pmPerkm'] = emissions.pmPerKm(result.modelYear);
         }
 
         return res.status(200).json({
