@@ -291,7 +291,7 @@
  *         message:
  *           type: string
  *           description: Status message
- *           example: Readings downloaded successfully
+ *           example: Rilevazioni scaricate con successo
  *         sessionId:
  *           type: integer
  *           description: The session ID
@@ -821,8 +821,9 @@
  *                 message:
  *                   type: string
  *                   example: Car info retrieved successfully via VIN
- *                 car:
- *                   $ref: '#/components/schemas/VehicleInfo'
+ *                 result:
+ *                   type: object
+ *                   description: Decoded vehicle details from VIN
  *       400:
  *         description: Invalid or missing VIN
  *         content:
@@ -930,7 +931,7 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Zone saved successfully
+ *                   example: Zona salvata correttamente
  *       400:
  *         description: Missing fields or invalid coordinates (minimum 3 points required)
  *         content:
@@ -940,7 +941,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: coordinates must be an array of at least 3 numeric [lng, lat] pairs
+ *                   example: coordinates deve essere un array di almeno 3 coppie [lng, lat] numeriche
  *       403:
  *         description: Forbidden - Access reserved for authenticated municipalities
  *         content:
@@ -950,7 +951,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: Access reserved for authenticated municipalities
+ *                   example: Accesso riservato ai comuni autenticati
  *       500:
  *         description: Internal server error
  *         content:
@@ -963,9 +964,10 @@
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: Error saving the zone
+ *                   example: Errore nel salvataggio della zona
  *                 details:
  *                   type: string
+ *                   example: Database error details
  */
 
 /**
@@ -1050,19 +1052,33 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Zones deleted
+ *                   example: Zone eliminate
  *       404:
  *         description: No zones found with the requested ids
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Nessuna zona trovata con gli id richiesti
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nell'eliminazione delle zone
+ *                 details:
+ *                   type: string
+ *                   example: Database error details
  */
 
 /**
@@ -1114,7 +1130,11 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: lng, lat e distance devono essere numeri (distance in metri)
  *       403:
  *         description: Forbidden - Access reserved for authenticated municipalities
  *         content:
@@ -1124,7 +1144,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: Access reserved for authenticated municipalities
+ *                   example: Accesso riservato ai comuni autenticati
  *       500:
  *         description: Internal server error
  *         content:
@@ -1137,9 +1157,10 @@
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: Error deleting zones
+ *                   example: Errore nel recupero delle zone vicine
  *                 details:
  *                   type: string
+ *                   example: Database error details
  */
 
 /**
@@ -1168,13 +1189,27 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Accesso riservato ai comuni autenticati
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nel recupero degli id delle zone
+ *                 details:
+ *                   type: string
+ *                   example: Database error details
  */
 
 /**
@@ -1209,19 +1244,37 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: id zona non valido
  *       404:
  *         description: Zone not found
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Zona non trovata
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nel recupero della geometria della zona
+ *                 details:
+ *                   type: string
+ *                   example: Database error details
  */
 
 // ==================== REPORTS ENDPOINTS ====================
@@ -1344,7 +1397,19 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/EcoscoreResponse'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Ecoscore retrieved successfully
+ *                 ecoscore:
+ *                   type: number
+ *                   description: The ecoscore value (-1 if no data available)
+ *                   example: 85.5
+ *                 numeroRilevazioni:
+ *                   type: integer
+ *                   description: Total number of telemetry readings for the user
+ *                   example: 1250
  *       400:
  *         description: Invalid email format
  *         content:
@@ -1365,6 +1430,129 @@
  *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User with this email doesn't exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /reports/user/sessions:
+ *   get:
+ *     summary: Get user's total session count
+ *     description: Returns the total number of telemetry sessions registered by the authenticated user
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Session count retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 numeroSessioni:
+ *                   type: integer
+ *                   description: Total number of sessions for the user
+ *                   example: 42
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /reports/user/sessions/{mm}/{aaaa}:
+ *   get:
+ *     summary: Get user's sessions for a specific month and year
+ *     description: Returns a detailed list of all telemetry sessions for the authenticated user in the specified month and year, including ecoscore for each session
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: mm
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
+ *         required: true
+ *         description: Month (1-12)
+ *         example: 3
+ *       - in: path
+ *         name: aaaa
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Year (e.g., 2024)
+ *         example: 2024
+ *     responses:
+ *       200:
+ *         description: Sessions list retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sessioni:
+ *                   type: array
+ *                   description: Array of session details
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         description: Session ID
+ *                         example: 42
+ *                       vettura:
+ *                         type: string
+ *                         description: Vehicle VIN
+ *                         example: WVWZZZ3CZWE123456
+ *                       data:
+ *                         type: integer
+ *                         description: Session start time (Unix timestamp in seconds)
+ *                         example: 1709251200
+ *                       ecoscore:
+ *                         type: number
+ *                         description: Ecoscore for this session
+ *                         example: 85.5
+ *       400:
+ *         description: Invalid month or year parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
  *         content:
  *           application/json:
  *             schema:
