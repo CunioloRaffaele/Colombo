@@ -250,6 +250,35 @@ exports.searchComuni = async (req, res) => {
   }
 };
 
+// Ritorna il nome del comune dato l'istat e verifica se registrato
+exports.getComuneByIstat = async (req, res) => {
+  const istat = parseInt(req.params.istat);
+  if (isNaN(istat)) {
+    return res.status(400).json({ error: 'Invalid ISTAT parameter' });
+  }
+  
+  try {
+    const comuneData = await prisma.comuni.findUnique({
+      where: { istat: istat }
+    });
+    if (!comuneData) {
+      return res.status(404).json({ error: 'Comune not trovato con ISTAT ' + istat });
+    }
+    
+    const isRegistered = await prisma.comuni_registrati.findUnique({
+      where: { comune: istat }
+    });
+
+    return res.status(200).json({
+      istat: comuneData.istat,
+      nome: comuneData.citta,
+      registrato: isRegistered ? true : false
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 // Informazioni account cittadino
 exports.getUserAccountInfo = async (req, res) => {
   const userEmail = req.userToken.email; 

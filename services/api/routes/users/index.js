@@ -17,6 +17,7 @@ userRouter.post('/comune', validateJsonRequest, controller.registerComune);
 userRouter.post('/login/comune', validateJsonRequest, controller.loginComune);
 userRouter.get('/comuni', controller.getAllComuni);
 userRouter.get('/comuni/search', controller.searchComuni);
+userRouter.get('/comune/:istat', controller.getComuneByIstat);
 
 // Informazioni account
 userRouter.get('/user', authMiddleware, controller.getUserAccountInfo);
