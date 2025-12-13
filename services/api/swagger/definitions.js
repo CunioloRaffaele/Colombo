@@ -291,7 +291,7 @@
  *         message:
  *           type: string
  *           description: Status message
- *           example: Readings downloaded successfully
+ *           example: Rilevazioni scaricate con successo
  *         sessionId:
  *           type: integer
  *           description: The session ID
@@ -821,8 +821,9 @@
  *                 message:
  *                   type: string
  *                   example: Car info retrieved successfully via VIN
- *                 car:
- *                   $ref: '#/components/schemas/VehicleInfo'
+ *                 result:
+ *                   type: object
+ *                   description: Decoded vehicle details from VIN
  *       400:
  *         description: Invalid or missing VIN
  *         content:
@@ -930,7 +931,7 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Zone saved successfully
+ *                   example: Zona salvata correttamente
  *       400:
  *         description: Missing fields or invalid coordinates (minimum 3 points required)
  *         content:
@@ -940,7 +941,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: coordinates must be an array of at least 3 numeric [lng, lat] pairs
+ *                   example: coordinates deve essere un array di almeno 3 coppie [lng, lat] numeriche
  *       403:
  *         description: Forbidden - Access reserved for authenticated municipalities
  *         content:
@@ -950,7 +951,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: Access reserved for authenticated municipalities
+ *                   example: Accesso riservato ai comuni autenticati
  *       500:
  *         description: Internal server error
  *         content:
@@ -963,7 +964,7 @@
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: Error saving the zone
+ *                   example: Errore nel salvataggio della zona
  *                 details:
  *                   type: string
  */
@@ -1050,19 +1051,32 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Zones deleted
+ *                   example: Zone eliminate
  *       404:
  *         description: No zones found with the requested ids
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Nessuna zona trovata con gli id richiesti
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nell'eliminazione delle zone
+ *                 details:
+ *                   type: string
  */
 
 /**
@@ -1114,7 +1128,11 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: lng, lat e distance devono essere numeri (distance in metri)
  *       403:
  *         description: Forbidden - Access reserved for authenticated municipalities
  *         content:
@@ -1124,7 +1142,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: Access reserved for authenticated municipalities
+ *                   example: Accesso riservato ai comuni autenticati
  *       500:
  *         description: Internal server error
  *         content:
@@ -1137,7 +1155,7 @@
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: Error deleting zones
+ *                   example: Errore nel recupero delle zone vicine
  *                 details:
  *                   type: string
  */
@@ -1168,13 +1186,26 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Accesso riservato ai comuni autenticati
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nel recupero degli id delle zone
+ *                 details:
+ *                   type: string
  */
 
 /**
@@ -1209,19 +1240,36 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: id zona non valido
  *       404:
  *         description: Zone not found
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Zona non trovata
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nel recupero della geometria della zona
+ *                 details:
+ *                   type: string
  */
 
 // ==================== REPORTS ENDPOINTS ====================
