@@ -46,6 +46,7 @@ CREATE TABLE sessioni (
     vettura char(17) NOT NULL REFERENCES vetture(vin) ON DELETE CASCADE ON UPDATE CASCADE,
     km      real     NOT NULL,      -- km percorsi
     co2     real     NOT NULL DEFAULT 0,       -- CO2 emessa
+    pm     real     NOT NULL DEFAULT 0,       -- PM emessa
     inizio   bigint  NOT NULL DEFAULT 0   -- timestamp unix epoch (momento di avvio sessione)
 );
 
