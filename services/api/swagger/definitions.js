@@ -967,6 +967,7 @@
  *                   example: Errore nel salvataggio della zona
  *                 details:
  *                   type: string
+ *                   example: Database error details
  */
 
 /**
@@ -1077,6 +1078,7 @@
  *                   example: Errore nell'eliminazione delle zone
  *                 details:
  *                   type: string
+ *                   example: Database error details
  */
 
 /**
@@ -1158,6 +1160,7 @@
  *                   example: Errore nel recupero delle zone vicine
  *                 details:
  *                   type: string
+ *                   example: Database error details
  */
 
 /**
@@ -1206,6 +1209,7 @@
  *                   example: Errore nel recupero degli id delle zone
  *                 details:
  *                   type: string
+ *                   example: Database error details
  */
 
 /**
@@ -1270,6 +1274,7 @@
  *                   example: Errore nel recupero della geometria della zona
  *                 details:
  *                   type: string
+ *                   example: Database error details
  */
 
 // ==================== REPORTS ENDPOINTS ====================
