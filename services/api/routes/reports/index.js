@@ -14,4 +14,9 @@ reportsRouter.get('/session/:id/summary', authMiddleware, controller.ecoscoreSes
 //Ecoscore totale cittadino
 reportsRouter.get('/user/:email/summary', authMiddleware, controller.ecoscoreUtente);
 
+// Sessioni utente: conteggio totale
+reportsRouter.get('/user/sessions', authMiddleware, controller.getUserSessionsCount);
+// Sessioni utente: lista dettagliata per mese/anno
+reportsRouter.get('/user/sessions/:mm/:aaaa', authMiddleware, controller.getUserSessionsListByMonthYear);
+
 module.exports = reportsRouter;

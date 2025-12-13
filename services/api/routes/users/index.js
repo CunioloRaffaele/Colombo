@@ -22,8 +22,6 @@ userRouter.get('/comuni/search', controller.searchComuni);
 userRouter.get('/user', authMiddleware, controller.getUserAccountInfo);
 userRouter.get('/comune', authMiddleware, controller.getComuneAccountInfo);
 
-// Sessioni 
-userRouter.get('/user/sessions', authMiddleware, controller.getUserSessionsCount);
-userRouter.get('/user/sessions/:mm/:aaaa', authMiddleware, controller.getUserSessionsListByMonthYear);
+// Rimuovo endpoint sessioni utente spostati in reports
 
 module.exports = userRouter;
