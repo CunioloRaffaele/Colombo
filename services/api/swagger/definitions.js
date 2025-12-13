@@ -1344,7 +1344,19 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/EcoscoreResponse'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Ecoscore retrieved successfully
+ *                 ecoscore:
+ *                   type: number
+ *                   description: The ecoscore value (-1 if no data available)
+ *                   example: 85.5
+ *                 numeroRilevazioni:
+ *                   type: integer
+ *                   description: Total number of telemetry readings for the user
+ *                   example: 1250
  *       400:
  *         description: Invalid email format
  *         content:
@@ -1365,6 +1377,129 @@
  *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User with this email doesn't exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /reports/user/sessions:
+ *   get:
+ *     summary: Get user's total session count
+ *     description: Returns the total number of telemetry sessions registered by the authenticated user
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Session count retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 numeroSessioni:
+ *                   type: integer
+ *                   description: Total number of sessions for the user
+ *                   example: 42
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /reports/user/sessions/{mm}/{aaaa}:
+ *   get:
+ *     summary: Get user's sessions for a specific month and year
+ *     description: Returns a detailed list of all telemetry sessions for the authenticated user in the specified month and year, including ecoscore for each session
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: mm
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
+ *         required: true
+ *         description: Month (1-12)
+ *         example: 3
+ *       - in: path
+ *         name: aaaa
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Year (e.g., 2024)
+ *         example: 2024
+ *     responses:
+ *       200:
+ *         description: Sessions list retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sessioni:
+ *                   type: array
+ *                   description: Array of session details
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         description: Session ID
+ *                         example: 42
+ *                       vettura:
+ *                         type: string
+ *                         description: Vehicle VIN
+ *                         example: WVWZZZ3CZWE123456
+ *                       data:
+ *                         type: integer
+ *                         description: Session start time (Unix timestamp in seconds)
+ *                         example: 1709251200
+ *                       ecoscore:
+ *                         type: number
+ *                         description: Ecoscore for this session
+ *                         example: 85.5
+ *       400:
+ *         description: Invalid month or year parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
  *         content:
  *           application/json:
  *             schema:
