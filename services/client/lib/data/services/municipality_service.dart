@@ -24,4 +24,38 @@ class MunicipalityService {
       throw ('Errore durante la ricerca dei comuni: $e');
     }
   }
+
+  static Future<String> getMunicipalityName(String istat) async {
+    final api = ApiClient();
+    try {
+      final data = await api.get<Map<String, dynamic>>(
+        ApiConstants.getMunicipalityNameEndpoint(istat),
+      );
+
+      if (data.containsKey('nome') && data['nome'] is String) {
+        return data['nome'] as String;
+      }
+
+      return '';
+    } catch (e) {
+      throw ('Errore durante il recupero del nome del comune: $e');
+    }
+  }
+
+  static Future<bool> isMunicipalityRegistered(String istat) async {
+    final api = ApiClient();
+    try {
+      final data = await api.get<Map<String, dynamic>>(
+        ApiConstants.getMunicipalityNameEndpoint(istat),
+      );
+
+      if (data.containsKey('registrato') && data['registrato'] == true) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      throw ('Errore durante la verifica del comune: $e');
+    }
+  }
 }

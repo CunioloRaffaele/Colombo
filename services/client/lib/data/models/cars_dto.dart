@@ -43,12 +43,16 @@ class CarDetailsResultDto {
   final bool isValid;
   final CarDetailsInfoDto info;
   final int? modelYear;
+  final double co2Perkm;
+  final double pmPerkm;
 
   CarDetailsResultDto({
     required this.vin,
     required this.isValid,
     required this.info,
     this.modelYear,
+    required this.co2Perkm,
+    required this.pmPerkm,
   });
 
   factory CarDetailsResultDto.fromJson(Map<String, dynamic> json) =>

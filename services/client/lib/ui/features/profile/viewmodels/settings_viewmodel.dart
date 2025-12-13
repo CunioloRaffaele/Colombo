@@ -1,27 +1,41 @@
+import 'package:colombo/core/constants/api_constants.dart';
+import 'package:colombo/data/services/reports_service.dart';
 import 'package:colombo/ui/widgets/notification_overlay.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../data/services/auth_service.dart';
 import '../../../../data/services/vehicle_service.dart';
+import '../../../../data/services/municipality_service.dart';
 import '../../auth/view/login.dart';
+import '../view/user_info.dart';
+import 'package:colombo/ui/features/profile/view/car_info.dart';
 
 class CarUiModel {
+  final String vin;
   final String model;
   final String manufacturer;
   final String year;
+  final double co2Emissions;
+  final double pmEmissions;
   final ImageProvider? image;
+  final String heroTag;
 
   CarUiModel({
+    required this.vin,
     required this.model,
     this.manufacturer = '',
     this.year = '',
+    required this.co2Emissions,
+    required this.pmEmissions,
     this.image,
-  });
+    String? heroTag,
+  }) : heroTag = heroTag ?? vin;
 }
 
 class SettingsViewModel extends ChangeNotifier {
   final VehicleService _vehicleService = VehicleService();
   final AuthService _authService = AuthService();
+  final ReportsService _reportsService = ReportsService();
 
   // State variables
   String _userName = "Unknown";
@@ -55,9 +69,12 @@ class SettingsViewModel extends ChangeNotifier {
             final assetPath = _getCarAssetPath(rawManufacturer);
             _cars.add(
               CarUiModel(
-                model: "",
+                vin: car.vin,
+                model: '',
                 manufacturer: rawManufacturer,
-                year: carDetails.modelYear?.toString() ?? 'Anno Sconosciuto',
+                year: carDetails.modelYear?.toString() ?? 'Anno sconosciuto',
+                co2Emissions: carDetails.pmPerkm,
+                pmEmissions: carDetails.co2Perkm,
                 image: AssetImage(assetPath),
               ),
             );
@@ -92,6 +109,14 @@ class SettingsViewModel extends ChangeNotifier {
       fileName = 'SEAT';
     } else if (cleanName.contains('ford')) {
       fileName = 'FORD';
+    } else if (cleanName.contains('renault')) {
+      fileName = 'RENAULT';
+    } else if (cleanName.contains('peugeot')) {
+      fileName = 'PEUGEOT';
+    } else if (cleanName.contains('toyota')) {
+      fileName = 'TOYOTA';
+    } else if (cleanName.contains('mg')) {
+      fileName = 'MG';
     } else {
       fileName = 'car_placeholder';
     }
@@ -101,6 +126,25 @@ class SettingsViewModel extends ChangeNotifier {
   void selectCar(int index) {
     _selectedCarIndex = index;
     notifyListeners();
+  }
+
+  void openCarInfo(BuildContext context, int index) {
+    if (index < 0 || index >= _cars.length) return;
+    final car = _cars[index];
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => CarInfoPage(
+          heroTag: car.heroTag,
+          vin: car.vin,
+          manufacturer: car.manufacturer,
+          model: car.model,
+          year: car.year,
+          image: car.image,
+          co2Emissions: car.co2Emissions,
+          pmEmissions: car.pmEmissions,
+        ),
+      ),
+    );
   }
 
   Future<void> logout(BuildContext context) async {
@@ -157,9 +201,20 @@ class SettingsViewModel extends ChangeNotifier {
   Future<void> userInfo(BuildContext context) async {
     var userDto;
     var vehicles;
+    var sessionsDto;
+    var municipalityName;
+    bool isMunicipalityRegistered = false;
     try {
       userDto = await _authService.getUserInfo();
       vehicles = await _vehicleService.getUserCars();
+      sessionsDto = await _reportsService.getUserSessionsCounter();
+      municipalityName = await MunicipalityService.getMunicipalityName(
+        userDto.residenza.toString(),
+      );
+      isMunicipalityRegistered =
+          await MunicipalityService.isMunicipalityRegistered(
+            userDto.residenza.toString(),
+          );
     } catch (e) {
       NotificationOverlay.show(
         "Errore durante il recupero delle info utente: $e",
@@ -168,28 +223,25 @@ class SettingsViewModel extends ChangeNotifier {
       debugPrint("Errore durante il recupero delle info utente: $e");
     }
     if (context.mounted) {
-      await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Informazioni account'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Nome: ${userDto.nome}'),
-              Text('Cognome: ${userDto.cognome}'),
-              Text('Email: ${userDto.email}'),
-              Text('Residenza: ${userDto.residenza}'),
-              Text('Veicoli registrati: ${vehicles.length}'),
-              Text('Rilevazioni effettuate: '),
-            ],
+      Navigator.push(
+        context,
+        CupertinoPageRoute(
+          builder: (_) => UserInfoPage(
+            nome: userDto.nome,
+            cognome: userDto.cognome,
+            email: userDto.email,
+            codiceIstat: userDto.residenza.toString(),
+            comune: municipalityName ?? 'Comune non trovato',
+            comuneRegistrato: isMunicipalityRegistered,
+            veicoliRegistrati: vehicles.length,
+            sessioniGuida: sessionsDto.numeroSessioni,
+            serverInfo: ApiConstants.baseUrl
+                .toString()
+                .split('//')
+                .last
+                .split('/')
+                .first,
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Chiudi'),
-            ),
-          ],
         ),
       );
     }

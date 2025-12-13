@@ -6,7 +6,10 @@ class ApiConstants {
   static const String deleteAccountEndpoint = 'auth/user';
   static const String userInfoEndpoint = 'auth/user';
   static const String searchMunicipalitiesEndpoint = 'auth/comuni/search';
+  static String getMunicipalityNameEndpoint(String istat) =>
+      'auth/comune/$istat';
   static const String retriveCarListEndpoint = 'vehicles/cars';
+  static const String userSessionsCounterEndpoint = 'reports/user/sessions';
   static String carDetailsEndpoint(String vin) => 'vehicles/car/details/$vin';
 
   static const int timeoutSeconds = 10;

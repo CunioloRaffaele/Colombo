@@ -78,31 +78,34 @@ class _SettingsPageState extends State<SettingsPage> {
                                   child: Row(
                                     children: [
                                       // Car image circle
-                                      Container(
-                                        width: 72,
-                                        height: 72,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.white.withOpacity(
-                                              0.06,
-                                            ),
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.5,
+                                      Hero(
+                                        tag: car.heroTag,
+                                        child: Container(
+                                          width: 72,
+                                          height: 72,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white.withOpacity(
+                                                0.06,
                                               ),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 3),
                                             ),
-                                          ],
-                                          image: car.image != null
-                                              ? DecorationImage(
-                                                  image: car.image!,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : null,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(
+                                                  0.5,
+                                                ),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 3),
+                                              ),
+                                            ],
+                                            image: car.image != null
+                                                ? DecorationImage(
+                                                    image: car.image!,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : null,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 14),
@@ -119,6 +122,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                               car.manufacturer.isNotEmpty
                                                   ? car.manufacturer
                                                   : car.model,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
                                                 color: Colors.white.withOpacity(
                                                   0.95,
@@ -160,18 +165,25 @@ class _SettingsPageState extends State<SettingsPage> {
                                                           10,
                                                         ),
                                                   ),
-                                                  child: Text(
-                                                    'Info veicolo',
-                                                    style: TextStyle(
-                                                      color: selected
-                                                          ? accent
-                                                          : Colors.white
-                                                                .withOpacity(
-                                                                  0.7,
-                                                                ),
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w600,
+                                                  child: GestureDetector(
+                                                    onTap: () =>
+                                                        _viewModel.openCarInfo(
+                                                          context,
+                                                          index,
+                                                        ),
+                                                    child: Text(
+                                                      'Info veicolo',
+                                                      style: TextStyle(
+                                                        color: selected
+                                                            ? accent
+                                                            : Colors.white
+                                                                  .withOpacity(
+                                                                    0.7,
+                                                                  ),
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
