@@ -1,5 +1,6 @@
 const prisma = require('../../utils/prisma');
 const vinDecoder = require('../../utils/vin');
+const emissions = require('../../utils/emissions');
 
 // Aggiungi una vettura all'utente
 exports.addCarToUser = async (req, res) => {
@@ -90,7 +91,12 @@ exports.getCarInfo = async (req, res) => {
 
         const result = vinDecoder.getVIN(car.vin);
 
-        console.log("getCarInfo result:", result);
+        // Aggiungi stime emissioni basate sull'anno del modello
+        console.log("Car model year:", result.modelYear);
+        if (result && result.modelYear) {
+            result['co2/km'] = emissions.co2PerKm(result.modelYear);
+            result['pm/km'] = emissions.pmPerKm(result.modelYear);
+        }
 
         return res.status(200).json({
             message: 'Car info retrieved successfully via VIN',

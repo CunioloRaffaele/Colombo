@@ -12,7 +12,7 @@ reportsRouter.get('/comune/:istat/ecoscore', authMiddleware, controller.ecoscore
 reportsRouter.get('/session/:id/summary', authMiddleware, controller.ecoscoreSessione);
 
 //Ecoscore totale cittadino
-reportsRouter.get('/user/:email/summary', authMiddleware, controller.ecoscoreUtente);
+reportsRouter.get('/user/summary', authMiddleware, controller.ecoscoreUtente);
 
 // Sessioni utente: conteggio totale
 reportsRouter.get('/user/sessions', authMiddleware, controller.getUserSessionsCount);
