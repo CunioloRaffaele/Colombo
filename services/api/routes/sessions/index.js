@@ -1,17 +1,17 @@
 var express = require('express');
-var reportsRouter = express.Router();
+var sessionRouter = express.Router();
 const controller = require('./controller');
 
 const authMiddleware = require('../../middleware/auth');
 const validateJsonRequest = require('../../middleware/validateJsonRequest');
 
 //Avvia sessione
-reportsRouter.post('/start/:vin', authMiddleware, controller.startSession);
+sessionRouter.post('/start/:vin', authMiddleware, controller.startSession);
 
 //Invia rilevazione
-reportsRouter.post('/:id/readings', authMiddleware, controller.sendReadings);
+sessionRouter.post('/:id/readings', authMiddleware, controller.sendReadings);
 
 //Scarica rilevazioni
-reportsRouter.get('/:id', authMiddleware, controller.downloadReadings);
+sessionRouter.get('/:id', authMiddleware, controller.downloadReadings);
 
-module.exports = reportsRouter;
+module.exports = sessionRouter;

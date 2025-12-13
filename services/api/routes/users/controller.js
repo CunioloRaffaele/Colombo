@@ -272,5 +272,3 @@ exports.getComuneAccountInfo = async (req, res) => {
   if (!comune) return res.status(404).json({ error: 'Comune not found' });
   res.json(comune);
 };
-
-// Rimuovo funzioni sessioni utente spostate in reports

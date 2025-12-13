@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const prisma = require('../../utils/prisma');
 
 
-
+// Ecoscore totale comune
 exports.ecoscoreComune = async (req, res) => {
     try {
         const istat = parseInt(req.params.istat, 10);
@@ -36,6 +36,7 @@ exports.ecoscoreComune = async (req, res) => {
     }
 }
 
+// Ecoscore totale sessione - cittadino
 exports.ecoscoreSessione = async (req, res) => {
     try {
         const id = req.params.id;
@@ -55,7 +56,7 @@ exports.ecoscoreSessione = async (req, res) => {
     }
 }
 
-
+// Ecoscore totale cittadino
 exports.ecoscoreUtente = async (req, res) => {
     try {
         const email = req.params.email;
