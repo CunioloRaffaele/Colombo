@@ -43,8 +43,10 @@ Lo scopo è fornire un repository organizzato per sviluppare, testare e distribu
 	- `api/` — backend (Node/Express)
 - `db/` - script database e schema
 - `infrastructure/`
-	- `docker-compose.yml` — compose per prod sul VPS
-	- `nginx/` — configurazioni nginx per servire static e proxy
+	- `compose.certbot.yml` — compose per certbot SSL (primo setup)
+	- `compose.smoke.yml` — compose per smoke test CI/CD
+	- `compose.yml` — compose per prod sul VPS
+	- `nginx.conf` — configurazioni nginx per servire static e proxy
 - `deploy/`
 	- `ssh-deploy.sh` — script di deploy via SSH
 - `proto/` — file .proto per API gRPC
@@ -80,3 +82,9 @@ Lo scopo è fornire un repository organizzato per sviluppare, testare e distribu
 - `DUCKDNS_TOKEN` — Usato per ssl con certbot. (Deprecato... migrato da challange DNS a webroot su nginx)
 
 Non mettere `.env` nel repo. Usa variabili d'ambiente sul server o secret manager.
+
+## Link Utili
+- **DOCUMENTAZIONE API:** https://greendrive.duckdns.org/api/api-docs/
+- **API:** https://greendrive.duckdns.org/api/v1
+- **PAGINA AMMINISTRAZIONE COMUNI:** https://greendrive.duckdns.org/amministrazione/
+- **DOWNLOAD APP:** https://github.com/CunioloRaffaele/Colombo/releases
