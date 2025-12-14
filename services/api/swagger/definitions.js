@@ -1375,22 +1375,13 @@
 
 /**
  * @swagger
- * /reports/user/{email}/summary:
+ * /reports/user/summary:
  *   get:
  *     summary: Get ecoscore for a user
  *     description: Retrieves the aggregated ecoscore for a specific user. Users can only access their own ecoscore.
  *     tags: [Reports]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: email
- *         schema:
- *           type: string
- *           format: email
- *         required: true
- *         description: User's email address
- *         example: marco@gmail.com
  *     responses:
  *       200:
  *         description: Ecoscore retrieved successfully
@@ -1410,12 +1401,6 @@
  *                   type: integer
  *                   description: Total number of telemetry readings for the user
  *                   example: 1250
- *       400:
- *         description: Invalid email format
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Unauthorized - invalid or missing JWT token
  *         content:
