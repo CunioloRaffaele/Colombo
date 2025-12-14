@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter/services.dart';
 
 class Elm327Driver {
   // https://en.wikipedia.org/wiki/OBD-II_PIDs#Service_01
   static const MethodChannel _channel = MethodChannel('bluetooth_channel');
+
+  // MUTEX
+  Future<void>? _commandLock;
 
   // Cache of supported PIDs discovered via 01 00 / 01 20 / ... probes.
   Set<int>? _supportedPidsCache;
@@ -34,10 +38,12 @@ class Elm327Driver {
   }
 
   Future<bool> connect(String address) async {
-    return await _channel.invokeMethod<bool>('connectToSerial', {
-          'address': address,
-        }) ??
-        false;
+    return _synchronized(() async {
+      return await _channel.invokeMethod<bool>('connectToSerial', {
+            'address': address,
+          }) ??
+          false;
+    });
   }
 
   Future<void> disconnect() async {
@@ -49,14 +55,44 @@ class Elm327Driver {
     return await _channel.invokeMethod<bool>('isConnected') ?? false;
   }
 
+  // Send a command to the ELM327.
   Future<String> sendCommand(String command) async {
-    if (!await isConnected()) {
-      throw Exception("ELM327 driver: not connected to any device");
+    return _synchronized(() async {
+      if (!await isConnected()) {
+        throw Exception("ELM327 driver: not connected to any device");
+      }
+      return await _channel.invokeMethod<String>('sendSerialCommand', {
+            'command': command,
+          }) ??
+          '';
+    });
+  }
+
+  /// Mutex (Lock)
+  /// Executes the given [action] in a synchronized manner, ensuring that
+  /// only one action can run at a time.
+  Future<T> _synchronized<T>(Future<T> Function() action) async {
+    // 1. get the previous lock (if any)
+    final previousLock = _commandLock;
+
+    // 2. Create a new completer for our turn
+    final completer = Completer<void>();
+
+    // 3. Update the global lock: the next one will have to wait for us
+    _commandLock = completer.future;
+
+    try {
+      // 4. If there was someone before us, wait for them to finish
+      if (previousLock != null) {
+        await previousLock;
+      }
+
+      // 5. Now it's our turn
+      return await action();
+    } finally {
+      // 6. Signal that we have finished (even in case of error)
+      completer.complete();
     }
-    return await _channel.invokeMethod<String>('sendSerialCommand', {
-          'command': command,
-        }) ??
-        '';
   }
 
   // Returns the set of supported PID numbers (Mode 01) discovered from the ECU.
