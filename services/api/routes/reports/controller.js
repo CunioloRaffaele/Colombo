@@ -231,7 +231,7 @@ exports.getUserSessionsCount = async (req, res) => {
     const count = await prisma.sessioni.count({
       where: { vetture: { proprietario: email } }
     });
-    return res.status(200).json({ numeroSessioni: count });
+    return res.status(200).json({message:"Number of sessions retrieved successfully", numeroSessioni: count });
   } catch (err) {
     console.error('getUserSessionsCount error:', err);
     return res.status(500).json({ error: 'Internal server error' });
@@ -256,41 +256,27 @@ exports.getUserSessionsListByMonthYear = async (req, res) => {
     const endDate = new Date(aaaa, mm, 1);
     const sessions = await prisma.sessioni.findMany({
       where: {
-        vetture: { proprietario: email },
-        inizio: {
-          gte: BigInt(Math.floor(startDate.getTime() / 1000)),
-          lt: BigInt(Math.floor(endDate.getTime() / 1000))
-        }
-      },
-      select: { id: true, vettura: true, inizio: true }
-    });
-    // Per ogni sessione, calcola ecoscore
-    const results = [];
-    for (const session of sessions) {
-      const rilevazioni = await prisma.rilevazioni.findMany({
-        where: { sessione: session.id },
-        select: { rpm: true, throttle: true, acceleration: true }
-      });
-      const { getWeightedScore, getInstantScore, twoTailedZTestPValue, variables } = require('../../utils/ecoScore');
-      const weightedScores = [];
-      for (const r of rilevazioni) {
-        for (const key of Object.keys(variables)) {
-          if (r[key] !== undefined && typeof r[key] === 'number') {
-            const { mu, sigma, weight } = variables[key];
-            const pValue = twoTailedZTestPValue(r[key], mu, sigma);
-            weightedScores.push(getWeightedScore(pValue, weight));
-          }
-        }
+      vetture: { proprietario: email },
+      inizio: {
+        gte: BigInt(Math.floor(startDate.getTime() / 1000)),
+        lt: BigInt(Math.floor(endDate.getTime() / 1000))
       }
-      const ecoscore = getInstantScore(weightedScores);
-      results.push({
-        id: session.id,
-        vettura: session.vettura,
-        data: session.inizio,
-        ecoscore
-      });
-    }
-    return res.status(200).json({ sessioni: results });
+      },
+      select: { id: true, vettura: true, inizio: true, km: true, co2: true, pm: true }
+    });
+
+    const sessionsWithEcoscore = await Promise.all(sessions.map(async (session) => {
+      const ret = await prisma.$queryRaw`
+        SELECT ecoscore_sessione(${session.id}::int) AS ecoscore`;
+      const ecoscore = ret[0].ecoscore;
+      return {
+      ...session,
+      inizio: session.inizio.toString(),
+      ecoscore: ecoscore !== null ? ecoscore : -1
+      };
+    }));
+
+    return res.status(200).json({ message: "Sessions retrieved successfully", sessioni: sessionsWithEcoscore });
   } catch (err) {
     console.error('getUserSessionsListByMonthYear error:', err);
     return res.status(500).json({ error: 'Internal server error' });
