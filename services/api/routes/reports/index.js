@@ -8,6 +8,9 @@ const validateJsonRequest = require('../../middleware/validateJsonRequest');
 //Ecoscore totale comune
 reportsRouter.get('/comune/:istat/ecoscore', authMiddleware, controller.ecoscoreComune);
 
+//Summary zona comune
+reportsRouter.get('/comune/:id/summary', authMiddleware, controller.summaryZona);
+
 //Ecoscore totale sessione - cittadino
 reportsRouter.get('/session/:id/summary', authMiddleware, controller.ecoscoreSessione);
 

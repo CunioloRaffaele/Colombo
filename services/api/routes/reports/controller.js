@@ -36,6 +36,77 @@ exports.ecoscoreComune = async (req, res) => {
   }
 }
 
+exports.summaryZona = async (req, res) => {
+  try {
+    const zonaId = parseInt(req.params.id, 10);
+    if (isNaN(zonaId)) {
+      return res.status(400).json({ error: 'Invalid zone ID' });
+    }
+
+    // Verifica che l'utente sia un comune
+    if (req.userToken.type !== 'comune') {
+      return res.status(403).json({ error: 'Accesso riservato ai comuni' });
+    }
+
+    const comuneEmail = req.userToken.email;
+
+    // Verifica esistenza del comune e recupero ISTAT
+    const existingComune = await prisma.comuni_registrati.findUnique({
+      where: { email: comuneEmail },
+    });
+    if (!existingComune) {
+      return res.status(404).json({ error: 'Comune non trovato' });
+    }
+    const comuneIstat = existingComune.comune;
+
+    // Verifica esistenza della zona e che appartenga al comune
+    const zoneResult = await prisma.$queryRaw`SELECT id, comune FROM zone WHERE id = ${zonaId}`;
+    const zona = zoneResult[0];
+
+    if (!zona) {
+      return res.status(404).json({ error: 'Zona non trovata' });
+    }
+
+    if (zona.comune !== comuneIstat) {
+      return res.status(403).json({ error: 'Non hai il permesso di accedere a questa zona' });
+    }
+
+    // Calcola l'ecoscore medio e le medie di PM e CO2 per la zona specificata
+    const result = await prisma.$queryRaw`
+      SELECT 
+      AVG(r.punteggio) as ecoscore,
+      AVG(s.pm) as pm,
+      AVG(s.co2) as co2
+      FROM rilevazioni r
+      JOIN sessioni s ON r.sessione = s.id
+      WHERE ST_Intersects(r.punto, (SELECT poligono FROM zone WHERE id = ${zonaId}))
+    `;
+
+    const summary = result[0];
+    const ecoscore = summary.ecoscore;
+
+    // Se ecoscore è null, significa che non ci sono rilevazioni nella zona
+    if (ecoscore === null || ecoscore === undefined) {
+      return res.status(200).json({
+        message: "Nessuna rilevazione per questa zona",
+        ecoscore: -1,
+        pm: 0,
+        co2: 0
+      });
+    }
+
+    return res.status(200).json({
+      message: "Summary retrieved successfully",
+      ecoscore: ecoscore,
+      pm: summary.pm || 0,
+      co2: summary.co2 || 0
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 // Ecoscore totale sessione - cittadino
 exports.ecoscoreSessione = async (req, res) => {
   try {
@@ -60,22 +131,41 @@ exports.ecoscoreSessione = async (req, res) => {
         SELECT ecoscore_sessione(${id}::int) AS ecoscore`;
     const ecoscore = ret[0].ecoscore;
 
-
-    // Trova i comuni attraversati (intersezione punti rilevati con zone dei comuni)
+    // Trova i comuni e le zone attraversate con il relativo ecoscore
     const comuniAttraversatiRaw = await prisma.$queryRaw`
-        SELECT DISTINCT z.comune
+        SELECT
+            z.comune AS istat_comune,
+            z.id AS zona_id,
+            AVG(r.punteggio) AS ecoscore_zona
         FROM rilevazioni r
         JOIN zone z ON ST_Intersects(r.punto, z.poligono)
         WHERE r.sessione = ${id}::int
+        GROUP BY z.comune, z.id
     `;
-    const comuniAttraversati = comuniAttraversatiRaw.map(c => c.comune);
+
+    // Raggruppa i risultati per comune
+    const comuniAttraversati = comuniAttraversatiRaw.reduce((acc, curr) => {
+      let comune = acc.find(c => c.istat === curr.istat_comune);
+      if (!comune) {
+        comune = {
+          istat: curr.istat_comune,
+          zone_attraversate: []
+        };
+        acc.push(comune);
+      }
+      comune.zone_attraversate.push({
+        zona_id: curr.zona_id,
+        ecoscore: curr.ecoscore_zona
+      });
+      return acc;
+    }, []);
 
     const responseData = {
       message: ecoscore !== null ? "Ecoscore retrieved successfully" : "No ecoscore found for this session",
-      ecoscore: ecoscore !== null ? ecoscore : -1,
+      ecoscore: ecoscore,
       km: session.km,
       vin: session.vettura,
-      pm: session.pm || 0,
+      pm: session.pm,
       co2: session.co2,
       comuni_attraversati: comuniAttraversati
     };
