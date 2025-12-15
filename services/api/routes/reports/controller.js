@@ -59,10 +59,28 @@ exports.ecoscoreSessione = async (req, res) => {
     const ret = await prisma.$queryRaw`
         SELECT ecoscore_sessione(${id}::int) AS ecoscore`;
     const ecoscore = ret[0].ecoscore;
-    if (ecoscore === null) {
-      return res.status(200).json({ message: "No ecoscore found for this session", ecoscore: -1 });
-    }
-    return res.status(200).json({ message: "Ecoscore retrieved successfully", ecoscore: ecoscore });
+
+
+    // Trova i comuni attraversati (intersezione punti rilevati con zone dei comuni)
+    const comuniAttraversatiRaw = await prisma.$queryRaw`
+        SELECT DISTINCT z.comune
+        FROM rilevazioni r
+        JOIN zone z ON ST_Intersects(r.punto, z.poligono)
+        WHERE r.sessione = ${id}::int
+    `;
+    const comuniAttraversati = comuniAttraversatiRaw.map(c => c.comune);
+
+    const responseData = {
+      message: ecoscore !== null ? "Ecoscore retrieved successfully" : "No ecoscore found for this session",
+      ecoscore: ecoscore !== null ? ecoscore : -1,
+      km: session.km,
+      vin: session.vettura,
+      pm: session.pm || 0,
+      co2: session.co2,
+      comuni_attraversati: comuniAttraversati
+    };
+
+    return res.status(200).json(responseData);
 
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -90,22 +108,22 @@ exports.ecoscoreUtente = async (req, res) => {
         SELECT 
           ecoscore_cittadino(${email}::text) AS ecoscore,
           (
-            SELECT COUNT(r.id)
+            SELECT COUNT(s.id)
             FROM cittadini c
             JOIN vetture v ON c.email = v.proprietario
             JOIN sessioni s ON v.vin = s.vettura
-            JOIN rilevazioni r ON s.id = r.sessione
             WHERE c.email = ${email}::text
-          )::int AS "numeroRilevazioni"
+          )::int AS "numeroSessioni"
       `;
-    const { ecoscore, numeroRilevazioni } = ret[0];
+    const { ecoscore, numeroSessioni } = ret[0];
 
     if (ecoscore === null) {
-      return res.status(200).json({ message: "No ecoscore found for this user", ecoscore: -1, numeroRilevazioni: 0 });
+      return res.status(200).json({ message: "No ecoscore found for this user", ecoscore: -1, numeroSessioni: 0 });
     }
-    return res.status(200).json({ message: "Ecoscore retrieved successfully", ecoscore: ecoscore, numeroRilevazioni: numeroRilevazioni });
+    return res.status(200).json({ message: "Ecoscore retrieved successfully", ecoscore: ecoscore, numeroSessioni: numeroSessioni });
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
