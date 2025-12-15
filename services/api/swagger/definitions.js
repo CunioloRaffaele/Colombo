@@ -677,6 +677,61 @@
  *               $ref: '#/components/schemas/Error'
  */
 
+/**
+ * @swagger
+ * /auth/comune/{istat}:
+ *   get:
+ *     summary: Get municipality information by ISTAT code
+ *     description: Returns municipality details including whether it's registered in the system
+ *     tags: [Comuni]
+ *     parameters:
+ *       - in: path
+ *         name: istat
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ISTAT code of the municipality
+ *         example: 10010
+ *     responses:
+ *       200:
+ *         description: Municipality information retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 istat:
+ *                   type: integer
+ *                   description: ISTAT code of the municipality
+ *                   example: 10010
+ *                 nome:
+ *                   type: string
+ *                   description: Name of the municipality
+ *                   example: Bagnolo Piemonte
+ *                 registrato:
+ *                   type: boolean
+ *                   description: Whether the municipality is registered in the system
+ *                   example: true
+ *       400:
+ *         description: Invalid ISTAT parameter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Municipality not found with the provided ISTAT code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 // ==================== VEHICLE ENDPOINTS ====================
 
 /**
@@ -1331,6 +1386,82 @@
 
 /**
  * @swagger
+ * /reports/comune/{id}/summary:
+ *   get:
+ *     summary: Get zone summary for a municipality
+ *     description: Retrieves the average ecoscore, PM, and CO2 values for a specific zone. Only accessible by municipalities, and only for zones they own.
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Zone ID
+ *         example: 5
+ *     responses:
+ *       200:
+ *         description: Zone summary retrieved successfully or no readings found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Summary retrieved successfully
+ *                 ecoscore:
+ *                   type: number
+ *                   description: Average ecoscore for the zone (-1 if no readings)
+ *                   example: 85.5
+ *                 pm:
+ *                   type: number
+ *                   description: Average PM value for the zone
+ *                   example: 12.5
+ *                 co2:
+ *                   type: number
+ *                   description: Average CO2 value for the zone
+ *                   example: 150.3
+ *       400:
+ *         description: Invalid zone ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Access reserved for municipalities or zone doesn't belong to the municipality
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Accesso riservato ai comuni
+ *       404:
+ *         description: Municipality or zone not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
  * /reports/session/{id}/summary:
  *   get:
  *     summary: Get ecoscore for a session
@@ -1590,6 +1721,73 @@
  *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User not found or car not found/does not belong to the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /telemetry/sessions/end/{id}:
+ *   post:
+ *     summary: End a telemetry session
+ *     description: Ends a telemetry session and updates its total kilometers traveled. Also calculates and stores CO2 and PM emissions based on the vehicle's model year.
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Session ID
+ *         example: 42
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - km
+ *             properties:
+ *               km:
+ *                 type: number
+ *                 description: Total kilometers traveled during the session (must be non-negative)
+ *                 example: 15.5
+ *     responses:
+ *       200:
+ *         description: Session ended and kilometers updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Session ended and km updated
+ *       400:
+ *         description: Invalid session ID, email in token, or km value
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found or session not found/not associated with user
  *         content:
  *           application/json:
  *             schema:
