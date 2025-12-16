@@ -3,21 +3,47 @@ const { jStat } = require('jstat');
 
 const variables = {
     rpm: {
-        weight: 0.64,
-        mu: 3000,
-        sigma: 700,
+      weight: 0.25,
+      mu: 2200,
+      sigma: 500,
     },
-    throttle: {
-        weight: 0.13,
-        mu: 35,
-        sigma: 20,
+    speed: {
+      weight: 0.15,
+      mu: 80, // km/h
+      sigma: 20,
     },
-    acceleration: {
-        weight: 0.23,
-        mu: 0,
-        sigma: 4,
-    }
-};
+    throttlePosition: {
+      weight: 0.25,
+      mu: 30, // %
+      sigma: 15,
+    },
+    coolantTemp: {
+      weight: 0.05,
+      mu: 90, // Celsius
+      sigma: 10,
+    },
+    fuelRate: {
+      weight: 0.20,
+      mu: 3, // L/h - ideal low consumption rate
+      sigma: 2,
+    },
+    engineExhaustFlow: {
+      weight: 0.10,
+      mu: 150, // g/s
+      sigma: 50,
+    },
+    // Vitals not directly related to driving style have a weight of 0.
+    odometer: {
+      weight: 0.0,
+      mu: 0,
+      sigma: 1,
+    },
+    fuelTankLevel: {
+      weight: 0.0,
+      mu: 0,
+      sigma: 1,
+    },
+  };
 
 /**
  * p-value è lo score
