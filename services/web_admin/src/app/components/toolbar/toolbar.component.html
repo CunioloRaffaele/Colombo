@@ -1,0 +1,41 @@
+<mat-toolbar color="primary">
+  <span class="logo">Green Drive</span>
+  <span class="spacer"></span>
+  <ng-container *ngIf="isLoggedIn()">
+    <button mat-button [matMenuTriggerFor]="userMenu">
+      <mat-icon>account_circle</mat-icon>
+      {{ getComunalName() || 'Account' }}
+    </button>
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item disabled>
+        <mat-icon>person</mat-icon>
+        {{ getComunalName() || 'Account' }}
+      </button>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Logout
+      </button>
+    </mat-menu>
+  </ng-container>
+  <!-- Pulsante dinamico -->
+  <ng-container *ngIf="isLoggedIn()">
+    <button
+      mat-button
+      *ngIf="isCurrentRoute('/comunal-admin-dashboard'); else backToDashboard"
+      (click)="goToEditZones()"
+    >
+      <mat-icon>edit</mat-icon>
+      Modifica Zone
+    </button>
+    <ng-template #backToDashboard>
+      <button
+        mat-button
+        *ngIf="isCurrentRoute('/edit-zones')"
+        (click)="goToDashboard()"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        Torna alla Dashboard
+      </button>
+    </ng-template>
+  </ng-container>
+</mat-toolbar>

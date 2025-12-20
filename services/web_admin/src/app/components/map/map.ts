@@ -1,9 +1,24 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component, AfterViewInit, Input } from '@angular/core';
 import * as L from 'leaflet';
+import 'leaflet-draw';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PolygonService } from '../../services/polygon.service';
 
+
+// Fix per i tipi mancanti di Leaflet Draw
+declare module 'leaflet' {
+  namespace Control {
+    class Draw extends Control {
+      constructor(options?: any);
+    }
+  }
+  namespace Draw {
+    namespace Event {
+      const CREATED: string;
+    }
+  }
+}
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -19,6 +34,8 @@ L.Icon.Default.mergeOptions({
   styleUrls: ['./map.css'],
 })
 export class MapComponent implements AfterViewInit {
+  @Input() enableDrawing = false; // <--- aggiungi questa riga
+
   private map!: L.Map;
   private zoneColors = [
     '#e53935', // rosso
@@ -32,6 +49,11 @@ export class MapComponent implements AfterViewInit {
     '#757575', // grigio
     '#d81b60', // rosa
   ];
+  private polygonsLayers: L.Layer[] = [];
+  drawnCoordinates: number[][] = [];
+  drawnPolygons: number[][][] = [];
+  drawnPolygonLayers: L.Layer[] = []; // Nuovo array per i layer
+  labelMarkers: L.Marker[] = [];
 
   constructor(private http: HttpClient, private polygonService: PolygonService) { }
 
@@ -56,26 +78,141 @@ export class MapComponent implements AfterViewInit {
     this.map.fitBounds(italyBounds);
 
     // Carica i poligoni dal backend e assegna un colore diverso a ciascuno
+    this.loadPolygons();
+
+    // Aggiungi il controllo di disegno solo se abilitato
+    if (this.enableDrawing) {
+      const drawControl = new L.Control.Draw({
+        draw: {
+          polygon: true,
+          marker: false,
+          polyline: false,
+          rectangle: false,
+          circle: false,
+          circlemarker: false
+        },
+        edit: false
+      });
+      this.map.addControl(drawControl);
+
+      this.map.on(L.Draw.Event.CREATED, (event: any) => {
+        const layer = event.layer;
+        this.map.addLayer(layer);
+
+        const latlngs = layer.getLatLngs()[0];
+        const polygon = latlngs.map((latlng: L.LatLng) => [latlng.lat, latlng.lng]);
+        this.drawnPolygons.push(polygon);
+        this.drawnPolygonLayers.push(layer);
+
+        // Calcola il centroide del poligono
+        const center = layer.getBounds().getCenter();
+
+        // Crea un marker con il numero del poligono
+        const labelNumber = this.drawnPolygons.length;
+        const labelMarker = L.marker(center, {
+          icon: L.divIcon({
+            className: 'polygon-label',
+            html: `<div>${labelNumber}</div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          }),
+          interactive: false
+        }).addTo(this.map);
+
+        this.labelMarkers.push(labelMarker);
+
+        this.drawnCoordinates = polygon;
+      });
+    }
+  }
+
+  /**
+   * Carica e visualizza i poligoni delle zone sulla mappa.
+   */
+  loadPolygons() {
+    // Rimuovi i poligoni esistenti
+    this.polygonsLayers.forEach(layer => this.map.removeLayer(layer));
+    this.polygonsLayers = [];
+
     this.polygonService.getAllPolygons().subscribe(polygons => {
       const bounds = L.latLngBounds([]);
       polygons.forEach((geometryData, idx) => {
         const color = this.zoneColors[idx % this.zoneColors.length];
+        const zoneId = geometryData.id; 
         const geoJsonLayer = L.geoJSON(geometryData, {
-      style: {
-        color: color,
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.5
-      }
-      }).addTo(this.map);
-        geoJsonLayer.bindPopup(`Zona ${idx + 1}`);
-        // Estendi i bounds con quelli del poligono
+          style: {
+            color: color,
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.5
+          }
+        }).addTo(this.map);
+
+        this.polygonsLayers.push(geoJsonLayer);
+
+        geoJsonLayer.on('click', () => {
+          const token = localStorage.getItem('jwt_token');
+          this.http.get<any>(
+            `${environment.apiUrl}reports/comune/${zoneId}/summary`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          ).subscribe({
+            next: (data) => {
+              geoJsonLayer.bindPopup(
+                `<b>Zona ${idx + 1}</b><br>
+                Ecoscore: ${data.ecoscore === -1 ? 'Valore non disponibile' : data.ecoscore?.toFixed(1)}<br>
+                PM: ${data.pm === 0 ? 'Valore non disponibile' : data.pm?.toFixed(2)}<br>
+                CO₂: ${data.co2 === 0 ? 'Valore non disponibile' : data.co2?.toFixed(2)}`
+              ).openPopup();
+            },
+            error: () => {
+              geoJsonLayer.bindPopup('Errore nel recupero dei dati').openPopup();
+            }
+          });
+        });
+
         bounds.extend(geoJsonLayer.getBounds());
       });
-      // Zoom automatico su tutte le zone del comune
       if (bounds.isValid()) {
         this.map.fitBounds(bounds.pad(0.1));
       }
     });
+  }
+
+  /**
+   * Metodo pubblico per ricaricare i poligoni (usato dalla dashboard).
+   */
+  reloadPolygons() {
+    this.loadPolygons();
+  }
+
+  // Metodo per inviare il poligono al backend
+  saveZone() {
+    const token = localStorage.getItem('jwt_token');
+    const headers = { Authorization: `Bearer ${token}` };
+
+    // Per ogni poligono disegnato, invia una richiesta POST separata
+    this.drawnPolygons.forEach(polygon => {
+      const geoJsonCoords = polygon.map(([lat, lng]) => [lng, lat]);
+      const body = {
+        coordinates: geoJsonCoords,
+        tipologia: 'generica'
+      };
+      this.http.post(
+        `${environment.apiUrl}zones`,
+        body,
+        { headers }
+      ).subscribe({
+        next: () => {
+          // Puoi aggiungere qui una notifica di successo per ogni poligono
+        },
+        error: () => {
+          // Puoi aggiungere qui una notifica di errore per ogni poligono
+        }
+      });
+    });
+  }
+
+  removePolygonLayer(layer: L.Layer) {
+    this.map.removeLayer(layer);
   }
 }

@@ -51,7 +51,7 @@ export class ComunalAdminLogin {
     private fb: FormBuilder, 
     private http: HttpClient, 
     private router: Router,
-    private authService: AuthService // Inietta il servizio
+    private authService: AuthService 
   ) {
     // Inizializzazione del form con i campi 'email' and 'password' e i relativi validatori.
     this.loginForm = this.fb.group({

@@ -1,0 +1,21 @@
+.spacer {
+  flex: 1 1 auto;
+}
+
+mat-toolbar {
+  background: linear-gradient(90deg, #a5d6a7 0%, #43a047 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(67, 160, 71, 0.08);
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 1.3em;
+  letter-spacing: 1px;
+  color: #2e7d32;
+  text-shadow: 0 1px 2px #e8f5e9;
+}
+
+mat-icon {
+  color: #1e4e20;
+}

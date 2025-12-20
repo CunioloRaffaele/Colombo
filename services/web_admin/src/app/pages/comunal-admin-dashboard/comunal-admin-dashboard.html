@@ -1,8 +1,33 @@
+<app-toolbar></app-toolbar>
 <div class="dashboard-layout">
   <div class="dashboard-map">
     <app-map></app-map>
   </div>
   <div class="dashboard-side">
-    <!-- Qui potrai aggiungere i dati, grafici, info ecc. -->
+    <h2>Ecoscore Totale del Comune</h2>
+    <div class="zone-card">
+      <div getTotalEcoscore="zones"></div>
+      <div>
+        <span *ngIf="totalEcoscore !== null; else noEcoscore">{{ totalEcoscore | number:'1.1-1' }}</span>
+        <ng-template #noEcoscore>Valore non disponibile</ng-template>
+      </div> 
+    </div>
+    <h2>Zone del Comune</h2>
+    <div *ngIf="loading">Caricamento zone...</div>
+    <div *ngIf="error" class="error">{{ error }}</div>
+    <div class="zone-cards" *ngIf="!loading && !error">
+      <div class="zone-card" *ngFor="let zone of zones; let i = index">
+        <b>Zona {{ i + 1 }}</b><br>
+        <span>Ecoscore: <b>{{ zone.ecoscore !== -1 ? (zone.ecoscore | number:'1.1-1') : 'Valore non disponibile' }}</b></span><br>
+        <span>PM: <b>{{ zone.pm !== 0 ? (zone.pm | number:'1.2-2') : 'Valore non disponibile' }}</b></span><br>
+        <span>CO₂: <b>{{ zone.co2 !== 0 ? (zone.co2 | number:'1.2-2') : 'Valore non disponibile' }}</b></span>
+        <div class="zone-card-actions">
+          <button mat-raised-button color="warn" (click)="deleteZone(zone.id)">
+            <mat-icon>delete</mat-icon> Elimina zona
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
+  
 </div>

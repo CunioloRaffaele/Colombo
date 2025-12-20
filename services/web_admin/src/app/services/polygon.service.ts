@@ -33,9 +33,22 @@ export class PolygonService {
 }
 
   getAllPolygons(): Observable<any[]> {
-    return this.getZoneIds().pipe(
-      map(ids => ids || []),
-      switchMap(ids => ids.length ? forkJoin(ids.map(id => this.getZoneGeometry(id))) : of([]))
-    );
-  }
+  return this.getZoneIds().pipe(
+    map(ids => ids || []),
+    switchMap(ids =>
+      ids.length
+        ? forkJoin(
+            ids.map(id =>
+              this.getZoneGeometry(id).pipe(
+                map(geometry => ({
+                  id,         
+                  ...geometry 
+                }))
+              )
+            )
+          )
+        : of([])
+    )
+  );
+}
 }
