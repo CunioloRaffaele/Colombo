@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package colombo.api.v1;
+
+import "common/types.proto";
+
+// Rappresenta un punto dati di una sessione di guida
+message DriveDataPoint {
+  int64 timestamp_unix = 1; // Unix timestamp (secondi)
+  int32 rpm = 2;
+  int32 speed = 3;
+  float throttle_position = 4;
+  int32 coolant_temp = 5;
+  float fuel_rate = 6;
+  double odometer = 7;
+  float engine_exhaust_flow = 8;
+  float fuel_tank_level = 9;
+  double latitude = 10;
+  double longitude = 11;
+}

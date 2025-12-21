@@ -142,11 +142,39 @@ exports.endSession = async (req, res) => {
 }
 
 
+
+const protobuf = require('protobufjs');
+const path = require('path');
+
 exports.sendReadings = async (req, res) => {
     try {
-        res.status(200).json({ message: 'Dummy return' });
+        let data;
+        const contentType = req.headers['content-type'];
+        if (contentType === 'application/x-protobuf') {
+            // Carica dinamicamente il .proto
+            const protoPath = path.join(__dirname, '../../../../proto/api/v1/drive_data.proto');
+            const root = await protobuf.load(protoPath);
+            const DriveDataPoint = root.lookupType('colombo.api.v1.DriveDataPoint');
+            // Buffer dal body
+            const buffer = req.body instanceof Buffer ? req.body : Buffer.from(req.body);
+            const message = DriveDataPoint.decode(buffer);
+            data = DriveDataPoint.toObject(message, { enums: String, longs: Number, defaults: true });
+        } else if (contentType && contentType.includes('application/json')) {
+            data = req.body;
+        } else {
+            return res.status(415).json({ error: 'Unsupported content-type' });
+        }
 
+        // Validazione base (puoi aggiungere controlli specifici)
+        if (!data || typeof data !== 'object') {
+            return res.status(400).json({ error: 'Invalid data format' });
+        }
+
+        // TODO: Salvataggio dati su DB (usando prisma, come per le altre funzioni)
+
+        res.status(200).json({ message: 'Dati ricevuti correttamente', data });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 }
