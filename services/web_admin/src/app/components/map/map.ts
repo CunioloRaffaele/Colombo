@@ -3,8 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PolygonService } from '../../services/polygon.service';
 
+// Dichiarazione globale per Leaflet caricato via script esterno (per compatibilità con Leaflet Draw)
 declare var L: any;
 
+/**
+ * Componente Mappa.
+ * Gestisce la visualizzazione delle zone esistenti e, se abilitato, il disegno di nuove zone.
+ * Utilizza Leaflet e Leaflet Draw.
+ */
 @Component({
   selector: 'app-map',
   standalone: true,
@@ -12,29 +18,41 @@ declare var L: any;
   styleUrls: ['./map.css'],
 })
 export class MapComponent implements AfterViewInit {
+  /** Abilita o disabilita gli strumenti di disegno (matita, poligono). */
   @Input() enableDrawing = false;
 
-  private map!: any; // Sostituisci L.Map con any
+  private map!: any; 
+  
+  // Palette di colori per distinguere visivamente le diverse zone
   private zoneColors = [
-    '#e53935', // rosso
-    '#8e24aa', // viola
-    '#3949ab', // blu
-    '#00897b', // verde acqua
-    '#43a047', // verde
-    '#fbc02d', // giallo
-    '#fb8c00', // arancione
-    '#6d4c41', // marrone
-    '#757575', // grigio
-    '#d81b60', // rosa
+    '#e53935', '#8e24aa', '#3949ab', '#00897b', '#43a047', 
+    '#fbc02d', '#fb8c00', '#6d4c41', '#757575', '#d81b60',
   ];
-  private polygonsLayers: any[] = []; // Sostituisci L.Layer[] con any[]
+
+  // Riferimenti ai layer per poterli rimuovere o manipolare
+  private polygonsLayers: any[] = []; 
+  
+  /** Coordinate dell'ultimo poligono disegnato (per debug o uso esterno). */
   drawnCoordinates: number[][] = [];
+  
+  /** Lista di tutti i poligoni disegnati nella sessione corrente (non ancora salvati). */
   drawnPolygons: number[][][] = [];
-  drawnPolygonLayers: any[] = []; // Sostituisci L.Layer[] con any[]
-  labelMarkers: any[] = []; // Sostituisci L.Marker[] con any[]
+  
+  /** Lista delle tipologie associate ai poligoni disegnati. */
+  drawnPolygonTypes: string[] = []; // <--- NUOVO ARRAY
+
+  /** Layer grafici dei poligoni disegnati. */
+  drawnPolygonLayers: any[] = []; 
+  
+  /** Marker numerati che indicano l'ordine dei poligoni disegnati. */
+  labelMarkers: any[] = []; 
 
   constructor(private http: HttpClient, private polygonService: PolygonService) { }
 
+  /**
+   * Inizializza la mappa dopo che la view è stata renderizzata.
+   * Imposta i tile, i limiti geografici (Italia) e i controlli di disegno.
+   */
   ngAfterViewInit(): void {
     // Limiti geografici Italia: [SudOvest, NordEst]
     const italyBounds = L.latLngBounds(
@@ -43,10 +61,10 @@ export class MapComponent implements AfterViewInit {
     );
 
     this.map = L.map('map', {
-      maxBounds: italyBounds,         // Limita lo spostamento
-      maxBoundsViscosity: 1.0,        // Rimbalzo ai bordi
-      minZoom: 6,                     // Zoom minimo per non vedere il mondo intero
-      maxZoom: 18                     // Zoom massimo
+      maxBounds: italyBounds,         
+      maxBoundsViscosity: 1.0,        
+      minZoom: 6,                     
+      maxZoom: 18                     
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -55,36 +73,39 @@ export class MapComponent implements AfterViewInit {
 
     this.map.fitBounds(italyBounds);
 
-    // Carica i poligoni dal backend e assegna un colore diverso a ciascuno
+    // Carica i poligoni esistenti dal backend
     this.loadPolygons();
 
-    // Aggiungi il controllo di disegno solo se abilitato
+    // Configurazione Leaflet Draw (solo se enableDrawing è true)
     if (this.enableDrawing) {
       const drawControl = new L.Control.Draw({
         draw: {
-          polygon: {},
+          polygon: {}, // Abilita solo il disegno di poligoni
           marker: false,
           polyline: false,
           rectangle: false,
           circle: false,
           circlemarker: false
-        }
+        },
+        edit: false // Disabilita l'editing diretto (gestito tramite cancellazione)
       });
       this.map.addControl(drawControl);
 
+      // Gestione evento: Poligono creato
       this.map.on(L.Draw.Event.CREATED, (event: any) => {
         const layer = event.layer;
         this.map.addLayer(layer);
 
+        // Estrae le coordinate e le converte in formato array semplice
         const latlngs = layer.getLatLngs()[0];
-        const polygon = latlngs.map((latlng: any) => [latlng.lat, latlng.lng]); // Sostituisci L.LatLng con any
+        const polygon = latlngs.map((latlng: any) => [latlng.lat, latlng.lng]); 
+        
         this.drawnPolygons.push(polygon);
+        this.drawnPolygonTypes.push(''); 
         this.drawnPolygonLayers.push(layer);
 
-        // Calcola il centroide del poligono
+        // Aggiunge un marker numerato al centro del poligono
         const center = layer.getBounds().getCenter();
-
-        // Crea un marker con il numero del poligono
         const labelNumber = this.drawnPolygons.length;
         const labelMarker = L.marker(center, {
           icon: L.divIcon({
@@ -97,17 +118,17 @@ export class MapComponent implements AfterViewInit {
         }).addTo(this.map);
 
         this.labelMarkers.push(labelMarker);
-
         this.drawnCoordinates = polygon;
       });
     }
   }
 
   /**
-   * Carica e visualizza i poligoni delle zone sulla mappa.
+   * Recupera i poligoni dal servizio e li renderizza sulla mappa.
+   * Aggiunge anche un popup interattivo che mostra i dati (Ecoscore, PM, CO2) al click.
    */
   loadPolygons() {
-    // Rimuovi i poligoni esistenti
+    // Pulisce i layer esistenti prima di ricaricare
     this.polygonsLayers.forEach(layer => this.map.removeLayer(layer));
     this.polygonsLayers = [];
 
@@ -116,6 +137,7 @@ export class MapComponent implements AfterViewInit {
       polygons.forEach((geometryData, idx) => {
         const color = this.zoneColors[idx % this.zoneColors.length];
         const zoneId = geometryData.id; 
+        
         const geoJsonLayer = L.geoJSON(geometryData, {
           style: {
             color: color,
@@ -127,6 +149,7 @@ export class MapComponent implements AfterViewInit {
 
         this.polygonsLayers.push(geoJsonLayer);
 
+        // Gestione click sul poligono per mostrare i dettagli
         geoJsonLayer.on('click', () => {
           const token = localStorage.getItem('jwt_token');
           this.http.get<any>(
@@ -149,6 +172,8 @@ export class MapComponent implements AfterViewInit {
 
         bounds.extend(geoJsonLayer.getBounds());
       });
+      
+      // Adatta lo zoom per mostrare tutti i poligoni
       if (bounds.isValid()) {
         this.map.fitBounds(bounds.pad(0.1));
       }
@@ -156,40 +181,61 @@ export class MapComponent implements AfterViewInit {
   }
 
   /**
-   * Metodo pubblico per ricaricare i poligoni (usato dalla dashboard).
+   * Ricarica i poligoni (wrapper pubblico per loadPolygons).
+   * Utile per aggiornare la mappa dopo una cancellazione o modifica esterna.
    */
   reloadPolygons() {
     this.loadPolygons();
   }
 
-  // Metodo per inviare il poligono al backend
+  /**
+   * Invia al backend tutti i poligoni disegnati nella sessione corrente.
+   * Effettua una chiamata POST per ogni poligono nell'array `drawnPolygons`.
+   */
   saveZone() {
     const token = localStorage.getItem('jwt_token');
     const headers = { Authorization: `Bearer ${token}` };
 
-    // Per ogni poligono disegnato, invia una richiesta POST separata
-    this.drawnPolygons.forEach(polygon => {
+    // Validazione: controlla se ci sono tipologie non selezionate
+    if (this.drawnPolygonTypes.some(type => !type)) {
+      alert('Attenzione: Seleziona la tipologia per tutte le zone prima di salvare.');
+      return;
+    }
+
+    this.drawnPolygons.forEach((polygon, index) => {
+      // Inverte lat/lng per GeoJSON (che usa [lng, lat])
       const geoJsonCoords = polygon.map(([lat, lng]) => [lng, lat]);
+      
+      // Recupera la tipologia selezionata per questo poligono
+      const tipologia = this.drawnPolygonTypes[index];
+
       const body = {
         coordinates: geoJsonCoords,
-        tipologia: 'generica'
+        tipologia: tipologia 
       };
+      
       this.http.post(
         `${environment.apiUrl}zones`,
         body,
         { headers }
       ).subscribe({
         next: () => {
-          // Puoi aggiungere qui una notifica di successo per ogni poligono
+          // Successo
+          console.log(`Zona ${index + 1} salvata come ${tipologia}`);
         },
         error: () => {
-          // Puoi aggiungere qui una notifica di errore per ogni poligono
+          console.error('Errore salvataggio zona');
         }
       });
     });
+
   }
 
-  removePolygonLayer(layer: any) { // Sostituisci L.Layer con any
+  /**
+   * Rimuove un layer specifico dalla mappa.
+   * @param layer - Il layer Leaflet da rimuovere.
+   */
+  removePolygonLayer(layer: any) { 
     this.map.removeLayer(layer);
   }
 }

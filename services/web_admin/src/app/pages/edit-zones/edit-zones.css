@@ -16,14 +16,67 @@
 
 .edit-zones-side {
   flex: 1 1 40%;
-  min-width: 0;
+  min-width: 300px;
   min-height: 0;
   height: 100vh;
   overflow-y: auto;
   background: #fff;
   border-left: 1px solid #e0e0e0;
-  padding: 32px 24px 48px 24px;
+  padding: 24px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-actions h2 {
+  margin: 0;
+  color: #2e7d32;
+}
+
+.empty-state {
+  text-align: center;
+  color: #757575;
+  margin-top: 40px;
+}
+
+.polygons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.polygon-item {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  transition: box-shadow 0.2s;
+}
+
+.polygon-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.polygon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.polygon-title {
+  font-weight: 500;
+  font-size: 1.1em;
+  color: #424242;
+}
+
+.full-width {
+  width: 1
 }

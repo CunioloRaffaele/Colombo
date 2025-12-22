@@ -4,20 +4,43 @@
     <app-map [enableDrawing]="true"></app-map>
   </div>
   <div class="edit-zones-side">
-    <button mat-raised-button color="primary" (click)="saveZone()" [disabled]="!mapComponent?.drawnCoordinates?.length">
-      <mat-icon>save</mat-icon>
-      Salva zona
-    </button>
-    <!-- Mostra tutte le coordinate di tutti i poligoni disegnati -->
-    <div *ngIf="hasDrawnPolygons">
-      <div *ngFor="let polygon of mapComponent?.drawnPolygons; let i = index" style="margin-bottom: 8px;">
-        <span>Poligono {{ i + 1 }}</span>
-        <button mat-icon-button color="warn" (click)="removeDrawnPolygon(i)">
-          <mat-icon>delete</mat-icon>
-        </button>
-        <pre style="white-space: pre-wrap; word-break: break-all; background: #f5f5f5; padding: 8px; border-radius: 4px;">
-{{ polygon | json }}
-        </pre>
+    <div class="header-actions">
+      <h2>Nuove Zone</h2>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="saveZone()" 
+        [disabled]="!isFormValid">
+        <mat-icon>save</mat-icon>
+        Salva tutto
+      </button>
+    </div>
+    
+    <div *ngIf="!hasDrawnPolygons" class="empty-state">
+      <p>Disegna un poligono sulla mappa per iniziare.</p>
+    </div>
+
+    <!-- Lista poligoni disegnati -->
+    <div *ngIf="hasDrawnPolygons" class="polygons-list">
+      <div *ngFor="let polygon of mapComponent?.drawnPolygons; let i = index" class="polygon-item">
+        <div class="polygon-header">
+          <span class="polygon-title">Zona {{ i + 1 }}</span>
+          <button mat-icon-button color="warn" (click)="removeDrawnPolygon(i)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+        
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Tipologia Zona</mat-label>
+          <mat-select [(ngModel)]="mapComponent!.drawnPolygonTypes[i]" required>
+            <mat-option *ngFor="let type of zoneTypes" [value]="type">
+              {{ type | titlecase }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="!mapComponent!.drawnPolygonTypes[i]">
+            Seleziona una tipologia
+          </mat-error>
+        </mat-form-field>
       </div>
     </div>
   </div>

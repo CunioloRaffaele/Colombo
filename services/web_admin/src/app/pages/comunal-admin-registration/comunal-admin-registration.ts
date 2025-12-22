@@ -4,7 +4,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../../environments/environment';
-import { AuthService } from '../../services/auth.service'; // Importa il servizio
+import { AuthService } from '../../services/auth.service';
 
 // Material
 import { MatCardModule } from '@angular/material/card';
@@ -45,18 +45,14 @@ export class ComunalAdminRegistration {
 
   /**
    * Costruttore del componente.
-   * Inizializza il form di registrazione con i campi richiesti e i relativi validatori.
-   * 
-   * @param fb - FormBuilder per la creazione del form reattivo
-   * @param http - HttpClient per effettuare le chiamate API
-   * @param router - Router per la navigazione tra le pagine
-   * @param authService - AuthService per la gestione dell'autenticazione
+   * Inizializza il form di registrazione con i campi richiesti (comune, email, password)
+   * e i relativi validatori (required, email, minLength).
    */
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
     private router: Router,
-    private authService: AuthService // Inietta il servizio
+    private authService: AuthService
   ) {
     this.registrationForm = this.fb.group({
       comune: ['', Validators.required],
@@ -70,7 +66,7 @@ export class ComunalAdminRegistration {
    * 1. Verifica la validità del form.
    * 2. Invia una richiesta POST all'endpoint di registrazione.
    * 3. In caso di successo: salva il token, verifica il tipo utente e reindirizza alla dashboard.
-   * 4. In caso di errore: gestisce e visualizza il messaggio di errore appropriato.
+   * 4. In caso di errore: gestisce e visualizza il messaggio di errore appropriato (parsing errori server).
    */
   onRegister() {
     if (this.registrationForm.invalid) return;
@@ -86,7 +82,7 @@ export class ComunalAdminRegistration {
       next: (res) => {
         localStorage.setItem('jwt_token', res.token);
         
-        // Usa il metodo del servizio
+        // Usa il metodo del servizio per verificare il tipo utente
         const type = this.authService.getTypeFromToken(res.token);
         
         this.loading = false;
@@ -95,6 +91,7 @@ export class ComunalAdminRegistration {
         }
       },
       error: (err) => {
+        // Logica complessa per gestire diversi formati di errore restituiti dal backend
         if (err.error) {
           if (typeof err.error === 'string') {
             try {

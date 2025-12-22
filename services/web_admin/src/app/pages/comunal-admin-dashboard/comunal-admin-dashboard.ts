@@ -12,6 +12,10 @@ import { MatIcon } from '@angular/material/icon';
 import { J } from '@angular/cdk/keycodes';
 
 
+/**
+ * Dashboard principale per l'amministratore comunale.
+ * Visualizza la mappa delle zone, l'ecoscore totale e la lista delle zone monitorate.
+ */
 @Component({
   selector: 'app-comunal-admin-dashboard',
   standalone: true,
@@ -39,7 +43,7 @@ export class ComunalAdminDashboard implements OnInit, AfterViewInit {
     this.loadZonesWithData();
     this.loadTotalEcoscore();
 
-    // Ricarica la mappa ogni volta che si torna sulla dashboard
+    // Ricarica la mappa quando si naviga indietro verso la dashboard
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd && event.urlAfterRedirects.includes('comunal-admin-dashboard')) {
         setTimeout(() => {
@@ -50,12 +54,16 @@ export class ComunalAdminDashboard implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Ricarica i poligoni quando la view è pronta
+    // Assicura che la mappa sia aggiornata dopo il rendering iniziale
     setTimeout(() => {
       this.mapComponent?.reloadPolygons();
     });
   }
 
+  /**
+   * Carica l'Ecoscore medio totale del comune.
+   * Effettua una chiamata all'endpoint di reportistica.
+   */
   loadTotalEcoscore() {
     const token = localStorage.getItem('jwt_token');
     if (!token) {
@@ -80,6 +88,10 @@ export class ComunalAdminDashboard implements OnInit, AfterViewInit {
     });
   }
 
+  /**
+   * Carica la lista delle zone e per ciascuna recupera i dati di dettaglio (PM, CO2, Ecoscore).
+   * Utilizza Promise.all per attendere il completamento di tutte le richieste di dettaglio.
+   */
   loadZonesWithData() {
     this.loading = true;
     this.error = null;
@@ -91,6 +103,8 @@ export class ComunalAdminDashboard implements OnInit, AfterViewInit {
           return;
         }
         const token = localStorage.getItem('jwt_token');
+        
+        // Esegue chiamate parallele per ottenere i dettagli di ogni zona
         Promise.all(
           ids.map(id =>
             this.http.get<any>(
@@ -119,8 +133,9 @@ export class ComunalAdminDashboard implements OnInit, AfterViewInit {
   }
 
   /**
-   * Elimina una zona tramite l'endpoint DELETE /zones e aggiorna la lista e la mappa.
-   * @param id id della zona da eliminare
+   * Elimina una zona specifica.
+   * Dopo l'eliminazione, aggiorna la lista locale e ricarica la mappa.
+   * @param id - L'ID della zona da eliminare.
    */
   deleteZone(id: number) {
     const token = localStorage.getItem('jwt_token');
@@ -134,9 +149,7 @@ export class ComunalAdminDashboard implements OnInit, AfterViewInit {
       }
     ).subscribe({
       next: () => {
-        // Aggiorna la lista delle zone
         this.zones = this.zones.filter(z => z.id !== id);
-        // Aggiorna la mappa se disponibile
         if (this.mapComponent && typeof this.mapComponent.reloadPolygons === 'function') {
           this.mapComponent.reloadPolygons();
         }
