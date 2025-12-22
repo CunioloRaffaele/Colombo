@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const prisma = require('../../utils/prisma');
 const emissions = require('../../utils/emissions');
 const vinDecoder = require('../../utils/vin');
+const DriveDataProto = require('../../proto/compiled/drive_data.js');
 
 exports.startSession = async (req, res) => {
     try {
@@ -141,43 +142,75 @@ exports.endSession = async (req, res) => {
     }
 }
 
-
-
-const protobuf = require('protobufjs');
-const path = require('path');
-
 exports.sendReadings = async (req, res) => {
     try {
-        let data;
+        const sessioneId = parseInt(req.params.id);
+        const email = req.userToken.email;
         const contentType = req.headers['content-type'];
+        let data;
+
+        // Validate session id
+        if (!sessioneId || isNaN(sessioneId)) {
+            return res.status(400).json({ error: 'Invalid session id' });
+        }
+
+        // Validate user
+        const user = await prisma.cittadini.findUnique({ where: { email } });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Validate session exists and belongs to user
+        const sessione = await prisma.sessioni.findFirst({
+            where: {
+                id: sessioneId,
+                vetture: { proprietario: email }
+            }
+        });
+        if (!sessione) {
+            return res.status(404).json({ error: 'Session not found or not associated with user' });
+        }
+
+        // Decode input
         if (contentType === 'application/x-protobuf') {
-            // Carica dinamicamente il .proto
-            const protoPath = path.join(__dirname, '../../../../proto/api/v1/drive_data.proto');
-            const root = await protobuf.load(protoPath);
-            const DriveDataPoint = root.lookupType('colombo.api.v1.DriveDataPoint');
-            // Buffer dal body
+            // Use precompiled static-module
             const buffer = req.body instanceof Buffer ? req.body : Buffer.from(req.body);
-            const message = DriveDataPoint.decode(buffer);
-            data = DriveDataPoint.toObject(message, { enums: String, longs: Number, defaults: true });
+            data = DriveDataProto.colombo.api.v1.DriveDataPoint.decode(buffer);
         } else if (contentType && contentType.includes('application/json')) {
             data = req.body;
         } else {
             return res.status(415).json({ error: 'Unsupported content-type' });
         }
 
-        // Validazione base (puoi aggiungere controlli specifici)
-        if (!data || typeof data !== 'object') {
+        // Basic validation
+        if (!data || typeof data !== 'object' || data.latitude == null || data.longitude == null) {
             return res.status(400).json({ error: 'Invalid data format' });
         }
 
-        // TODO: Salvataggio dati su DB (usando prisma, come per le altre funzioni)
+        // Save to DB (geometry point from lat/lon)
+        // NOTE: This assumes PostGIS and that prisma supports raw SQL for geometry
+        const geoJson = {
+            type: 'Point',
+            coordinates: [data.longitude, data.latitude]
+        };
+        const punteggio = 0; // TODO: calculate score if needed
 
-        res.status(200).json({ message: 'Dati ricevuti correttamente', data });
+        await prisma.$executeRaw`INSERT INTO rilevazioni (sessione, punto, punteggio) VALUES (${sessioneId}, ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(geoJson)}), 4326), ${punteggio})`;
+
+        // Return Swagger-compliant response
+        res.status(200).json({
+            message: 'Dati ricevuti correttamente',
+            sessionId: sessioneId,
+            rilevazione: {
+                punto: geoJson,
+                punteggio
+            }
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
-}
+};
 
 
 exports.downloadReadings = async (req, res) => {
