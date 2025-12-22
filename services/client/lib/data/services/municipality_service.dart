@@ -1,4 +1,5 @@
 import 'package:colombo/core/constants/api_constants.dart';
+import 'package:colombo/data/models/zone_dto.dart';
 
 import '../../core/api/api_client.dart';
 
@@ -22,6 +23,23 @@ class MunicipalityService {
       return 0;
     } catch (e) {
       throw ('Errore durante la ricerca dei comuni: $e');
+    }
+  }
+
+  static Future<List<ZoneDto>> getZones(int istat) async {
+    final api = ApiClient();
+    try {
+      final data = await api.get<Map<String, dynamic>>(
+        ApiConstants.getMunicipalityPoligonsEndpoint(istat),
+      );
+
+      if (data.containsKey('zones') && data['zones'] is List) {
+        final response = ZoneResponseDto.fromJson(data);
+        return response.zones;
+      }
+      return [];
+    } catch (e) {
+      throw ('Errore durante il recupero delle zone: $e');
     }
   }
 
