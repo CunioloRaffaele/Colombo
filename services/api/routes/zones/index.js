@@ -17,5 +17,7 @@ zoneRouter.post('/near-point', validateJsonRequest, authMiddleware, controller.g
 zoneRouter.get('/ids', authMiddleware, controller.getZoneIdsByComune);
 // Restituisce la geometria di una zona dato l'id
 zoneRouter.get('/geometry/:id', authMiddleware, controller.getZoneGeometryById);
+// Restituisce tutte le geometrie di un istat specifico (usato per mappa app client)
+zoneRouter.get('/map/:istat', authMiddleware, controller.getZonesByComune);
 
 module.exports = zoneRouter;

@@ -170,3 +170,53 @@ exports.getZoneGeometryById = async (req, res) => {
     return res.status(500).json({ success: false, error: 'Errore nel recupero della geometria della zona', details: err.message });
   }
 };
+
+// Restituisce tutte le geometrie di un istat specifico (usato per mappa app client)
+exports.getZonesByComune = async (req, res) => {
+  const istat = parseInt(req.params.istat);
+  if (!istat) {
+    return res.status(400).json({ error: 'istat comune richiesto' });
+  }
+
+  try {
+    // Verifica se l'utente risiede in un comune registrato
+    const userEmail = req.userToken.email;
+    
+    // Recupera la residenza dell'utente
+    const user = await prisma.cittadini.findUnique({
+      where: { email: userEmail },
+      select: { residenza: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+
+    // Controlla se il comune di residenza è registrato
+    const comuneRegistrato = await prisma.comuni_registrati.findUnique({
+      where: { comune: user.residenza }
+    });
+
+    if (!comuneRegistrato) {
+      return res.status(403).json({ error: 'Il tuo comune di residenza non è registrato alla piattaforma. Non è possibile visualizzare le zone' });
+    }
+    /*
+    if (user.residenza !== istat) {
+       return res.status(403).json({ error: 'Puoi visualizzare solo le zone del tuo comune di residenza' });
+    }
+    */
+
+    const result = await prisma.$queryRaw`
+      SELECT id, ST_AsGeoJSON(poligono) as geometry, tipologia FROM zone WHERE comune = ${istat}
+    `;
+    const zones = result.map(z => ({
+      id: z.id,
+      geometry: JSON.parse(z.geometry),
+      tipologia: z.tipologia
+    }));
+    return res.json({ zones });
+  } catch (err) {
+    console.error('getZonesByComune error:', err.stack);
+    return res.status(500).json({ success: false, error: 'Errore nel recupero delle zone del comune', details: err.message });
+  }
+};
