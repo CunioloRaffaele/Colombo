@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class GlassCard extends StatelessWidget {
+/*class GlassCard extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? padding;
@@ -44,5 +44,43 @@ class GlassCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}*/
+
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final VoidCallback? onTap;
+  final double borderRadius;
+
+  const GlassCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.onTap,
+    this.borderRadius = 20,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: padding ?? const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+          ),
+          child: child,
+        ),
+      ),
+    );
+
+    return onTap == null
+        ? content
+        : GestureDetector(onTap: onTap, child: content);
   }
 }
