@@ -84,13 +84,13 @@ class CarInfoPage extends StatelessWidget {
                   _infoRow(
                     'Emissioni CO₂ (g/km)',
                     co2Emissions >= 0
-                        ? co2Emissions.toStringAsFixed(2)
+                        ? co2Emissions.toStringAsFixed(4)
                         : 'Dati non disponibili',
                   ),
                   _infoRow(
                     'Emissioni PM (g/km)',
                     pmEmissions >= 0
-                        ? pmEmissions.toStringAsFixed(2)
+                        ? pmEmissions.toStringAsFixed(4)
                         : 'Dati non disponibili',
                   ),
                 ],

@@ -102,7 +102,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                             image: car.image != null
                                                 ? DecorationImage(
                                                     image: car.image!,
-                                                    fit: BoxFit.cover,
+                                                    fit: BoxFit.contain,
                                                   )
                                                 : null,
                                           ),

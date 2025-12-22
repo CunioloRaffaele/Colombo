@@ -92,7 +92,6 @@ exports.getCarInfo = async (req, res) => {
         const result = vinDecoder.getVIN(car.vin);
 
         // Aggiungi stime emissioni basate sull'anno del modello
-        console.log("Car model year:", result.modelYear);
         if (result && result.modelYear) {
             result['co2Perkm'] = emissions.co2PerKm(result.modelYear);
             result['pmPerkm'] = emissions.pmPerKm(result.modelYear);

@@ -73,8 +73,8 @@ class SettingsViewModel extends ChangeNotifier {
                 model: '',
                 manufacturer: rawManufacturer,
                 year: carDetails.modelYear?.toString() ?? 'Anno sconosciuto',
-                co2Emissions: carDetails.pmPerkm,
-                pmEmissions: carDetails.co2Perkm,
+                co2Emissions: carDetails.co2Perkm,
+                pmEmissions: carDetails.pmPerkm,
                 image: AssetImage(assetPath),
               ),
             );
