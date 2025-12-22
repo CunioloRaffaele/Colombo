@@ -6,20 +6,6 @@ import { environment } from '../../../environments/environment';
 import { PolygonService } from '../../services/polygon.service';
 
 
-// Fix per i tipi mancanti di Leaflet Draw
-declare module 'leaflet' {
-  namespace Control {
-    class Draw extends Control {
-      constructor(options?: any);
-    }
-  }
-  namespace Draw {
-    namespace Event {
-      const CREATED: string;
-    }
-  }
-}
-
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'assets/leaflet/marker-icon-2x.png',
@@ -84,14 +70,14 @@ export class MapComponent implements AfterViewInit {
     if (this.enableDrawing) {
       const drawControl = new L.Control.Draw({
         draw: {
-          polygon: true,
+          polygon: {},
           marker: false,
           polyline: false,
           rectangle: false,
           circle: false,
           circlemarker: false
         },
-        edit: false
+        edit: { featureGroup: new L.FeatureGroup() }
       });
       this.map.addControl(drawControl);
 
