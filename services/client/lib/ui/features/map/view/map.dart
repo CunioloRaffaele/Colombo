@@ -71,9 +71,13 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
             children: [
               FlutterMap(
                 mapController: _viewModel.mapController,
-                options: const MapOptions(
-                  initialCenter: LatLng(41.8719, 12.5674), // Center of Italy
+                options: MapOptions(
+                  initialCenter: const LatLng(
+                    41.8719,
+                    12.5674,
+                  ), // Center of Italy
                   initialZoom: 5.0,
+                  onTap: _viewModel.onMapTap,
                 ),
                 children: [
                   TileLayer(
@@ -88,7 +92,99 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
               ),
 
               Positioned(
-                bottom: 100,
+                bottom: MediaQuery.of(context).padding.bottom + 95,
+                left: 20,
+                right: 20,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 600),
+                  switchInCurve: Curves.easeOutBack,
+                  switchOutCurve: Curves.easeInBack,
+                  transitionBuilder: (child, animation) {
+                    final offsetAnimation = Tween<Offset>(
+                      begin: const Offset(0, 2.0),
+                      end: Offset.zero,
+                    ).animate(animation);
+                    return SlideTransition(
+                      position: offsetAnimation,
+                      child: child,
+                    );
+                  },
+                  child: _viewModel.selectedZone != null
+                      ? LiquidGlassLayer(
+                          key: ValueKey(_viewModel.selectedZone!.tipologia),
+                          child: LiquidStretch(
+                            stretch: 0.5,
+                            interactionScale: 0.90,
+                            child: LiquidGlass(
+                              shape: LiquidRoundedSuperellipse(
+                                borderRadius: 20,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.1),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        _getIconForZoneType(
+                                          _viewModel.selectedZone!.tipologia,
+                                        ),
+                                        color: Colors.white,
+                                        size: 28,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _viewModel.selectedZone!.tipologia
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Zona a traffico controllato.\nNon sono attualmente disponibili informazioni circa incentivazioni per la guida sostenibile in questa area.',
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(
+                                                0.7,
+                                              ),
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+
+              Positioned(
+                bottom: MediaQuery.of(context).padding.bottom + 15,
                 left: 20,
                 right: 20,
                 child: LiquidGlassLayer(
@@ -173,5 +269,21 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
         },
       ),
     );
+  }
+
+  IconData _getIconForZoneType(String type) {
+    switch (type.toLowerCase()) {
+      case 'centro storico':
+        return Icons.school;
+      case 'commerciale':
+        return Icons.store;
+      case 'industriale':
+        return Icons.factory;
+      case 'residenziale':
+        return Icons.home;
+      case 'generica':
+      default:
+        return Icons.map;
+    }
   }
 }

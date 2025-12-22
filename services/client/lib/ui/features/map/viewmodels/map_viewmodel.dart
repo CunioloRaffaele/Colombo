@@ -4,6 +4,7 @@ import 'package:colombo/ui/widgets/notification_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../../data/models/zone_dto.dart';
 
 class MapViewModel extends ChangeNotifier {
   final MapController mapController = MapController();
@@ -16,6 +17,12 @@ class MapViewModel extends ChangeNotifier {
 
   List<Marker> _markers = [];
   List<Marker> get markers => _markers;
+
+  // Store zone data for hit testing
+  List<({ZoneDto zone, List<LatLng> points})> _zonesData = [];
+
+  ZoneDto? _selectedZone;
+  ZoneDto? get selectedZone => _selectedZone;
 
   bool _isMunicipalityRegistered = false;
   bool get isMunicipalityRegistered => _isMunicipalityRegistered;
@@ -76,12 +83,16 @@ class MapViewModel extends ChangeNotifier {
         _showError(context, 'Nessuna zona trovata per questo comune');
         _polygons = [];
         _markers = [];
+        _zonesData = [];
+        _selectedZone = null;
         notifyListeners();
         return;
       }
 
       _polygons = [];
       _markers = [];
+      _zonesData = [];
+      _selectedZone = null;
 
       for (var z in zones) {
         final coordinates = z.geometry['coordinates'] as List;
@@ -93,6 +104,8 @@ class MapViewModel extends ChangeNotifier {
             (coord[0] as num).toDouble(),
           );
         }).toList();
+
+        _zonesData.add((zone: z, points: points));
 
         Color color;
         IconData icon;
@@ -157,6 +170,40 @@ class MapViewModel extends ChangeNotifier {
     } catch (e) {
       _showError(context, e.toString());
     } finally {}
+  }
+
+  void onMapTap(TapPosition tapPosition, LatLng point) {
+    ZoneDto? foundZone;
+
+    for (var data in _zonesData) {
+      if (_isPointInPolygon(point, data.points)) {
+        foundZone = data.zone;
+        break;
+      }
+    }
+
+    if (_selectedZone != foundZone) {
+      _selectedZone = foundZone;
+      notifyListeners();
+    }
+  }
+
+  bool _isPointInPolygon(LatLng point, List<LatLng> polygon) {
+    bool isInside = false;
+    int i, j = polygon.length - 1;
+    for (i = 0; i < polygon.length; i++) {
+      if (((polygon[i].latitude > point.latitude) !=
+              (polygon[j].latitude > point.latitude)) &&
+          (point.longitude <
+              (polygon[j].longitude - polygon[i].longitude) *
+                      (point.latitude - polygon[i].latitude) /
+                      (polygon[j].latitude - polygon[i].latitude) +
+                  polygon[i].longitude)) {
+        isInside = !isInside;
+      }
+      j = i;
+    }
+    return isInside;
   }
 
   LatLng _calculatePolygonCenter(List<LatLng> points) {

@@ -107,31 +107,33 @@ class _MainLayoutState extends State<MainLayout> {
           ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(bottom: 10.0),
-        child: GlowBottomAppBar(
-          initialIndex: _currentIndex,
-          height: 60,
-          onChange: (value) {
-            setState(() {
-              _currentIndex = value;
-            });
-          },
-          background: Colors.black.withOpacity(0.4),
-          iconSize: 35,
-          glowColor: const Color(0xFF1EAE98),
-          selectedChildren: const [
-            Icon(Icons.drive_eta_rounded, color: Color(0xFF1EAE98)),
-            Icon(Icons.stacked_bar_chart_rounded, color: Color(0xFF1EAE98)),
-            Icon(Icons.map, color: Color(0xFF1EAE98)),
-            Icon(Icons.person, color: Color(0xFF1EAE98)),
-          ],
-          children: const [
-            Icon(Icons.drive_eta_rounded, color: Colors.white54),
-            Icon(Icons.stacked_bar_chart_rounded, color: Colors.white54),
-            Icon(Icons.map_outlined, color: Colors.white54),
-            Icon(Icons.person_outline, color: Colors.white54),
-          ],
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 5.0),
+          child: GlowBottomAppBar(
+            initialIndex: _currentIndex,
+            height: 60,
+            onChange: (value) {
+              setState(() {
+                _currentIndex = value;
+              });
+            },
+            background: Colors.black.withOpacity(0.4),
+            iconSize: 35,
+            glowColor: const Color(0xFF1EAE98),
+            selectedChildren: const [
+              Icon(Icons.drive_eta_rounded, color: Color(0xFF1EAE98)),
+              Icon(Icons.stacked_bar_chart_rounded, color: Color(0xFF1EAE98)),
+              Icon(Icons.map, color: Color(0xFF1EAE98)),
+              Icon(Icons.person, color: Color(0xFF1EAE98)),
+            ],
+            children: const [
+              Icon(Icons.drive_eta_rounded, color: Colors.white54),
+              Icon(Icons.stacked_bar_chart_rounded, color: Colors.white54),
+              Icon(Icons.map_outlined, color: Colors.white54),
+              Icon(Icons.person_outline, color: Colors.white54),
+            ],
+          ),
         ),
       ),
     );
