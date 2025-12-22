@@ -5,12 +5,20 @@ class ApiConstants {
   static const String registerEndpoint = 'auth/user';
   static const String deleteAccountEndpoint = 'auth/user';
   static const String userInfoEndpoint = 'auth/user';
+
   static const String searchMunicipalitiesEndpoint = 'auth/comuni/search';
   static String getMunicipalityNameEndpoint(String istat) =>
       'auth/comune/$istat';
+  static String getMunicipalityPoligonsEndpoint(int istat) =>
+      'zones/map/$istat';
+
   static const String retriveCarListEndpoint = 'vehicles/cars';
-  static const String userSessionsCounterEndpoint = 'reports/user/sessions';
   static String carDetailsEndpoint(String vin) => 'vehicles/car/details/$vin';
+
+  static const String userSessionsCounterEndpoint = 'reports/user/sessions';
+  static const String userGlobalEcoStatsEndpoint = 'reports/user/summary';
+  static String userMonthlyEcoStatsEndpoint(int year, int month) =>
+      'reports/user/sessions/$month/$year';
 
   static const int timeoutSeconds = 10;
 }
