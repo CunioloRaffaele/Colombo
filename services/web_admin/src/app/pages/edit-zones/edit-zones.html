@@ -9,7 +9,7 @@
       Salva zona
     </button>
     <!-- Mostra tutte le coordinate di tutti i poligoni disegnati -->
-    <div *ngIf="mapComponent?.drawnPolygons?.length">
+    <div *ngIf="hasDrawnPolygons">
       <div *ngFor="let polygon of mapComponent?.drawnPolygons; let i = index" style="margin-bottom: 8px;">
         <span>Poligono {{ i + 1 }}</span>
         <button mat-icon-button color="warn" (click)="removeDrawnPolygon(i)">

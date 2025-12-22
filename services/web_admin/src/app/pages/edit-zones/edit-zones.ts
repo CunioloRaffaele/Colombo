@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MapComponent } from '../../components/map/map';
 import { ToolbarComponent } from '../../components/toolbar/toolbar.component';
@@ -13,10 +13,15 @@ import * as L from 'leaflet';
   templateUrl: './edit-zones.html',
   styleUrl: './edit-zones.css',
 })
-export class EditZones {
+export class EditZones implements AfterViewInit {
   @ViewChild(MapComponent) mapComponent?: MapComponent;
 
-  constructor(public http: HttpClient) {}
+  constructor(public http: HttpClient, private cdr: ChangeDetectorRef) {}
+
+  ngAfterViewInit() {
+    // Forza il rilevamento dei cambiamenti dopo che ViewChild è inizializzato
+    this.cdr.detectChanges();
+  }
 
   saveZone() {
     this.mapComponent?.saveZone();
@@ -49,5 +54,9 @@ export class EditZones {
         }));
       });
     }
+  }
+
+  get hasDrawnPolygons(): boolean {
+    return !!this.mapComponent?.drawnPolygons?.length;
   }
 }
