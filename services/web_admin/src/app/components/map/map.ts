@@ -1,17 +1,9 @@
 import { Component, AfterViewInit, Input } from '@angular/core';
-import * as L from 'leaflet';
-import 'leaflet-draw';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PolygonService } from '../../services/polygon.service';
 
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'assets/leaflet/marker-icon-2x.png',
-  iconUrl: 'assets/leaflet/marker-icon.png',
-  shadowUrl: 'assets/leaflet/marker-shadow.png'
-});
+declare var L: any;
 
 @Component({
   selector: 'app-map',
@@ -20,9 +12,9 @@ L.Icon.Default.mergeOptions({
   styleUrls: ['./map.css'],
 })
 export class MapComponent implements AfterViewInit {
-  @Input() enableDrawing = false; // <--- aggiungi questa riga
+  @Input() enableDrawing = false;
 
-  private map!: L.Map;
+  private map!: any; // Sostituisci L.Map con any
   private zoneColors = [
     '#e53935', // rosso
     '#8e24aa', // viola
@@ -35,11 +27,11 @@ export class MapComponent implements AfterViewInit {
     '#757575', // grigio
     '#d81b60', // rosa
   ];
-  private polygonsLayers: L.Layer[] = [];
+  private polygonsLayers: any[] = []; // Sostituisci L.Layer[] con any[]
   drawnCoordinates: number[][] = [];
   drawnPolygons: number[][][] = [];
-  drawnPolygonLayers: L.Layer[] = []; // Nuovo array per i layer
-  labelMarkers: L.Marker[] = [];
+  drawnPolygonLayers: any[] = []; // Sostituisci L.Layer[] con any[]
+  labelMarkers: any[] = []; // Sostituisci L.Marker[] con any[]
 
   constructor(private http: HttpClient, private polygonService: PolygonService) { }
 
@@ -85,7 +77,7 @@ export class MapComponent implements AfterViewInit {
         this.map.addLayer(layer);
 
         const latlngs = layer.getLatLngs()[0];
-        const polygon = latlngs.map((latlng: L.LatLng) => [latlng.lat, latlng.lng]);
+        const polygon = latlngs.map((latlng: any) => [latlng.lat, latlng.lng]); // Sostituisci L.LatLng con any
         this.drawnPolygons.push(polygon);
         this.drawnPolygonLayers.push(layer);
 
@@ -197,7 +189,7 @@ export class MapComponent implements AfterViewInit {
     });
   }
 
-  removePolygonLayer(layer: L.Layer) {
+  removePolygonLayer(layer: any) { // Sostituisci L.Layer con any
     this.map.removeLayer(layer);
   }
 }

@@ -5,7 +5,8 @@ import { ToolbarComponent } from '../../components/toolbar/toolbar.component';
 import { MatIcon } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { HttpClient } from '@angular/common/http';
-import * as L from 'leaflet';
+
+declare var L: any;
 
 @Component({
   selector: 'app-edit-zones',
