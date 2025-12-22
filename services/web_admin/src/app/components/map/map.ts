@@ -76,8 +76,7 @@ export class MapComponent implements AfterViewInit {
           rectangle: false,
           circle: false,
           circlemarker: false
-        },
-        edit: { featureGroup: new L.FeatureGroup() }
+        }
       });
       this.map.addControl(drawControl);
 
