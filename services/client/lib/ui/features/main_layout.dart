@@ -1,7 +1,11 @@
 // stateless widget for home screen
 import 'package:flutter/material.dart';
-import 'package:glow_bottom_app_bar/glow_bottom_app_bar.dart';
+//import 'package:glow_bottom_app_bar/glow_bottom_app_bar.dart'; --- IGNORE ---
+import '../widgets/custom_bottom_app_bar.dart';
 import './profile/view/settings.dart';
+import './stats/view/statistics.dart';
+import './map/view/map.dart';
+import './../../data/services/location_service.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -11,6 +15,46 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _verifyLocationPermissions(),
+    );
+  }
+
+  Future<void> _verifyLocationPermissions() async {
+    bool granted;
+    String errorMessage = '';
+    try {
+      granted = await verifyLocationPermissions();
+    } catch (e) {
+      granted = false;
+      errorMessage = e.toString();
+    }
+    if (!mounted) return;
+    if (!granted) {
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(errorMessage),
+          content: const Text(
+            'Per utilizzare tutte le funzionalità dell\'app, è necessario abilitare i servizi di localizzazione.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _verifyLocationPermissions();
+              },
+              child: const Text('Chiudi'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   int _currentIndex = 0;
 
   // Lista delle pagine da mostrare
@@ -21,13 +65,9 @@ class _MainLayoutState extends State<MainLayout> {
         style: TextStyle(color: Colors.white),
       ),
     ),
-    const Center(
-      child: Text(
-        "Statistics View Placeholder",
-        style: TextStyle(color: Colors.white),
-      ),
-    ),
-    Center(child: SettingsPage()),
+    const Center(child: StatisticsPage()),
+    const Center(child: MapPage()),
+    const Center(child: SettingsPage()),
   ];
 
   @override
@@ -68,7 +108,7 @@ class _MainLayoutState extends State<MainLayout> {
         ),
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(bottom: 20.0),
+        padding: const EdgeInsets.only(bottom: 10.0),
         child: GlowBottomAppBar(
           initialIndex: _currentIndex,
           height: 60,
@@ -83,11 +123,13 @@ class _MainLayoutState extends State<MainLayout> {
           selectedChildren: const [
             Icon(Icons.drive_eta_rounded, color: Color(0xFF1EAE98)),
             Icon(Icons.stacked_bar_chart_rounded, color: Color(0xFF1EAE98)),
+            Icon(Icons.map, color: Color(0xFF1EAE98)),
             Icon(Icons.person, color: Color(0xFF1EAE98)),
           ],
           children: const [
             Icon(Icons.drive_eta_rounded, color: Colors.white54),
             Icon(Icons.stacked_bar_chart_rounded, color: Colors.white54),
+            Icon(Icons.map_outlined, color: Colors.white54),
             Icon(Icons.person_outline, color: Colors.white54),
           ],
         ),
