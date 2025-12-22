@@ -15,7 +15,8 @@
           "options": {
             "browser": "src/main.ts",
             "polyfills": [
-              "zone.js"
+              "zone.js",
+              "src/leaflet-global.ts"
             ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
@@ -33,6 +34,7 @@
               "node_modules/leaflet/dist/leaflet.css",
               "node_modules/leaflet-draw/dist/leaflet.draw.css"
             ],
+            "scripts": [],
             "allowedCommonJsDependencies": [
               "leaflet",
               "leaflet-draw"
