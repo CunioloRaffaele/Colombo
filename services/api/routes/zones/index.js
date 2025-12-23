@@ -8,7 +8,7 @@ const validateJsonRequest = require('../../middleware/validateJsonRequest');
 // Salva una zona di interesse
 zoneRouter.post('', validateJsonRequest, authMiddleware, controller.saveZone);
 // Verifica se un punto è dentro una zona
-zoneRouter.post('/contains', validateJsonRequest, authMiddleware, controller.checkPointInZone);
+zoneRouter.get('/contains/:lat/:lng', authMiddleware, controller.checkPointInZone);
 // Elimina una o più zone di interesse
 zoneRouter.delete('', validateJsonRequest, authMiddleware, controller.deleteZones);
 // Restituisce la lista di zone vicine a un punto

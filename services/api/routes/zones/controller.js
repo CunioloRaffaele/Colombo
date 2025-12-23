@@ -11,8 +11,9 @@ exports.saveZone = async (req, res) => {
   const comune = req.userToken.comune;
   const { coordinates, tipologia } = req.body;
 
-  if (!isValidCoordinatesArray(coordinates)) {
-    return res.status(400).json({ error: 'coordinates deve essere un array di almeno 3 coppie [lng, lat] numeriche' });
+  // Now expect coordinates as [lat, lng]
+  if (!Array.isArray(coordinates) || coordinates.length < 3 || !coordinates.every(c => Array.isArray(c) && c.length === 2 && typeof c[0] === 'number' && typeof c[1] === 'number')) {
+    return res.status(400).json({ error: 'coordinates deve essere un array di almeno 3 coppie [lat, lng] numeriche' });
   }
 
   // Chiude il poligono se necessario
@@ -21,7 +22,8 @@ exports.saveZone = async (req, res) => {
     coords.push(coords[0]);
   }
 
-  const poligonoWKT = `POLYGON((${coords.map(c => `${c[0]} ${c[1]}`).join(', ')}))`;
+  // Build WKT as POLYGON((lng lat, ...))
+  const poligonoWKT = `POLYGON((${coords.map(c => `${c[1]} ${c[0]}`).join(', ')}))`;
 
   try {
     const sql = `
@@ -41,17 +43,14 @@ exports.saveZone = async (req, res) => {
 
 // Verifica punto
 exports.checkPointInZone = async (req, res) => {
-  const { point } = req.body;
-
-  if (!Array.isArray(point) || point.length !== 2) {
-    return res.status(400).json({ error: 'Missing required field: point ([lng,lat])' });
+  // Prendi lat e lng dai parametri URL
+  const lat = Number(req.params.lat);
+  const lng = Number(req.params.lng);
+  if (isNaN(lat) || isNaN(lng)) {
+    return res.status(400).json({ error: 'lat e lng devono essere numeri' });
   }
 
-  const [lng, lat] = point;
-  if (typeof lng !== 'number' || typeof lat !== 'number') {
-    return res.status(400).json({ error: 'point deve contenere numeri: [lng, lat]' });
-  }
-
+  // Build WKT as POINT(lng lat)
   const pointWKT = `POINT(${lng} ${lat})`;
 
   try {
@@ -109,12 +108,14 @@ exports.deleteZones = async (req, res) => {
 // Zone vicine a un punto
 exports.getZonesNearPoint = async (req, res) => {
 
-  const { lng, lat, distance } = req.body;
+  // Expect { lat, lng, distance }
+  const { lat, lng, distance } = req.body;
 
-  if (typeof lng !== 'number' || typeof lat !== 'number' || typeof distance !== 'number') {
-    return res.status(400).json({ error: 'lng, lat e distance devono essere numeri (distance in metri)' });
+  if (typeof lat !== 'number' || typeof lng !== 'number' || typeof distance !== 'number') {
+    return res.status(400).json({ error: 'lat, lng e distance devono essere numeri (distance in metri)' });
   }
 
+  // Build WKT as POINT(lng lat)
   const pointWKT = `POINT(${lng} ${lat})`;
 
   try {
