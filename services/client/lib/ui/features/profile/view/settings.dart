@@ -223,7 +223,21 @@ class _SettingsPageState extends State<SettingsPage> {
                             icon: Icons.code,
                             title: 'Licenze open source',
                             subtitle: 'Vedi le librerie usate',
-                            onTap: () {},
+                            onTap: () {
+                              showLicensePage(
+                                context: context,
+                                applicationName:
+                                    'Green Drive\nProgetto Colombo',
+                                applicationIcon: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Image.asset(
+                                    'lib/ui/assets/icon/icon.png',
+                                    width: 48,
+                                    height: 48,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                           const Divider(
                             color: Colors.white12,
