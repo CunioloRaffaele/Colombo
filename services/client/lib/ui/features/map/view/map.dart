@@ -1,4 +1,6 @@
 import 'package:colombo/ui/features/map/viewmodels/map_viewmodel.dart';
+import 'package:colombo/ui/widgets/glass_button.dart';
+import 'package:colombo/ui/widgets/zone_info_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -110,74 +112,8 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                     );
                   },
                   child: _viewModel.selectedZone != null
-                      ? LiquidGlassLayer(
-                          key: ValueKey(_viewModel.selectedZone!.tipologia),
-                          child: LiquidStretch(
-                            stretch: 0.5,
-                            interactionScale: 0.90,
-                            child: LiquidGlass(
-                              shape: LiquidRoundedSuperellipse(
-                                borderRadius: 20,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.1),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 50,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        _getIconForZoneType(
-                                          _viewModel.selectedZone!.tipologia,
-                                        ),
-                                        color: Colors.white,
-                                        size: 28,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            _viewModel.selectedZone!.tipologia
-                                                .toUpperCase(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Zona a traffico controllato.\nNon sono attualmente disponibili informazioni circa incentivazioni per la guida sostenibile in questa area.',
-                                            style: TextStyle(
-                                              color: Colors.white.withOpacity(
-                                                0.7,
-                                              ),
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
+                      ? ZoneInfoCard(
+                          zoneName: _viewModel.selectedZone!.tipologia,
                         )
                       : const SizedBox.shrink(),
                 ),
@@ -211,16 +147,16 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                               child: TextField(
                                 controller: _viewModel.searchController,
                                 style: const TextStyle(
-                                  color: Colors.white54,
+                                  color: Colors.white,
                                   fontSize: 16,
                                 ),
                                 decoration: const InputDecoration(
                                   prefixIcon: Icon(
                                     Icons.location_city,
-                                    color: Colors.white70,
+                                    color: Colors.white,
                                   ),
                                   hintText: 'Cerca comune...',
-                                  hintStyle: TextStyle(color: Colors.white54),
+                                  hintStyle: TextStyle(color: Colors.white),
                                   border: InputBorder.none,
                                   isDense: true,
                                   contentPadding: EdgeInsets.symmetric(
@@ -235,30 +171,14 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      LiquidStretch(
-                        stretch: 0.5,
-                        interactionScale: 0.90,
-                        child: LiquidGlass(
-                          shape: LiquidRoundedSuperellipse(borderRadius: 20),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.1),
-                              ),
-                            ),
-                            child: IconButton(
-                              onPressed: () =>
-                                  _viewModel.searchMunicipality(context, this),
-                              icon: const Icon(
-                                Icons.search,
-                                color: Colors.white,
-                              ),
-                              padding: const EdgeInsets.all(16),
-                            ),
-                          ),
-                        ),
+                      GlassButton(
+                        icon: Icons.search,
+                        label: "Cerca",
+                        height: 55,
+                        fontSize: 16,
+                        backgroundColor: Colors.black.withOpacity(0.3),
+                        onTap: () =>
+                            _viewModel.searchMunicipality(context, this),
                       ),
                     ],
                   ),
@@ -269,21 +189,5 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
         },
       ),
     );
-  }
-
-  IconData _getIconForZoneType(String type) {
-    switch (type.toLowerCase()) {
-      case 'centro storico':
-        return Icons.school;
-      case 'commerciale':
-        return Icons.store;
-      case 'industriale':
-        return Icons.factory;
-      case 'residenziale':
-        return Icons.home;
-      case 'generica':
-      default:
-        return Icons.map;
-    }
   }
 }
