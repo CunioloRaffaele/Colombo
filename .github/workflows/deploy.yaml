@@ -20,7 +20,15 @@ jobs:
         uses: actions/checkout@v2
 
       # This test uses docker compose to start only the API and DB services
-      
+      - name: Install Protocol Buffers Compiler
+        run: |
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Generate API Protos
+        run: |
+          mkdir -p services/api/proto
+          protoc -I=proto --js_out=import_style=commonjs,binary:services/api/proto proto/api/v1/*.proto proto/common/*.proto
+
       - name: Copy API files (Backend)
         run: |
           mkdir -p dist/api
@@ -118,6 +126,15 @@ jobs:
         run: |
           mkdir -p dist/web_admin
           cp -r services/web_admin/dist/* dist/web_admin
+
+      - name: Install Protocol Buffers Compiler
+        run: |
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Generate API Protos
+        run: |
+          mkdir -p services/api/proto
+          protoc -I=proto --js_out=import_style=commonjs,binary:services/api/proto proto/api/v1/*.proto proto/common/*.proto
 
       # Copy api files
       - name: Copy API files (Backend)
