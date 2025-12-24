@@ -8,11 +8,7 @@ class ZoneDto {
   final Map<String, dynamic> geometry;
   final String tipologia;
 
-  ZoneDto({
-    required this.id,
-    required this.geometry,
-    required this.tipologia,
-  });
+  ZoneDto({required this.id, required this.geometry, required this.tipologia});
 
   factory ZoneDto.fromJson(Map<String, dynamic> json) =>
       _$ZoneDtoFromJson(json);
@@ -30,4 +26,17 @@ class ZoneResponseDto {
       _$ZoneResponseDtoFromJson(json);
 
   Map<String, dynamic> toJson() => _$ZoneResponseDtoToJson(this);
+}
+
+@JsonSerializable()
+class PointInZoneResponseDto {
+  final bool contains;
+  final String? comune;
+
+  PointInZoneResponseDto({required this.contains, this.comune});
+
+  factory PointInZoneResponseDto.fromJson(Map<String, dynamic> json) =>
+      _$PointInZoneResponseDtoFromJson(json);
+
+  Map<String, dynamic> toJson() => _$PointInZoneResponseDtoToJson(this);
 }

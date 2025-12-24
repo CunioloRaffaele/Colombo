@@ -3,7 +3,7 @@ import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 class GlassButton extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String? label;
   final VoidCallback onTap;
   final Color color;
   final Color backgroundColor;
@@ -14,7 +14,7 @@ class GlassButton extends StatelessWidget {
   const GlassButton({
     super.key,
     required this.icon,
-    required this.label,
+    this.label,
     required this.onTap,
     this.color = Colors.white,
     this.backgroundColor = Colors.transparent,
@@ -52,15 +52,16 @@ class GlassButton extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center, // Center content
                   children: [
                     Icon(icon, color: color, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                        fontSize: fontSize,
+                    if (label != null) const SizedBox(width: 8),
+                    if (label != null)
+                      Text(
+                        label!,
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                          fontSize: fontSize,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

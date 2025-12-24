@@ -1,4 +1,7 @@
 // stateless widget for home screen
+import 'package:colombo/ui/features/drive/view/drive.dart';
+import 'package:colombo/ui/features/drive/viewmodels/drive_viewmodel.dart';
+import 'package:colombo/ui/widgets/notification_overlay.dart';
 import 'package:flutter/material.dart';
 //import 'package:glow_bottom_app_bar/glow_bottom_app_bar.dart'; --- IGNORE ---
 import '../widgets/custom_bottom_app_bar.dart';
@@ -15,12 +18,26 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
+  final _driveViewModel = DriveViewModel();
+
   @override
   void initState() {
     super.initState();
+    _driveViewModel.addListener(_onDriveStateChanged);
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _verifyLocationPermissions(),
     );
+  }
+
+  void _onDriveStateChanged() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _driveViewModel.removeListener(_onDriveStateChanged);
+    _driveViewModel.dispose();
+    super.dispose();
   }
 
   Future<void> _verifyLocationPermissions() async {
@@ -58,13 +75,8 @@ class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
 
   // Lista delle pagine da mostrare
-  final List<Widget> _pages = [
-    const Center(
-      child: Text(
-        "Home View Placeholder",
-        style: TextStyle(color: Colors.white),
-      ),
-    ),
+  late final List<Widget> _pages = [
+    Center(child: DrivePage(viewModel: _driveViewModel)),
     const Center(child: StatisticsPage()),
     const Center(child: MapPage()),
     const Center(child: SettingsPage()),
@@ -114,6 +126,12 @@ class _MainLayoutState extends State<MainLayout> {
             initialIndex: _currentIndex,
             height: 60,
             onChange: (value) {
+              if (_driveViewModel.isSessionActive && value != 0) {
+                NotificationOverlay.show(
+                  "Sessione di guida in corso. Mantieni la concentrazione alla guida e adotta comportamenti sicuri.",
+                  Colors.redAccent,
+                );
+              }
               setState(() {
                 _currentIndex = value;
               });

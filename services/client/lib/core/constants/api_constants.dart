@@ -11,6 +11,8 @@ class ApiConstants {
       'auth/comune/$istat';
   static String getMunicipalityPoligonsEndpoint(int istat) =>
       'zones/map/$istat';
+  static String pointInZoneEndpoint(double latitude, double longitude) =>
+      'zones/contains/$latitude/$longitude';
 
   static const String retriveCarListEndpoint = 'vehicles/cars';
   static String carDetailsEndpoint(String vin) => 'vehicles/car/details/$vin';

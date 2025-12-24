@@ -32,9 +32,8 @@ class MunicipalityService {
       final data = await api.get<Map<String, dynamic>>(
         ApiConstants.getMunicipalityPoligonsEndpoint(istat),
       );
-
-      if (data.containsKey('zones') && data['zones'] is List) {
-        final response = ZoneResponseDto.fromJson(data);
+      final response = ZoneResponseDto.fromJson(data);
+      if (response.zones.isNotEmpty) {
         return response.zones;
       }
       return [];
@@ -74,6 +73,20 @@ class MunicipalityService {
       }
     } catch (e) {
       throw ('Errore durante la verifica del comune: $e');
+    }
+  }
+
+  static Future<PointInZoneResponseDto> isPointInZone(
+      double latitude, double longitude) async {
+    final api = ApiClient();
+    try {
+      final data = await api.get<Map<String, dynamic>>(
+        ApiConstants.pointInZoneEndpoint (latitude, longitude)
+      );
+
+      return PointInZoneResponseDto.fromJson(data);
+    } catch (e) {
+      throw ('Errore durante la verifica del punto nella zona: $e');
     }
   }
 }
