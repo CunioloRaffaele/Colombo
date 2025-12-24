@@ -19,10 +19,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
       # This test uses docker compose to start only the API and DB services
-      - name: Install Protocol Buffers Compiler
+      - name: Install Protocol Buffers Compiler and Plugin
         run: |
           sudo apt-get update && sudo apt-get install -y protobuf-compiler
+          npm install -g protoc-gen-js
 
       - name: Generate API Protos
         run: |
@@ -127,9 +133,10 @@ jobs:
           mkdir -p dist/web_admin
           cp -r services/web_admin/dist/* dist/web_admin
 
-      - name: Install Protocol Buffers Compiler
+      - name: Install Protocol Buffers Compiler and Plugin
         run: |
           sudo apt-get update && sudo apt-get install -y protobuf-compiler
+          npm install -g protoc-gen-js
 
       - name: Generate API Protos
         run: |
