@@ -42,4 +42,28 @@ class ReportsService {
       throw Exception("Errore fetch user monthly eco stats: $e");
     }
   }
+
+  Future<SessionDetailsDto> getSessionDetails(int sessionId) async {
+    print("Fetching session details for session $sessionId");
+    try {
+      final endpoint = ApiConstants.sessionDetailsEndpoint(sessionId);
+      final responseJson = await _api.get<Map<String, dynamic>>(endpoint);
+      final responseDto = SessionDetailsDto.fromJson(responseJson);
+      return responseDto;
+    } catch (e) {
+      throw Exception("Errore fetch session details: $e");
+    }
+  }
+
+  Future<SessionSummaryDto> getSessionSummary(int sessionId) async {
+    print("Fetching session summary for session $sessionId");
+    try {
+      final endpoint = ApiConstants.sessionSummaryEndpoint(sessionId);
+      final responseJson = await _api.get<Map<String, dynamic>>(endpoint);
+      final responseDto = SessionSummaryDto.fromJson(responseJson);
+      return responseDto;
+    } catch (e) {
+      throw Exception("Errore fetch session summary: $e");
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:colombo/ui/widgets/glass_card.dart';
 import 'package:flutter/material.dart';
+import 'session_details_page.dart';
 import '../viewmodels/statistics_viewmodel.dart';
 import '../../../widgets/staggered_list.dart';
 
@@ -234,9 +235,23 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                     padding: const EdgeInsets.only(
                                       bottom: 10.0,
                                     ),
-                                    child: _buildSessionItem(
-                                      _viewModel.sessions[index],
-                                      index,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                SessionDetailsPage(
+                                                  session: _viewModel
+                                                      .sessions[index]
+                                                      .originalDto,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      child: _buildSessionItem(
+                                        _viewModel.sessions[index],
+                                        index,
+                                      ),
                                     ),
                                   ),
                                 );

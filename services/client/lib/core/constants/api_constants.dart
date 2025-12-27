@@ -21,6 +21,10 @@ class ApiConstants {
   static const String userGlobalEcoStatsEndpoint = 'reports/user/summary';
   static String userMonthlyEcoStatsEndpoint(int year, int month) =>
       'reports/user/sessions/$month/$year';
+  static String sessionDetailsEndpoint(int sessionId) =>
+      'telemetry/sessions/$sessionId';
+  static String sessionSummaryEndpoint(int sessionId) =>
+      'reports/session/$sessionId/summary';
 
   static const int timeoutSeconds = 10;
 }

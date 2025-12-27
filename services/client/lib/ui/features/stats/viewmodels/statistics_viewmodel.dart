@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math'; // Aggiungi questo import
+import 'package:colombo/data/models/reports_dto.dart';
 import 'package:colombo/data/services/reports_service.dart';
 import 'package:colombo/data/services/tips_service.dart';
 import 'package:colombo/ui/widgets/notification_overlay.dart';
@@ -152,6 +153,7 @@ class StatisticsViewModel extends ChangeNotifier {
           score: session.ecoscore != null && session.ecoscore! < 0
               ? 0
               : session.ecoscore!.round(),
+          originalDto: session,
         );
       });
     } catch (e) {
@@ -171,11 +173,13 @@ class DrivingSession {
   final String date;
   final String distance;
   final int score;
+  final MonthlyEcoStatsSessionsDto originalDto;
 
   DrivingSession({
     required this.id,
     required this.date,
     required this.distance,
     required this.score,
+    required this.originalDto,
   });
 }

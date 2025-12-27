@@ -56,3 +56,90 @@ class MonthlyEcoStatsSessionsDto {
   factory MonthlyEcoStatsSessionsDto.fromJson(Map<String, dynamic> json) =>
       _$MonthlyEcoStatsSessionsDtoFromJson(json);
 }
+
+@JsonSerializable()
+class SessionDetailsDto {
+  final String message;
+  final int sessionId;
+  final List<RilevazioneDto> rilevazioni;
+
+  SessionDetailsDto({
+    required this.message,
+    required this.sessionId,
+    required this.rilevazioni,
+  });
+
+  factory SessionDetailsDto.fromJson(Map<String, dynamic> json) =>
+      _$SessionDetailsDtoFromJson(json);
+}
+
+@JsonSerializable()
+class RilevazioneDto {
+  final PuntoDto punto;
+  final int punteggio;
+
+  RilevazioneDto({required this.punto, required this.punteggio});
+
+  factory RilevazioneDto.fromJson(Map<String, dynamic> json) =>
+      _$RilevazioneDtoFromJson(json);
+}
+
+@JsonSerializable()
+class PuntoDto {
+  final String type;
+  final List<double> coordinates;
+
+  PuntoDto({required this.type, required this.coordinates});
+
+  factory PuntoDto.fromJson(Map<String, dynamic> json) =>
+      _$PuntoDtoFromJson(json);
+}
+
+@JsonSerializable()
+class SessionSummaryDto {
+  final String message;
+  final double ecoscore;
+  final double km;
+  final String vin;
+  final double pm;
+  final double co2;
+  @JsonKey(name: 'comuni_attraversati')
+  final List<ComuneAttraversatoDto> comuniAttraversati;
+
+  SessionSummaryDto({
+    required this.message,
+    required this.ecoscore,
+    required this.km,
+    required this.vin,
+    required this.pm,
+    required this.co2,
+    required this.comuniAttraversati,
+  });
+
+  factory SessionSummaryDto.fromJson(Map<String, dynamic> json) =>
+      _$SessionSummaryDtoFromJson(json);
+}
+
+@JsonSerializable()
+class ComuneAttraversatoDto {
+  final int istat;
+  @JsonKey(name: 'zone_attraversate')
+  final List<ZonaAttraversataDto> zoneAttraversate;
+
+  ComuneAttraversatoDto({required this.istat, required this.zoneAttraversate});
+
+  factory ComuneAttraversatoDto.fromJson(Map<String, dynamic> json) =>
+      _$ComuneAttraversatoDtoFromJson(json);
+}
+
+@JsonSerializable()
+class ZonaAttraversataDto {
+  @JsonKey(name: 'zona_id')
+  final int zonaId;
+  final double ecoscore;
+
+  ZonaAttraversataDto({required this.zonaId, required this.ecoscore});
+
+  factory ZonaAttraversataDto.fromJson(Map<String, dynamic> json) =>
+      _$ZonaAttraversataDtoFromJson(json);
+}
