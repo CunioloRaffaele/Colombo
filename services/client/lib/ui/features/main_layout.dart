@@ -1,4 +1,5 @@
 // stateless widget for home screen
+import 'package:colombo/data/services/bluetooth_service.dart';
 import 'package:colombo/ui/features/drive/view/drive.dart';
 import 'package:colombo/ui/features/drive/viewmodels/drive_viewmodel.dart';
 import 'package:colombo/ui/widgets/notification_overlay.dart';
@@ -24,9 +25,10 @@ class _MainLayoutState extends State<MainLayout> {
   void initState() {
     super.initState();
     _driveViewModel.addListener(_onDriveStateChanged);
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _verifyLocationPermissions(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _verifyLocationPermissions();
+      _verifyBluetoothPermissions();
+    });
   }
 
   void _onDriveStateChanged() {
@@ -63,6 +65,31 @@ class _MainLayoutState extends State<MainLayout> {
               onPressed: () {
                 Navigator.of(ctx).pop();
                 _verifyLocationPermissions();
+              },
+              child: const Text('Chiudi'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _verifyBluetoothPermissions() async {
+    bool granted = await requestPermissions();
+    if (!mounted) return;
+    if (!granted) {
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Permessi Bluetooth Negati'),
+          content: const Text(
+            'Per utilizzare tutte le funzionalità dell\'app, è necessario abilitare i permessi Bluetooth.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _verifyBluetoothPermissions();
               },
               child: const Text('Chiudi'),
             ),
