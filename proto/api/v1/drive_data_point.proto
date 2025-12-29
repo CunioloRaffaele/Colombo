@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package api.v1;
+
+message DriveDataPoint {
+  int64 timestamp_unix = 1;
+  bool rpm_available = 2;
+  int32 rpm = 3;
+  bool speed_available = 4;
+  int32 speed = 5;
+  bool throttle_position_available = 6;
+  double throttle_position = 7;
+  bool coolant_temp_available = 8;
+  int32 coolant_temp = 9;
+  bool fuel_rate_available = 10;
+  double fuel_rate = 11;
+  bool odometer_available = 12;
+  double odometer = 13;
+  bool engine_exhaust_flow_available = 14;
+  double engine_exhaust_flow = 15;
+  bool fuel_tank_level_available = 16;
+  double fuel_tank_level = 17;
+  double latitude = 18;
+  double longitude = 19;
+}

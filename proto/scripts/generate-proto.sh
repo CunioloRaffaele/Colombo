@@ -19,6 +19,7 @@ else
     --dart_out=grpc:$ROOT_DIR/services/client/lib/src/generated \
     --js_out=import_style=commonjs:$ROOT_DIR/services/web_admin/src/app/proto \
     --grpc-web_out=import_style=typescript,mode=grpcwebtext:$ROOT_DIR/services/web_admin/src/app/proto \
+    --js_out=import_style=commonjs:$ROOT_DIR/services/api/proto/compiled/api/v1 \
     $PROTO_DIR/api/v1/*.proto
 fi
 
