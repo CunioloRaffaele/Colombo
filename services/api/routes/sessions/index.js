@@ -9,10 +9,10 @@ const validateJsonRequest = require('../../middleware/validateJsonRequest');
 sessionRouter.post('/start/:vin', authMiddleware, controller.startSession);
 
 //Termina sessione
-sessionRouter.post('/end/:id', authMiddleware, controller.endSession);
+sessionRouter.post('/end/:id', validateJsonRequest, authMiddleware, controller.endSession);
 
 //Invia rilevazione
-sessionRouter.post('/:id/readings', authMiddleware, controller.sendReadings);
+sessionRouter.post('/:id/readings', validateJsonRequest, authMiddleware, controller.sendReadings);
 
 //Scarica rilevazioni
 sessionRouter.get('/:id', authMiddleware, controller.downloadReadings);
