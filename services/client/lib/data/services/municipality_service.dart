@@ -77,11 +77,14 @@ class MunicipalityService {
   }
 
   static Future<PointInZoneResponseDto> isPointInZone(
-      double latitude, double longitude) async {
+    double latitude,
+    double longitude,
+  ) async {
     final api = ApiClient();
     try {
       final data = await api.get<Map<String, dynamic>>(
-        ApiConstants.pointInZoneEndpoint (latitude, longitude)
+        ApiConstants.pointInZoneEndpoint(latitude, longitude),
+        showLoader: false,
       );
 
       return PointInZoneResponseDto.fromJson(data);

@@ -79,9 +79,16 @@ class ApiClient {
     }
   }
 
-  Future<T> get<T>(String path, {Map<String, dynamic>? query}) async {
+  Future<T> get<T>(
+    String path, {
+    Map<String, dynamic>? query,
+    bool showLoader = true,
+  }) async {
     try {
-      final r = await dio.get(path, queryParameters: query);
+      final options = showLoader
+          ? null
+          : Options(extra: {'disableLoader': true});
+      final r = await dio.get(path, queryParameters: query, options: options);
       return r.data as T;
     } on DioException catch (e) {
       throw (e.error is ApiException)

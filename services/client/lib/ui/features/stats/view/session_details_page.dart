@@ -1,3 +1,4 @@
+import 'package:colombo/core/constants/color_costants.dart';
 import 'package:colombo/data/models/reports_dto.dart';
 import 'package:colombo/data/services/reports_service.dart';
 import 'package:colombo/ui/widgets/glass_card.dart';
@@ -30,14 +31,6 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
     );
   }
 
-  Color _getScoreColor(int score) {
-    if (score >= 80) return Colors.green;
-    if (score >= 60) return Colors.lightGreen;
-    if (score >= 40) return Colors.yellow;
-    if (score >= 20) return Colors.orange;
-    return Colors.red;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,7 +43,7 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          "Dettaglio Sessione ${widget.session.id}",
+          "Dettaglio Sessione",
           style: const TextStyle(color: Colors.white),
         ),
       ),
@@ -121,7 +114,7 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
                         TileLayer(
                           urlTemplate:
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.example.colombo',
+                          userAgentPackageName: 'com.colombo.app',
                         ),
                         PolylineLayer(
                           polylines: _buildPolylines(details.rilevazioni),
@@ -259,7 +252,7 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
                               Text(
                                 zona.ecoscore.toStringAsFixed(0),
                                 style: TextStyle(
-                                  color: _getScoreColor(zona.ecoscore.round()),
+                                  color: getScoreColor(zona.ecoscore.toInt()),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
@@ -297,7 +290,7 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
       polylines.add(
         Polyline(
           points: [p1, p2],
-          color: _getScoreColor(score),
+          color: getScoreColor(score),
           strokeWidth: 4.0,
         ),
       );

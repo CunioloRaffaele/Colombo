@@ -1,7 +1,9 @@
+import 'package:colombo/core/constants/color_costants.dart';
 import 'package:flutter/material.dart';
 import '../../../widgets/glass_button.dart';
 import '../../../widgets/eco_effect_layer.dart';
 import '../viewmodels/drive_viewmodel.dart';
+import 'drive_debug_page.dart';
 
 class DrivePage extends StatefulWidget {
   final DriveViewModel? viewModel;
@@ -40,17 +42,10 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     if (mounted) setState(() {});
   }
 
-  Color _getColorForScore(double score) {
-    if (score >= 80) return const Color(0xFF1EAE98);
-    if (score >= 70) return Colors.limeAccent[700]!;
-    if (score >= 40) return Colors.orangeAccent;
-    return Colors.redAccent;
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = _viewModel.currentState;
-    final mainColor = _getColorForScore(state.ecoscore);
+    final mainColor = getColorForScore(state.ecoscore, _viewModel);
 
     return GestureDetector(
       onTap: _viewModel.resetInactivityTimer,
@@ -76,7 +71,8 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            EcoEffectLayer(score: state.ecoscore),
+            if (_viewModel.isSessionActive)
+              EcoEffectLayer(score: state.ecoscore),
             SafeArea(
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 500),
@@ -101,7 +97,10 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                 child: Column(
                   children: [
                     if (state.isInZone)
-                      _buildAlertChip("Zona Monitorata: ${state.zoneName}"),
+                      _buildAlertChip(
+                        "Zona Monitorata: ${state.zoneName}",
+                        color: Colors.greenAccent,
+                      ),
                     if (!state.isPipeConnected)
                       _buildAlertChip("Disconnesso", color: Colors.red),
                   ],
@@ -112,52 +111,72 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  AnimatedBuilder(
-                    animation: _pulseController,
-                    builder: (context, child) {
-                      return Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: mainColor.withOpacity(0.5),
-                            width: 4,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: mainColor.withOpacity(0.4),
-                              blurRadius: 20 + (_pulseController.value * 20),
-                              spreadRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              RollingNumberText(
-                                value: state.ecoscore.toInt(),
-                                style: const TextStyle(
-                                  fontSize: 80,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  height: 1,
-                                ),
-                              ),
-                              const Text(
-                                "ECOSCORE",
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
-                                  letterSpacing: 2,
-                                ),
-                              ),
-                            ],
-                          ),
+                  GestureDetector(
+                    onLongPress: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const DriveDebugPage(),
                         ),
                       );
                     },
+                    child: AnimatedBuilder(
+                      animation: _pulseController,
+                      builder: (context, child) {
+                        return Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: mainColor.withOpacity(0.5),
+                              width: 4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: mainColor.withOpacity(0.4),
+                                blurRadius: 20 + (_pulseController.value * 20),
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (_viewModel.isSessionActive)
+                                  RollingNumberText(
+                                    value: state.ecoscore.toInt(),
+                                    style: const TextStyle(
+                                      fontSize: 80,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      height: 1,
+                                    ),
+                                  )
+                                else
+                                  const Text(
+                                    "--",
+                                    style: TextStyle(
+                                      fontSize: 80,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white54,
+                                      height: 1,
+                                    ),
+                                  ),
+                                const Text(
+                                  "ECOSCORE",
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   SizedBox(height: 40),
                   AnimatedOpacity(
@@ -190,7 +209,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                             ? "Disconnetti"
                             : "Connetti ELM",
                         onTap: () {
-                          // Mock service is auto-started
+                          _viewModel.togglePipeConnection(context);
                         },
                       ),
                       const SizedBox(width: 16),

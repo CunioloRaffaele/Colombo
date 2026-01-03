@@ -27,6 +27,8 @@ class DriveState {
   final Position? position;
   // State (generic)
   final bool? isSomethingBroken;
+  final DateTime? lastUpdated;
+  final int positionInBuffer;
 
   DriveState({
     this.isPipeConnected = false,
@@ -46,6 +48,8 @@ class DriveState {
     this.zoneName,
     this.position,
     this.isSomethingBroken,
+    this.lastUpdated,
+    this.positionInBuffer = 0,
   });
 
   // CopyWith method to create a new instance with optional updated values
@@ -66,6 +70,8 @@ class DriveState {
     String? zoneName,
     Position? position,
     bool? isSomethingBroken,
+    DateTime? lastUpdated,
+    int? positionInBuffer,
   }) {
     return DriveState(
       isPipeConnected: isPipeConnected ?? this.isPipeConnected,
@@ -84,6 +90,8 @@ class DriveState {
       zoneName: zoneName ?? this.zoneName,
       position: position ?? this.position,
       isSomethingBroken: isSomethingBroken ?? this.isSomethingBroken,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      positionInBuffer: positionInBuffer ?? this.positionInBuffer,
     );
   }
 }

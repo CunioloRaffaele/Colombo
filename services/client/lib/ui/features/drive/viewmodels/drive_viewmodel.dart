@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:colombo/ui/widgets/notification_overlay.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../../../data/services/drive_sessions_service.dart';
 import '../../../../data/global_drive_state.dart';
@@ -69,6 +71,11 @@ class DriveViewModel extends ChangeNotifier {
   bool _isSessionActive = false;
   bool get isSessionActive => _isSessionActive;
 
+  bool _isBluetoothConnected = false;
+  bool get isBluetoothConnected => _isBluetoothConnected;
+  String _bluetoothAddress = "";
+  String get bluetoothAddress => _bluetoothAddress;
+
   // Timers
   Timer? _inactivityTimer;
 
@@ -77,7 +84,7 @@ class DriveViewModel extends ChangeNotifier {
   }
 
   void _init() {
-    _driveSessionService.startMonitoring("00:1D:A5:68:98:8B");
+    //_driveSessionService.startMonitoring("00:1D:A5:68:98:8B");
     _serviceSubscription = _driveSessionService.stream.listen((newState) {
       _currentState = newState;
       _checkZoneEntrySound(newState.isInZone);
@@ -98,9 +105,37 @@ class DriveViewModel extends ChangeNotifier {
   // --- Session Management ---
 
   void toggleSession() {
+    if (_isBluetoothConnected == false) {
+      NotificationOverlay.show(
+        'Per avviare la sessione, connettiti prima al dispositivo ELM327.',
+        Colors.red,
+      );
+      return;
+    }
+    if (!_isSessionActive) {
+      _driveSessionService.startMonitoring(_bluetoothAddress);
+    } else {
+      _driveSessionService.stopMonitoring();
+    }
     _isSessionActive = !_isSessionActive;
     _startSessionSound();
     resetInactivityTimer();
+    notifyListeners();
+  }
+
+  void togglePipeConnection(BuildContext context) async {
+    try {
+      final devices = await _driveSessionService.scanBluetoothDevices();
+      _bluetoothAddress = await _showDeviceSelectionDialog(context, devices);
+      if (_bluetoothAddress.isEmpty) return;
+      _isBluetoothConnected = !_isBluetoothConnected;
+    } catch (e) {
+      debugPrint("Error scanning Bluetooth devices: $e");
+      NotificationOverlay.show(
+        'Errore durante la scansione dei dispositivi Bluetooth: $e',
+        Colors.red,
+      );
+    }
     notifyListeners();
   }
 
@@ -112,6 +147,9 @@ class DriveViewModel extends ChangeNotifier {
       _isFocusMode = false;
       notifyListeners();
     }
+
+    // Only activate Focus Mode if session is active
+    if (!_isSessionActive) return;
 
     // Activate Focus Mode (black screen) after 10 seconds of inactivity
     _inactivityTimer = Timer(const Duration(seconds: 10), () {
@@ -167,4 +205,39 @@ class DriveViewModel extends ChangeNotifier {
     }
     notifyListeners();
   }
+}
+
+// --- Bluetooth Device Selection Dialog ---
+Future<String> _showDeviceSelectionDialog(
+  BuildContext context,
+  List<Map<String, String>> devices,
+) async {
+  String selectedAddress = "";
+  showDialog<void>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Seleziona un dispositivo'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: devices.length,
+            itemBuilder: (context, index) {
+              final device = devices[index];
+              return ListTile(
+                title: Text(device['name'] ?? 'Unknown Device'),
+                subtitle: Text(device['address'] ?? 'No address'),
+                onTap: () async {
+                  selectedAddress = device['address'] ?? '';
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              );
+            },
+          ),
+        ),
+      );
+    },
+  );
+  return selectedAddress;
 }

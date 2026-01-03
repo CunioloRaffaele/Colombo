@@ -29,8 +29,33 @@ class DriveSessionService {
   final List<DriveDataPoint> _dataBuffer = [];
   static const int _batchSize = 400; // Send data to server every 400 points
 
+  Future<List<Map<String, String>>> scanBluetoothDevices() async {
+    debugPrint("DEBUG: scanBluetoothDevices chiamato");
+
+    bool bluetoothStatus = await _driver.isBluetoothEnabled();
+
+    if (!bluetoothStatus) {
+      throw Exception("Bluetooth non è abilitato.");
+    }
+
+    try {
+      final devices = await _driver.getPairedDevices();
+      return devices;
+    } catch (e) {
+      debugPrint("DEBUG: Errore durante la scansione Bluetooth: $e");
+      rethrow;
+    }
+  }
+
   Future<void> startMonitoring(String macAddress) async {
-    if (_isRunning) return;
+    debugPrint("DEBUG: startMonitoring chiamato con $macAddress");
+    if (_isRunning) {
+      debugPrint("DEBUG: Il servizio è già in esecuzione. Ignoro la chiamata.");
+      return;
+    }
+
+    debugPrint("DEBUG: Avvio servizio...");
+    _isRunning = true;
 
     bool connected = await _driver.connect(macAddress);
     if (!connected) {
@@ -51,11 +76,15 @@ class DriveSessionService {
 
   void stopMonitoring() async {
     _isRunning = false;
-    _driver.disconnect();
+    //_driver.disconnect();
 
     // Send any remaining data before stopping
     if (_dataBuffer.isNotEmpty) {
       await _flushBuffer();
+      _currentState = _currentState.copyWith(
+        lastUpdated: DateTime.now(),
+        positionInBuffer: _dataBuffer.length,
+      );
     }
 
     _currentState = _currentState.copyWith(isPipeConnected: false);
@@ -63,7 +92,9 @@ class DriveSessionService {
   }
 
   Future<void> _sensorLoop() async {
+    debugPrint("DEBUG: Avvio loop sensori...");
     while (_isRunning) {
+      // debugPrint("DEBUG: Ciclo sensori...");
       final stopwatch = Stopwatch()..start();
 
       try {
@@ -113,7 +144,9 @@ class DriveSessionService {
         _currentState = _currentState.copyWith(
           position: pos,
           isInZone: serverStateOfPosition.contains,
-          zoneName: serverStateOfPosition.comune,
+          zoneName: serverStateOfPosition.contains
+              ? serverStateOfPosition.comune
+              : null,
         );
 
         // 3. Get local ecoscore
@@ -172,14 +205,18 @@ class DriveSessionService {
         _controller.add(_currentState);
 
         // 5. Add to buffer
+        _currentState = _currentState.copyWith(
+          positionInBuffer: _dataBuffer.length,
+        );
         final dataPoint = DriveDataPoint.fromState(_currentState);
         _dataBuffer.add(dataPoint);
 
         // PRINT FOR DEBUG
-        debugPrint(_currentState.ecoscore.toStringAsFixed(2));
+        debugPrint(_currentState.toString());
 
         // 6. Send to server (Batch)
         if (_dataBuffer.length >= _batchSize) {
+          _currentState = _currentState.copyWith(lastUpdated: DateTime.now());
           // Don't await here to keep the loop responsive (fire and forget)
           _flushBuffer();
         }
@@ -188,7 +225,7 @@ class DriveSessionService {
       }
 
       stopwatch.stop();
-      final waitTime = const Duration(milliseconds: 800) - stopwatch.elapsed;
+      final waitTime = const Duration(milliseconds: 1500) - stopwatch.elapsed;
       if (waitTime > Duration.zero) await Future.delayed(waitTime);
     }
   }
