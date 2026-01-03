@@ -2,4 +2,3 @@
 /prisma/generated
 .env
 .DS_Store
-proto/compiled/

@@ -3,9 +3,6 @@ const bcrypt = require('bcrypt');
 const prisma = require('../../utils/prisma');
 const emissions = require('../../utils/emissions');
 const vinDecoder = require('../../utils/vin');
-// Import Protobuf DriveDataPoint
-const proto = require('../../proto/compiled/api/v1/api/v1/drive_data_point_pb');
-const ecoScore = require('../../utils/ecoScore');
 
 exports.startSession = async (req, res) => {
     try {
@@ -147,89 +144,8 @@ exports.endSession = async (req, res) => {
 
 exports.sendReadings = async (req, res) => {
     try {
-        // Dati provenienti da elm327
-        const sensorData = req.body;
+        res.status(200).json({ message: 'Dummy return' });
 
-        // Mappa vitals disponibili (chiave: nome, valore: disponibilità)
-        const availableVitals = {
-            rpm: !!sensorData.rpmAvailable,
-            speed: !!sensorData.speedAvailable,
-            throttlePosition: !!sensorData.throttlePositionAvailable,
-            coolantTemp: !!sensorData.coolantTempAvailable,
-            fuelRate: !!sensorData.fuelRateAvailable,
-            odometer: !!sensorData.odometerAvailable,
-            engineExhaustFlow: !!sensorData.engineExhaustFlowAvailable,
-            fuelTankLevel: !!sensorData.fuelTankLevelAvailable,
-            acceleration: sensorData.acceleration !== undefined // opzionale
-        };
-        const availableKeys = Object.keys(availableVitals).filter(k => availableVitals[k]);
-
-        // Pesi corretti
-        const adjustedVariables = ecoScore.getAdjustedVariables(availableKeys);
-
-        // Calcolo score per ogni variabile disponibile
-        let componentScores = [];
-        for (const key of availableKeys) {
-            let value = sensorData[key];
-            // Se non presente, salta
-            if (value === undefined || value === null) continue;
-            // Parametri statistici
-            const variable = adjustedVariables[key];
-            // Calcolo p-value
-            const pValue = ecoScore.twoTailedZTestPValue(
-                parseFloat(value),
-                variable.mu,
-                variable.sigma
-            );
-            // Calcolo weighted score
-            const weightedScore = ecoScore.getWeightedScore(pValue, variable.weight);
-            componentScores.push(weightedScore);
-        }
-        // Total score
-        const totalScore = ecoScore.getInstantScore(componentScores);
-
-        // Costruisci il messaggio Protobuf
-        const driveDataPoint = new proto.DriveDataPoint();
-        driveDataPoint.setTimestampUnix(sensorData.timestampUnix);
-        driveDataPoint.setRpmAvailable(sensorData.rpmAvailable);
-        driveDataPoint.setRpm(sensorData.rpm);
-        driveDataPoint.setSpeedAvailable(sensorData.speedAvailable);
-        driveDataPoint.setSpeed(sensorData.speed);
-        driveDataPoint.setThrottlePositionAvailable(sensorData.throttlePositionAvailable);
-        driveDataPoint.setThrottlePosition(sensorData.throttlePosition);
-        driveDataPoint.setCoolantTempAvailable(sensorData.coolantTempAvailable);
-        driveDataPoint.setCoolantTemp(sensorData.coolantTemp);
-        driveDataPoint.setFuelRateAvailable(sensorData.fuelRateAvailable);
-        driveDataPoint.setFuelRate(sensorData.fuelRate);
-        driveDataPoint.setOdometerAvailable(sensorData.odometerAvailable);
-        driveDataPoint.setOdometer(sensorData.odometer);
-        driveDataPoint.setEngineExhaustFlowAvailable(sensorData.engineExhaustFlowAvailable);
-        driveDataPoint.setEngineExhaustFlow(sensorData.engineExhaustFlow);
-        driveDataPoint.setFuelTankLevelAvailable(sensorData.fuelTankLevelAvailable);
-        driveDataPoint.setFuelTankLevel(sensorData.fuelTankLevel);
-        driveDataPoint.setLatitude(sensorData.latitude);
-        driveDataPoint.setLongitude(sensorData.longitude);
-
-        // Serializza in binario
-        const buffer = driveDataPoint.serializeBinary();
-
-
-        // Salva la rilevazione nel database usando una query raw PostGIS
-        const sessioneId = parseInt(req.params.id);
-        const longitude = sensorData.longitude;
-        const latitude = sensorData.latitude;
-        await prisma.$executeRaw`INSERT INTO rilevazioni (sessione, punto, punteggio) VALUES (
-            ${sessioneId},
-            ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326),
-            ${totalScore}
-        )`;
-
-        // Risposta: score + dati serializzati
-        res.status(200).json({
-            message: 'Rilevazione ricevuta',
-            ecoscore: totalScore,
-            data: Buffer.from(buffer).toString('base64')
-        });
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
     }

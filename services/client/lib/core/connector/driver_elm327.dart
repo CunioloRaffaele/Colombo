@@ -220,7 +220,7 @@ class Elm327Driver {
     }
     throw Exception('Invalid engine exhaust flow response: $response');
   }
-  
+
   // Fuel Tank Level: response "41 2F XX" => (XX*100)/255.0
   Future<double> fuelTankLevel() async {
     final response = await sendCommand('01 2F');
