@@ -15,11 +15,12 @@ if command -v buf >/dev/null 2>&1; then
 else
   echo "buf not found, attempting protoc fallback"
   # Example: protoc for Dart and grpc-web, adapt paths/plugins as needed
-  protoc -I "$PROTO_DIR" \
+  protoc -I="$PROTO_DIR" \
+    --js_out=import_style=commonjs,binary:$ROOT_DIR/services/api/proto \
     --dart_out=grpc:$ROOT_DIR/services/client/lib/src/generated \
     --js_out=import_style=commonjs:$ROOT_DIR/services/web_admin/src/app/proto \
     --grpc-web_out=import_style=typescript,mode=grpcwebtext:$ROOT_DIR/services/web_admin/src/app/proto \
-    $PROTO_DIR/api/v1/*.proto
+    $PROTO_DIR/api/v1/*.proto $PROTO_DIR/common/*.proto
 fi
 
 echo "Proto generation completed"

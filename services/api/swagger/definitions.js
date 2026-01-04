@@ -1805,7 +1805,7 @@
  * /telemetry/sessions/{id}/readings:
  *   post:
  *     summary: Send telemetry readings to a session
- *     description: Sends telemetry data readings to an active session. Currently returns a dummy response.
+ *     description: Sends telemetry data readings to an active session. Accepts both JSON and Protobuf formats. Calculates scores, saves readings, and returns processing results.
  *     tags: [Sessions]
  *     security:
  *       - bearerAuth: []
@@ -1817,17 +1817,96 @@
  *         required: true
  *         description: Session ID
  *         example: 42
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               session_id:
+ *                 type: integer
+ *                 description: Session ID (optional, usually in path)
+ *                 example: 42
+ *               readings:
+ *                 type: array
+ *                 description: Array of telemetry readings
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     latitude:
+ *                       type: number
+ *                       example: 45.4642
+ *                     longitude:
+ *                       type: number
+ *                       example: 9.1900
+ *                     available_vitals:
+ *                       type: object
+ *                       additionalProperties:
+ *                         type: boolean
+ *                       example: { "pm": true, "co2": true }
+ *                     rpm:
+ *                       type: integer
+ *                       example: 1500
+ *                     speed:
+ *                       type: integer
+ *                       example: 50
+ *                     throttle_position:
+ *                       type: number
+ *                       example: 30.5
+ *                     coolant_temp:
+ *                       type: integer
+ *                       example: 90
+ *                     fuel_rate:
+ *                       type: number
+ *                       example: 1.2
+ *                     odometer:
+ *                       type: number
+ *                       example: 12345.6
+ *                     engine_exhaust_flow:
+ *                       type: number
+ *                       example: 0.8
+ *                     fuel_tank_level:
+ *                       type: number
+ *                       example: 60.0
+ *         application/octet-stream:
+ *           schema:
+ *             type: string
+ *             format: binary
+ *           description: Protobuf TelemetryBatchRequest (see proto/common/types.proto)
  *     responses:
  *       200:
- *         description: Dummy return (endpoint under development)
+ *         description: Readings processed successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
- *                   example: Dummy return
+ *                   example: Readings processed
+ *                 readings_processed:
+ *                   type: integer
+ *                   example: 1
+ *                 readings_tot_score:
+ *                   type: array
+ *                   items:
+ *                     type: number
+ *                   example: [85.5]
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *             description: Empty body, 200 OK
+ *       400:
+ *         description: Invalid or missing parameters, unsupported content type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Unauthorized - invalid or missing JWT token
  *         content:

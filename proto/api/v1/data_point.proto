@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package api.v1;
+
+message DriveDataPoint {
+  int32 timestamp_unix = 1;
+  map<string, bool> available_vitals = 2;
+  int32 rpm = 3;
+  int32 speed = 4;
+  double throttle_position = 5;
+  int32 coolant_temp = 6;
+  double fuel_rate = 7;
+  double odometer = 8;
+  double engine_exhaust_flow = 9;
+  double fuel_tank_level = 10;
+  double latitude = 11;
+  double longitude = 12;
+}

@@ -142,11 +142,78 @@ exports.endSession = async (req, res) => {
 }
 
 
+const ecoScore = require('../../utils/ecoScore');
+
 exports.sendReadings = async (req, res) => {
     try {
-        res.status(200).json({ message: 'Dummy return' });
+        // Support both JSON and Protobuf (Content-Type: application/json or application/octet-stream)
 
+        let sessionId, readings;
+        if (req.is('application/json')) {
+            // JSON: { session_id, readings: [ ... ] }
+            sessionId = req.params.id || req.body.session_id || req.body.sessionId;
+            readings = req.body.readings || req.body.readingsList;
+        } else if (req.is('application/octet-stream')) {
+            // Protobuf: decode using generated JS classes (esempio, da types_pb.js)
+            const TelemetryBatchRequest = require('../../proto/common/types_pb').TelemetryBatchRequest;
+            const batch = TelemetryBatchRequest.deserializeBinary(req.body);
+            sessionId = req.params.id || batch.getSessionId();
+            readings = batch.getReadingsList().map(r => r.toObject());
+        } else {
+            // Content-Type non supportato: restituisci 400 con errore
+            return res.status(400).json({ error: 'Unsupported content type' });
+        }
+
+        if (!sessionId || !Array.isArray(readings) || readings.length === 0) {
+            return res.status(400).json({ error: 'Missing session_id or readings' });
+        }
+
+        let processed = 0;
+        let readingsTotScore = [];
+        for (const reading of readings) {
+            // Estraggo la mappa delle variabili disponibili
+            const availableVitals = reading.available_vitals || reading.availableVitals || {};
+            const availableKeys = Object.keys(availableVitals).filter(k => availableVitals[k]);
+            // Calcolo pesi aggiustati
+            const adjustedVars = ecoScore.getAdjustedVariables(availableKeys);
+            // Calcolo weighted scores
+            let componentScores = [];
+            for (const key of availableKeys) {
+                const variable = adjustedVars[key];
+                let value = reading[key];
+                if (typeof value !== 'number') continue;
+                const pValue = ecoScore.twoTailedZTestPValue(value, variable.mu, variable.sigma);
+                const weightedScore = ecoScore.getWeightedScore(pValue, variable.weight);
+                componentScores.push(weightedScore);
+            }
+            const totalScore = ecoScore.getInstantScore(componentScores);
+            readingsTotScore.push(totalScore);
+
+            // Salva su rilevazioni: solo query raw PostGIS, compatibile con il DB
+            if (typeof reading.latitude === 'number' && typeof reading.longitude === 'number') {
+                await prisma.$executeRawUnsafe(
+                    `INSERT INTO rilevazioni (sessione, punto, punteggio) VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), $4)`,
+                    Number(sessionId), reading.longitude, reading.latitude, totalScore
+                );
+                processed++;
+            }
+        }
+
+        // Risposta compatibile con Swagger e Protobuf
+        const response = {
+            success: true,
+            message: 'Readings processed',
+            readings_processed: processed,
+            readings_tot_score: readingsTotScore
+        };
+        if (req.is('application/json')) {
+            return res.status(200).json(response);
+        } else if (req.is('application/octet-stream')) {
+            // Protobuf: restituisci solo 200 OK vuoto
+            return res.status(200).end();
+        }
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 }

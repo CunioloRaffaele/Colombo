@@ -1,2 +1,4 @@
+# Escludi i file generati dai proto
+services/api/proto/
 .DS_Store
 .vscode/

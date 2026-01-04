@@ -5,7 +5,8 @@
   "scripts": {
     "prisma:pull": "prisma db pull",
     "prisma:generate": "prisma generate",
-    "easyStart": "npm run prisma:generate && npm start",
+    "proto:generate": "protoc -I=../../proto --js_out=import_style=commonjs,binary:./proto ../../proto/api/v1/*.proto ../../proto/common/*.proto",
+    "easyStart": "npm run proto:generate && npm run prisma:generate && npm start",
     "start": "node ./bin/www",
     "debug": "nodemon DEBUG=backend:* npm start"
   },
