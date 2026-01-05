@@ -245,6 +245,20 @@ exports.downloadReadings = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // Verifica che l'id appartenga all'utente
+        const sessioneCheck = await prisma.sessioni.findFirst({
+            where: {
+                id: sessioneId,
+                vetture: {
+                    proprietario: email
+                }
+            }
+        });
+
+        if (!sessioneCheck) {
+            return res.status(404).json({ error: 'Session not found or does not belong to the user' });
+        }
+
         // Trova l'ultima sessione per questa vettura
         const sessione = await prisma.sessioni.findFirst({
             where: {
