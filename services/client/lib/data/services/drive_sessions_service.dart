@@ -92,9 +92,7 @@ class DriveSessionService {
   }
 
   Future<void> _sensorLoop() async {
-    debugPrint("DEBUG: Avvio loop sensori...");
     while (_isRunning) {
-      // debugPrint("DEBUG: Ciclo sensori...");
       final stopwatch = Stopwatch()..start();
 
       try {
@@ -121,6 +119,9 @@ class DriveSessionService {
           'fuelTankLevel': () async => _currentState = _currentState.copyWith(
             fuelTankLevel: await _driver.fuelTankLevel(),
           ),
+          'acceleration': () async => _currentState = _currentState.copyWith(
+            acceleration: await _driver.acceleration(),
+          ),
         };
 
         for (final entry in sensorActions.entries) {
@@ -137,17 +138,7 @@ class DriveSessionService {
 
         // 2. Get location
         final pos = await determinePosition();
-        var serverStateOfPosition = await MunicipalityService.isPointInZone(
-          pos.latitude,
-          pos.longitude,
-        );
-        _currentState = _currentState.copyWith(
-          position: pos,
-          isInZone: serverStateOfPosition.contains,
-          zoneName: serverStateOfPosition.contains
-              ? serverStateOfPosition.comune
-              : null,
-        );
+        _currentState = _currentState.copyWith(position: pos);
 
         // 3. Get local ecoscore
         VitalStats.adjustWeights(_currentState.supportedPids);
@@ -158,65 +149,93 @@ class DriveSessionService {
           double? value;
           switch (key) {
             case 'rpm':
-              value = _currentState.rpm.toDouble();
+              value = _currentState.rpm?.toDouble();
               break;
             case 'speed':
-              value = _currentState.speed.toDouble();
+              value = _currentState.speed?.toDouble();
               break;
             case 'throttlePosition':
-              value = _currentState.throttlePosition.toDouble();
+              value = _currentState.throttlePosition?.toDouble();
               break;
             case 'coolantTemp':
-              value = _currentState.coolantTemp.toDouble();
+              value = _currentState.coolantTemp?.toDouble();
               break;
             case 'fuelRate':
-              value = _currentState.fuelRate.toDouble();
+              value = _currentState.fuelRate?.toDouble();
               break;
             case 'engineExhaustFlow':
-              value = _currentState.engineExhaustFlow.toDouble();
+              value = _currentState.engineExhaustFlow?.toDouble();
               break;
             case 'odometer':
-              value = _currentState.odometer.toDouble();
+              value = _currentState.odometer?.toDouble();
               break;
             case 'fuelTankLevel':
-              value = _currentState.fuelTankLevel.toDouble();
+              value = _currentState.fuelTankLevel?.toDouble();
+              break;
+             case 'acceleration':
+              value = _currentState.acceleration;
+              break;
+          }
+
+          var pValue = 0.0;
+          if (value != null) {
+            switch (key) {
+            case 'rpm':
+              pValue = VitalStats.twoTailedZTestPValue(
+                value, variable.mu, variable.sigma);
+              break;
+            case 'speed':
+              pValue = VitalStats.twoTailedZTestPValue(
+                value, variable.mu, variable.sigma);
+              break;
+            case 'throttlePosition':
+              pValue = VitalStats.twoTailedZTestPValue(
+                value, variable.mu, variable.sigma);
+              break;
+            case 'coolantTemp':
+              pValue = VitalStats.twoTailedZTestPValue(
+                value, variable.mu, variable.sigma);
+              break;
+            case 'fuelRate':
+              pValue = VitalStats.twoTailedZTestPValue(
+                value, variable.mu, variable.sigma);
+              break;
+            case 'engineExhaustFlow':
+              pValue = VitalStats.twoTailedZTestPValue(
+                value, variable.mu, variable.sigma);
+              break;
+            case 'odometer':
+              pValue = VitalStats.twoTailedZTestPValue(
+                value, variable.mu, variable.sigma);
+              break;
+            case 'fuelTankLevel':
+              pValue = VitalStats.rightTailZTestPValue(
+                value, variable.mu, variable.sigma);
               break;
             case 'acceleration':
-              value = _currentState.acceleration;
+              pValue = VitalStats.rightTailZTestPValue(
+                value, variable.mu, variable.sigma);
+              break;
           }
-          if (value != null) {
-            final pValue = VitalStats.twoTailedZTestPValue(
-              value,
-              variable.mu,
-              variable.sigma,
-            );
-            final weightedScore = VitalStats.getWeightedScore(
-              pValue,
-              variable.weight,
-            );
+
+            final weightedScore =
+                VitalStats.getWeightedScore(pValue, variable.weight);
             componentScores.add(weightedScore);
           }
         });
-
-        totalScore = VitalStats.getInstantScore(componentScores);
-        _currentState = _currentState.copyWith(ecoscore: totalScore);
+        
+        //Final score
+        totalScore = EcoscoreService.getTotalEcoscore(componentScores);
 
         // 4. Update ui
         _controller.add(_currentState);
 
         // 5. Add to buffer
-        _currentState = _currentState.copyWith(
-          positionInBuffer: _dataBuffer.length,
-        );
         final dataPoint = DriveDataPoint.fromState(_currentState);
         _dataBuffer.add(dataPoint);
 
-        // PRINT FOR DEBUG
-        debugPrint(_currentState.toString());
-
         // 6. Send to server (Batch)
         if (_dataBuffer.length >= _batchSize) {
-          _currentState = _currentState.copyWith(lastUpdated: DateTime.now());
           // Don't await here to keep the loop responsive (fire and forget)
           _flushBuffer();
         }
@@ -225,7 +244,7 @@ class DriveSessionService {
       }
 
       stopwatch.stop();
-      final waitTime = const Duration(milliseconds: 1500) - stopwatch.elapsed;
+      final waitTime = const Duration(milliseconds: 800) - stopwatch.elapsed;
       if (waitTime > Duration.zero) await Future.delayed(waitTime);
     }
   }
