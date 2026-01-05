@@ -1027,27 +1027,28 @@
 
 /**
  * @swagger
- * /zones/contains:
- *   post:
+ * /zones/contains/{lat}/{lng}:
+ *   get:
  *     summary: Check if a point is inside a zone
- *     description: Checks if a geographic point is contained in any zone of the authenticated municipality. Also returns the municipality name.
+ *     description: Checks if a geographic point is contained in any zone. Also returns the municipality name if found.
  *     tags: [Zones]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               point:
- *                 type: array
- *                 items:
- *                   type: number
- *                 minItems: 2
- *                 maxItems: 2
- *                 example: [9.1905, 45.4647]
+ *     parameters:
+ *       - in: path
+ *         name: lat
+ *         schema:
+ *           type: number
+ *         required: true
+ *         description: Latitude of the point
+ *         example: 45.4647
+ *       - in: path
+ *         name: lng
+ *         schema:
+ *           type: number
+ *         required: true
+ *         description: Longitude of the point
+ *         example: 9.1905
  *     responses:
  *       200:
  *         description: Verification result
@@ -1062,8 +1063,9 @@
  *                 comune:
  *                   type: string
  *                   description: Name of the municipality (if present)
+ *                   nullable: true
  *       400:
- *         description: Missing fields or invalid point format
+ *         description: Invalid latitude or longitude parameters
  *         content:
  *           application/json:
  *             schema:
@@ -1151,15 +1153,20 @@
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - lat
+ *               - lng
+ *               - distance
  *             properties:
- *               lng:
- *                 type: number
- *                 example: 9.1925
  *               lat:
  *                 type: number
  *                 example: 45.4665
+ *               lng:
+ *                 type: number
+ *                 example: 9.1925
  *               distance:
  *                 type: number
+ *                 description: Distance in meters
  *                 example: 50
  *     responses:
  *       200:
@@ -1189,17 +1196,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: lng, lat e distance devono essere numeri (distance in metri)
- *       403:
- *         description: Forbidden - Access reserved for authenticated municipalities
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Accesso riservato ai comuni autenticati
+ *                   example: lat, lng e distance devono essere numeri (distance in metri)
  *       500:
  *         description: Internal server error
  *         content:
@@ -1327,6 +1324,101 @@
  *                 error:
  *                   type: string
  *                   example: Errore nel recupero della geometria della zona
+ *                 details:
+ *                   type: string
+ *                   example: Database error details
+ */
+
+/**
+ * @swagger
+ * /zones/map/{istat}:
+ *   get:
+ *     summary: Get all zones for a municipality
+ *     description: Returns all zones (geometries and metadata) for a specific municipality identified by its ISTAT code. Used by the client app to display zones on the map. Requires user authentication and checks that the user's municipality of residence is registered.
+ *     tags: [Zones]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: istat
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ISTAT code of the municipality
+ *         example: 10010
+ *     responses:
+ *       200:
+ *         description: Zones retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 zones:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         description: Zone ID
+ *                         example: 1
+ *                       geometry:
+ *                         type: object
+ *                         description: GeoJSON geometry object
+ *                       tipologia:
+ *                         type: string
+ *                         description: Zone type
+ *                         example: generica
+ *       400:
+ *         description: Invalid ISTAT code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: istat comune richiesto
+ *       401:
+ *         description: Unauthorized - invalid or missing JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: User's municipality of residence is not registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Il tuo comune di residenza non è registrato alla piattaforma. Non è possibile visualizzare le zone
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Utente non trovato
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Errore nel recupero delle zone del comune
  *                 details:
  *                   type: string
  *                   example: Database error details
