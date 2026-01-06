@@ -21,6 +21,86 @@
  * @swagger
  * components:
  *   schemas:
+ *     DriveDataPoint:
+ *       type: object
+ *       required:
+ *         - latitude
+ *         - longitude
+ *       properties:
+ *         timestamp_unix:
+ *           type: integer
+ *           description: Unix timestamp (secondi)
+ *           example: 1700000000
+ *         available_vitals:
+ *           type: object
+ *           additionalProperties:
+ *             type: boolean
+ *           description: >
+ *             Mappa delle variabili disponibili (true/false). Tutti i campi dichiarati true devono essere presenti e numerici nel payload, altrimenti la richiesta non sarà valida secondo la logica del controller. I campi non dichiarati true vengono ignorati per il calcolo del punteggio.
+ *           example: { "rpm": true, "speed": true, "latitude": true, "longitude": true }
+ *         rpm:
+ *           type: integer
+ *           description: Giri motore (obbligatorio se available_vitals.rpm è true)
+ *           example: 2000
+ *         speed:
+ *           type: integer
+ *           description: Velocità km/h (obbligatorio se available_vitals.speed è true)
+ *           example: 50
+ *         throttle_position:
+ *           type: number
+ *           description: Posizione acceleratore (0-1, obbligatorio se available_vitals.throttle_position è true)
+ *           example: 0.3
+ *         coolant_temp:
+ *           type: integer
+ *           description: Temperatura liquido raffreddamento (obbligatorio se available_vitals.coolant_temp è true)
+ *           example: 90
+ *         fuel_rate:
+ *           type: number
+ *           description: Consumo carburante (l/h, obbligatorio se available_vitals.fuel_rate è true)
+ *           example: 5.2
+ *         odometer:
+ *           type: number
+ *           description: Chilometraggio totale (obbligatorio se available_vitals.odometer è true)
+ *           example: 10000.5
+ *         engine_exhaust_flow:
+ *           type: number
+ *           description: Flusso gas di scarico (obbligatorio se available_vitals.engine_exhaust_flow è true)
+ *           example: 1.1
+ *         fuel_tank_level:
+ *           type: number
+ *           description: Livello carburante (%) (obbligatorio se available_vitals.fuel_tank_level è true)
+ *           example: 60.5
+ *         latitude:
+ *           type: number
+ *           description: Latitudine (obbligatoria per ogni rilevazione)
+ *           example: 45.4642
+ *         longitude:
+ *           type: number
+ *           description: Longitudine (obbligatoria per ogni rilevazione)
+ *           example: 9.1900
+ *     DriveDataPointArray:
+ *       type: object
+ *       required:
+ *         - data_points
+ *       properties:
+ *         data_points:
+ *           type: array
+ *           description: Array di rilevazioni DriveDataPoint (ogni elemento DEVE avere latitude e longitude)
+ *           items:
+ *             $ref: '#/components/schemas/DriveDataPoint'
+ *           example:
+ *             - timestamp_unix: 1700000000
+ *               available_vitals: { "rpm": true, "speed": true, "latitude": true, "longitude": true }
+ *               rpm: 2000
+ *               speed: 50
+ *               latitude: 45.4642
+ *               longitude: 9.1900
+ *             - timestamp_unix: 1700000060
+ *               available_vitals: { "rpm": true, "speed": true, "latitude": true, "longitude": true }
+ *               rpm: 2100
+ *               speed: 52
+ *               latitude: 45.4643
+ *               longitude: 9.1901
  *     Error:
  *       type: object
  *       properties:
@@ -1896,79 +1976,56 @@
  * @swagger
  * /telemetry/sessions/{id}/readings:
  *   post:
- *     summary: Send telemetry readings to a session
- *     description: Sends telemetry data readings to an active session. Accepts both JSON and Protobuf formats. Calculates scores, saves readings, and returns processing results.
+ *     summary: Invia rilevazioni di telemetria per una sessione
+ *     description: Accetta un array di rilevazioni (DriveDataPoint) per una sessione specifica. Supporta JSON e Protobuf.
  *     tags: [Sessions]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: integer
- *         required: true
- *         description: Session ID
+ *         description: ID della sessione
  *         example: 42
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               session_id:
- *                 type: integer
- *                 description: Session ID (optional, usually in path)
- *                 example: 42
- *               readings:
- *                 type: array
- *                 description: Array of telemetry readings
- *                 items:
- *                   type: object
- *                   properties:
- *                     latitude:
- *                       type: number
- *                       example: 45.4642
- *                     longitude:
- *                       type: number
- *                       example: 9.1900
- *                     available_vitals:
- *                       type: object
- *                       additionalProperties:
- *                         type: boolean
- *                       example: { "pm": true, "co2": true }
- *                     rpm:
- *                       type: integer
- *                       example: 1500
- *                     speed:
- *                       type: integer
- *                       example: 50
- *                     throttle_position:
- *                       type: number
- *                       example: 30.5
- *                     coolant_temp:
- *                       type: integer
- *                       example: 90
- *                     fuel_rate:
- *                       type: number
- *                       example: 1.2
- *                     odometer:
- *                       type: number
- *                       example: 12345.6
- *                     engine_exhaust_flow:
- *                       type: number
- *                       example: 0.8
- *                     fuel_tank_level:
- *                       type: number
- *                       example: 60.0
+ *             $ref: '#/components/schemas/DriveDataPointArray'
+ *           example:
+ *             data_points:
+ *               - timestamp_unix: 1700000000
+ *                 available_vitals: { "rpm": true, "speed": true, "latitude": true, "longitude": true }
+ *                 rpm: 2000
+ *                 speed: 50
+ *                 latitude: 45.4642
+ *                 longitude: 9.1900
+ *               - timestamp_unix: 1700000060
+ *                 available_vitals: { "rpm": true, "latitude": true, "longitude": true }
+ *                 rpm: 2100
+ *                 latitude: 45.4643
+ *                 longitude: 9.1901
+ *               - timestamp_unix: 1700000120
+ *                 available_vitals: { "speed": true, "latitude": true, "longitude": true }
+ *                 speed: 55
+ *                 latitude: 45.4644
+ *                 longitude: 9.1902
+ *               - timestamp_unix: 1700000180
+ *                 available_vitals: { "latitude": true, "longitude": true }
+ *                 latitude: 45.4645
+ *                 longitude: 9.1903
+ *           # Tutti i campi dichiarati true in available_vitals devono essere presenti e numerici, altrimenti errore 400.
  *         application/octet-stream:
  *           schema:
  *             type: string
  *             format: binary
- *           description: Protobuf TelemetryBatchRequest (see proto/common/types.proto)
+ *           description: DriveDataPointArray serializzato in Protobuf
  *     responses:
  *       200:
- *         description: Readings processed successfully
+ *         description: Rilevazioni elaborate con successo
  *         content:
  *           application/json:
  *             schema:
@@ -1982,19 +2039,20 @@
  *                   example: Readings processed
  *                 readings_processed:
  *                   type: integer
- *                   example: 1
+ *                   example: 2
  *                 readings_tot_score:
  *                   type: array
  *                   items:
  *                     type: number
- *                   example: [85.5]
+ *                   example: [85.5, 90.2]
  *           application/octet-stream:
  *             schema:
  *               type: string
  *               format: binary
- *             description: Empty body, 200 OK
+ *             description: Risposta vuota (solo status 200)
  *       400:
- *         description: Invalid or missing parameters, unsupported content type
+ *         description: >
+ *           Richiesta non valida (manca sessione, dati, latitude/longitude, oppure un campo dichiarato true in available_vitals è mancante o non numerico)
  *         content:
  *           application/json:
  *             schema:

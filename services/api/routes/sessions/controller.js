@@ -150,38 +150,75 @@ exports.sendReadings = async (req, res) => {
 
         let sessionId, readings;
         if (req.is('application/json')) {
-            // JSON: { session_id, readings: [ ... ] }
-            sessionId = req.params.id || req.body.session_id || req.body.sessionId;
-            readings = req.body.readings || req.body.readingsList;
+            // JSON: { data_points: [ ... ] }
+            sessionId = req.params.id;
+            readings = req.body.data_points;
         } else if (req.is('application/octet-stream')) {
-            // Protobuf: decode using generated JS classes (esempio, da types_pb.js)
-            const TelemetryBatchRequest = require('../../proto/common/types_pb').TelemetryBatchRequest;
-            const batch = TelemetryBatchRequest.deserializeBinary(req.body);
-            sessionId = req.params.id || batch.getSessionId();
-            readings = batch.getReadingsList().map(r => r.toObject());
+            // Protobuf: decode using generated JS classes (DriveDataPointArray)
+            const DriveDataPointArray = require('../../proto/api/v1/data_point_pb').DriveDataPointArray;
+            const batch = DriveDataPointArray.deserializeBinary(req.body);
+            sessionId = req.params.id;
+            readings = batch.getDataPointsList().map(r => r.toObject());
         } else {
             // Content-Type non supportato: restituisci 400 con errore
             return res.status(400).json({ error: 'Unsupported content type' });
         }
 
         if (!sessionId || !Array.isArray(readings) || readings.length === 0) {
-            return res.status(400).json({ error: 'Missing session_id or readings' });
+            return res.status(400).json({ error: 'Missing session_id or data_points' });
+        }
+
+        // Controllo che la sessione esista e appartenga all'utente
+        const email = req.userToken.email;
+        const sessione = await prisma.sessioni.findFirst({
+            where: {
+                id: Number(sessionId),
+                vetture: {
+                    proprietario: email
+                }
+            }
+        });
+        if (!sessione) {
+            return res.status(404).json({ error: 'Session not found or not associated with user' });
         }
 
         let processed = 0;
         let readingsTotScore = [];
-        for (const reading of readings) {
+        // Mappa snake_case -> camelCase per ecoScore
+        const keyMap = {
+            rpm: 'rpm',
+            speed: 'speed',
+            throttle_position: 'throttlePosition',
+            coolant_temp: 'coolantTemp',
+            fuel_rate: 'fuelRate',
+            engine_exhaust_flow: 'engineExhaustFlow',
+            acceleration: 'acceleration',
+            odometer: 'odometer',
+            fuel_tank_level: 'fuelTankLevel'
+        };
+        for (const [i, reading] of readings.entries()) {
+            // Controllo presenza latitude e longitude
+            if (typeof reading.latitude !== 'number' || typeof reading.longitude !== 'number') {
+                return res.status(400).json({
+                    error: `Missing latitude or longitude in data_points[${i}]`
+                });
+            }
             // Estraggo la mappa delle variabili disponibili
             const availableVitals = reading.available_vitals || reading.availableVitals || {};
-            const availableKeys = Object.keys(availableVitals).filter(k => availableVitals[k]);
-            // Calcolo pesi aggiustati
-            const adjustedVars = ecoScore.getAdjustedVariables(availableKeys);
+            // Solo le chiavi gestite da ecoScore
+            const availableKeys = Object.keys(availableVitals)
+                .filter(k => availableVitals[k] && keyMap[k]);
+            // Calcolo pesi aggiustati (in camelCase)
+            const camelKeys = availableKeys.map(k => keyMap[k]);
+            const adjustedVars = ecoScore.getAdjustedVariables(camelKeys);
             // Calcolo weighted scores
             let componentScores = [];
             for (const key of availableKeys) {
-                const variable = adjustedVars[key];
+                const camelKey = keyMap[key];
+                const variable = adjustedVars[camelKey];
                 let value = reading[key];
-                if (typeof value !== 'number') continue;
+                // Salta se la variabile non è gestita o il valore non è numerico
+                if (!variable || typeof value !== 'number') continue;
                 const pValue = ecoScore.twoTailedZTestPValue(value, variable.mu, variable.sigma);
                 const weightedScore = ecoScore.getWeightedScore(pValue, variable.weight);
                 componentScores.push(weightedScore);
@@ -190,13 +227,11 @@ exports.sendReadings = async (req, res) => {
             readingsTotScore.push(totalScore);
 
             // Salva su rilevazioni: solo query raw PostGIS, compatibile con il DB
-            if (typeof reading.latitude === 'number' && typeof reading.longitude === 'number') {
-                await prisma.$executeRawUnsafe(
-                    `INSERT INTO rilevazioni (sessione, punto, punteggio) VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), $4)`,
-                    Number(sessionId), reading.longitude, reading.latitude, totalScore
-                );
-                processed++;
-            }
+            await prisma.$executeRawUnsafe(
+                `INSERT INTO rilevazioni (sessione, punto, punteggio) VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), $4)`,
+                Number(sessionId), reading.longitude, reading.latitude, totalScore
+            );
+            processed++;
         }
 
         // Risposta compatibile con Swagger e Protobuf

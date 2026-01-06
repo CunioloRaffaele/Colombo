@@ -2,6 +2,11 @@ syntax = "proto3";
 
 package api.v1;
 
+// Messaggio wrapper per supportare array di DriveDataPoint
+message DriveDataPointArray {
+  repeated DriveDataPoint data_points = 1;
+}
+
 message DriveDataPoint {
   int32 timestamp_unix = 1;
   map<string, bool> available_vitals = 2;
