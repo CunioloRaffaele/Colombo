@@ -1,24 +1,32 @@
 # Protos
 
-Questa cartella contiene i file `.proto` che rappresentano il contratto tra client (Flutter), web (Angular) e backend.
+Questa cartella contiene i file `.proto` che rappresentano il contratto tra client (Flutter) e backend.
 
 `proto/` nella root del monorepo è il singolo punto di verità.
 
 Contenuto:
 - `api/` — proto per le API (versioned, es. `v1/`)
 - `common/` — tipi condivisi
-- `buf.yaml` / `buf.gen.yaml` — configurazione per `buf` (opzionale)
 
-Workflow raccomandato:
-1. Validare i proto: `buf lint` e `buf breaking` (se usi `buf`).
-2. Generare i client con `buf generate` o `protoc` (es. Dart, grpc-web, TypeScript).
-3. In CI: eseguire generation e copiarla nelle cartelle dei servizi prima del build.
-
-Esempio rapido (local dev):
+## Generazione del codice JavaScript:
+- Precondizione: 
+    - Installa `protoc`
+    - Installa il plugin js per protoc (`npm install -g protoc-gen-js`)
 ```
-# installa buf (https://docs.buf.build/installation)
-buf lint
-buf generate
+protoc -I=proto --js_out=import_style=commonjs,binary:services/api/proto proto/api/v1/*.proto proto/common/*.proto
 ```
 
-Vedi `scripts/generate-proto.sh` per uno script d'esempio.
+## Generazione del codice Dart:
+- Precondizione:
+    - Installa `protoc`
+    - Installa il plugin Dart per protoc (`pub global activate protoc_plugin`)
+```
+protoc -I=proto --dart_out=grpc:services/client/lib/da
+ta/proto proto/api/v1/*.proto proto/common/*.proto
+```
+### Nota
+Assicurati che il percorso del plugin Dart sia incluso nella variabile d'ambiente PATH. Puoi aggiungerlo con:
+```
+export PATH="$PATH":"$HOME/.pub-cache/bin"
+```
+
