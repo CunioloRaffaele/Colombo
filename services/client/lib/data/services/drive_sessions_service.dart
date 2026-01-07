@@ -121,9 +121,6 @@ class DriveSessionService {
           'fuelTankLevel': () async => _currentState = _currentState.copyWith(
             fuelTankLevel: await _driver.fuelTankLevel(),
           ),
-          'acceleration': () async => _currentState = _currentState.copyWith(
-            acceleration: await _driver.acceleration(),
-          ),
         };
 
         for (final entry in sensorActions.entries) {
@@ -242,14 +239,7 @@ class DriveSessionService {
                 );
                 break;
               case 'fuelTankLevel':
-                pValue = VitalStats.rightTailZTestPValue(
-                  value,
-                  variable.mu,
-                  variable.sigma,
-                );
-                break;
-              case 'acceleration':
-                pValue = VitalStats.rightTailZTestPValue(
+                pValue = VitalStats.rightTailedZTestPValue(
                   value,
                   variable.mu,
                   variable.sigma,
@@ -266,7 +256,7 @@ class DriveSessionService {
         });
 
         //Final score
-        totalScore = EcoscoreService.getTotalEcoscore(componentScores);
+        totalScore = VitalStats.getInstantScore(componentScores);
         _currentState = _currentState.copyWith(ecoscore: totalScore);
 
         // 4. Update ui
