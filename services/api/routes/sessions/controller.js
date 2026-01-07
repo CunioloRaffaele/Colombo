@@ -155,10 +155,47 @@ exports.sendReadings = async (req, res) => {
             readings = req.body.data_points;
         } else if (req.is('application/octet-stream')) {
             // Protobuf: decode using generated JS classes (DriveDataPointArray)
-            const DriveDataPointArray = require('../../proto/api/v1/data_point_pb').DriveDataPointArray;
-            const batch = DriveDataPointArray.deserializeBinary(req.body);
+            const messages = require('../../proto/api/v1/data_point_pb');
+            const DriveDataPointArray = messages.DriveDataPointArray;
+            
+            // Gestione input raw o Base64
+            let buffer = req.body;
+            // Se il buffer inizia con caratteri ASCII tipici del Base64 (es. 'C' = 0x43) invece del tag protobuf (0x0A = 10)
+            // proviamo a decodificarlo.
+            if (buffer.length > 0 && buffer[0] !== 0x0A && buffer[0] === 0x43) {
+                 buffer = Buffer.from(buffer.toString(), 'base64');
+            }
+            
+            // Converti in Uint8Array per google-protobuf
+            const uint8Buffer = new Uint8Array(buffer);
+            const batch = DriveDataPointArray.deserializeBinary(uint8Buffer);
             sessionId = req.params.id;
-            readings = batch.getDataPointsList().map(r => r.toObject());
+
+            // Mappatura Protobuf (camelCase) -> Logica Server (snake_case)
+            readings = batch.getDataPointsList().map(r => {
+                const obj = r.toObject();
+                const vitalsObj = {};
+                // Mappa delle variabili (Map<str,bool> diventa array in toObject)
+                if (obj.availableVitalsMap) {
+                    obj.availableVitalsMap.forEach(([k, v]) => vitalsObj[k] = v);
+                }
+                return {
+                    timestamp_unix: obj.timestampUnix,
+                    available_vitals: vitalsObj,
+                    latitude: obj.latitude,
+                    longitude: obj.longitude,
+                    rpm: obj.rpm,
+                    speed: obj.speed,
+                    throttle_position: obj.throttlePosition,
+                    coolant_temp: obj.coolantTemp,
+                    fuel_rate: obj.fuelRate,
+                    odometer: obj.odometer,
+                    engine_exhaust_flow: obj.engineExhaustFlow,
+                    fuel_tank_level: obj.fuelTankLevel
+                };
+            });
+            //console.log(`Decoded ${readings.length} readings from Protobuf`);
+            //console.log("proto readings", readings);
         } else {
             // Content-Type non supportato: restituisci 400 con errore
             return res.status(400).json({ error: 'Unsupported content type' });
@@ -227,6 +264,7 @@ exports.sendReadings = async (req, res) => {
             readingsTotScore.push(totalScore);
 
             // Salva su rilevazioni: solo query raw PostGIS, compatibile con il DB
+            //console.log(`Inserting reading ${i + 1}/${readings.length} with score ${totalScore} and data :`, reading);
             await prisma.$executeRawUnsafe(
                 `INSERT INTO rilevazioni (sessione, punto, punteggio) VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), $4)`,
                 Number(sessionId), reading.longitude, reading.latitude, totalScore
@@ -239,7 +277,7 @@ exports.sendReadings = async (req, res) => {
             success: true,
             message: 'Readings processed',
             readings_processed: processed,
-            readings_tot_score: readingsTotScore
+            //readings_tot_score: readingsTotScore
         };
         if (req.is('application/json')) {
             return res.status(200).json(response);
