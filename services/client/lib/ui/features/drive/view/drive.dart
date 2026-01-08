@@ -184,7 +184,8 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                     opacity: _viewModel.isFocusMode ? 0.0 : 1.0,
                     child: Column(
                       children: [
-                        _buildInfoChip(Icons.speed, state.speed, "km/h"),
+                        if (_viewModel.isSessionActive)
+                          _buildInfoChip(Icons.speed, state.speed, "km/h"),
                       ],
                     ),
                   ),

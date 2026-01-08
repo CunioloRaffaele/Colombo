@@ -15,6 +15,7 @@ class DriveState {
   final double throttlePosition;
   final int coolantTemp;
   final double fuelRate;
+  final double initialOdometer;
   final double odometer;
   final double engineExhaustFlow;
   final double fuelTankLevel;
@@ -29,6 +30,7 @@ class DriveState {
   final bool? isSomethingBroken;
   final DateTime? lastUpdated;
   final int positionInBuffer;
+  final int sessionId;
 
   DriveState({
     this.isPipeConnected = false,
@@ -39,6 +41,7 @@ class DriveState {
     this.throttlePosition = 0.0,
     this.coolantTemp = 0,
     this.fuelRate = 0.0,
+    this.initialOdometer = 0.0,
     this.odometer = 0.0,
     this.engineExhaustFlow = 0.0,
     this.fuelTankLevel = 0.0,
@@ -50,6 +53,7 @@ class DriveState {
     this.isSomethingBroken,
     this.lastUpdated,
     this.positionInBuffer = 0,
+    this.sessionId = 0,
   });
 
   // CopyWith method to create a new instance with optional updated values
@@ -62,6 +66,7 @@ class DriveState {
     double? throttlePosition,
     int? coolantTemp,
     double? fuelRate,
+    double? initialOdometer,
     double? odometer,
     double? engineExhaustFlow,
     double? fuelTankLevel,
@@ -72,6 +77,7 @@ class DriveState {
     bool? isSomethingBroken,
     DateTime? lastUpdated,
     int? positionInBuffer,
+    int? sessionId,
   }) {
     return DriveState(
       isPipeConnected: isPipeConnected ?? this.isPipeConnected,
@@ -82,6 +88,7 @@ class DriveState {
       throttlePosition: throttlePosition ?? this.throttlePosition,
       coolantTemp: coolantTemp ?? this.coolantTemp,
       fuelRate: fuelRate ?? this.fuelRate,
+      initialOdometer: initialOdometer ?? this.initialOdometer,
       odometer: odometer ?? this.odometer,
       engineExhaustFlow: engineExhaustFlow ?? this.engineExhaustFlow,
       fuelTankLevel: fuelTankLevel ?? this.fuelTankLevel,
@@ -92,6 +99,7 @@ class DriveState {
       isSomethingBroken: isSomethingBroken ?? this.isSomethingBroken,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       positionInBuffer: positionInBuffer ?? this.positionInBuffer,
+      sessionId: sessionId ?? this.sessionId,
     );
   }
 }

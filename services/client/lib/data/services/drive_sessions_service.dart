@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:colombo/core/connector/mock_driver_elm327.dart';
 import 'package:colombo/data/services/municipality_service.dart';
+import 'package:colombo/data/services/telemetry_service.dart';
+import 'package:colombo/data/services/vehicle_service.dart';
 import 'package:flutter/foundation.dart';
-import '../../core/connector/driver_elm327.dart';
-//import '../../core/api/api_client.dart';
+//import '../../core/connector/driver_elm327.dart';
+import '../../core/api/telemetry_api.dart';
 import '../global_drive_state.dart';
 import '../models/drive_data_point_dto.dart';
 import 'location_service.dart';
@@ -14,8 +17,11 @@ class DriveSessionService {
   factory DriveSessionService() => _instance;
   DriveSessionService._internal();
 
-  final Elm327Driver _driver = Elm327Driver();
-  //final ApiClient _api = ApiClient();
+  // final Elm327Driver _driver = Elm327Driver();
+  final MockElm327Driver _driver = MockElm327Driver();
+  final TelemetryApi _telemetryApi = TelemetryApi();
+  final VehicleService _vehicleService = VehicleService();
+  final TelemetryService _telemetryService = TelemetryService();
 
   // Stream for drive state updates to the ui
   final _controller = StreamController<DriveState>.broadcast();
@@ -59,10 +65,12 @@ class DriveSessionService {
 
     bool connected = await _driver.connect(macAddress);
     if (!connected) {
+      _currentState = _currentState.copyWith(isSomethingBroken: true);
+      _controller.add(_currentState);
+      _isRunning = false;
       throw Exception("Impossibile connettersi al dispositivo OBD-II.");
     }
 
-    _isRunning = true;
     _currentState = _currentState.copyWith(isPipeConnected: true);
 
     // Check for supported PIDs
@@ -71,12 +79,72 @@ class DriveSessionService {
 
     _controller.add(_currentState);
 
+    // Get VIN once connected
+    try {
+      final vin = await _driver.vin();
+      _currentState = _currentState.copyWith(vin: vin);
+      _controller.add(_currentState);
+    } catch (e) {
+      debugPrint("Errore lettura VIN: $e");
+      _currentState = _currentState.copyWith(isSomethingBroken: true);
+      _controller.add(_currentState);
+      _isRunning = false;
+      throw Exception("Errore lettura VIN: $e");
+    }
+
+    // Verify if user has already added a car with this VIN and add if not register new car
+    final UserCars = await _vehicleService.getUserCars();
+    bool isCarRegistered = UserCars.any((car) => car.vin == _currentState.vin);
+    if (!isCarRegistered) {
+      debugPrint("VIN non registrato per l'utente: ${_currentState.vin}");
+      final added = await _vehicleService.addCarToUser(_currentState.vin);
+      if (added) {
+        debugPrint("Auto aggiunta con successo per VIN: ${_currentState.vin}");
+      } else {
+        _currentState = _currentState.copyWith(isSomethingBroken: true);
+        _controller.add(_currentState);
+        _isRunning = false;
+        throw Exception("Errore aggiunta auto per VIN: ${_currentState.vin}");
+      }
+    }
+
+    // Register odometer state when starting session
+    try {
+      if (_currentState.supportedPids['odometer'] != true) {
+        throw Exception("Odometer PID non supportato.");
+      }
+      final odometer = await _driver.odometer();
+      _currentState = _currentState.copyWith(
+        odometer: odometer,
+        initialOdometer: odometer,
+      );
+      _controller.add(_currentState);
+    } catch (e) {
+      debugPrint("Errore lettura odometro: $e");
+    }
+
+    // Start a new session on the server and get session ID
+    try {
+      final sessionId = await _telemetryService.startTelemetrySession(
+        _currentState.vin,
+      );
+      _currentState = _currentState.copyWith(sessionId: sessionId);
+      _controller.add(_currentState);
+    } catch (e) {
+      debugPrint("Errore avvio nuova sessione: $e");
+      _currentState = _currentState.copyWith(isSomethingBroken: true);
+      _controller.add(_currentState);
+      _isRunning = false;
+      throw Exception("Errore avvio nuova sessione: $e");
+    }
+
+    // Start the sensor reading loop
     _sensorLoop();
   }
 
   void stopMonitoring() async {
     _isRunning = false;
-    //_driver.disconnect();
+    _driver.disconnect();
 
     // Send any remaining data before stopping
     if (_dataBuffer.isNotEmpty) {
@@ -85,6 +153,17 @@ class DriveSessionService {
         lastUpdated: DateTime.now(),
         positionInBuffer: _dataBuffer.length,
       );
+    }
+
+    // End session on server
+    try {
+      await _telemetryService.endTelemetrySession(
+        _currentState.sessionId,
+        _currentState.odometer - _currentState.initialOdometer,
+      );
+    } catch (e) {
+      debugPrint("Errore chiusura sessione: $e");
+      throw Exception("Errore chiusura sessione: $e");
     }
 
     _currentState = _currentState.copyWith(isPipeConnected: false);
@@ -269,7 +348,7 @@ class DriveSessionService {
         final dataPoint = DriveDataPoint.fromState(_currentState);
         _dataBuffer.add(dataPoint);
 
-        debugPrint(_currentState.toString());
+        // debugPrint(_currentState.toString()); // Rimosso per pulizia log
 
         // 6. Send to server (Batch)
         if (_dataBuffer.length >= _batchSize) {
@@ -297,7 +376,15 @@ class DriveSessionService {
     if (batchToSend.isEmpty) return;
 
     try {
-      debugPrint("Invio ${batchToSend.length} punti al server...");
+      debugPrint(
+        "Invio batch di ${batchToSend.length} punti al server (Protobuf)...",
+      );
+
+      // La TelemetryApi.uploadSessionData gestisce ora la conversione in Proto e l'invio binario
+      await _telemetryApi.uploadSessionData(
+        batchToSend,
+        _currentState.sessionId,
+      );
 
       debugPrint("Upload completato!");
     } catch (e) {

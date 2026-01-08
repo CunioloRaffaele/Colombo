@@ -5,6 +5,21 @@ import '../../core/constants/api_constants.dart';
 class VehicleService {
   final _api = ApiClient();
 
+  Future<bool> addCarToUser(String vin) async {
+    print("Adding car with VIN: $vin to user");
+    try {
+      final responseJson = await _api.post<Map<String, dynamic>>(
+        ApiConstants.addCarToUserEndpoint,
+        body: {'vin': vin},
+      );
+      print("Car added successfully: $responseJson");
+      return true;
+    } catch (e) {
+      print("Errore aggiunta auto ($vin): $e");
+      return false;
+    }
+  }
+
   Future<List<CarDto>> getUserCars() async {
     print("Fetching user cars");
     try {

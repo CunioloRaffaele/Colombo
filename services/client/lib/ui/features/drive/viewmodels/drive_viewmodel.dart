@@ -104,7 +104,7 @@ class DriveViewModel extends ChangeNotifier {
 
   // --- Session Management ---
 
-  void toggleSession() {
+  Future<void> toggleSession() async {
     if (_isBluetoothConnected == false) {
       NotificationOverlay.show(
         'Per avviare la sessione, connettiti prima al dispositivo ELM327.',
@@ -113,9 +113,28 @@ class DriveViewModel extends ChangeNotifier {
       return;
     }
     if (!_isSessionActive) {
-      _driveSessionService.startMonitoring(_bluetoothAddress);
+      try {
+        await _driveSessionService.startMonitoring(_bluetoothAddress);
+      } catch (e) {
+        debugPrint("Errore avvio sessione: $e");
+        NotificationOverlay.show(
+          'Errore durante l\'avvio della sessione: $e',
+          Colors.red,
+        );
+        _isSessionActive = false;
+        return;
+      }
     } else {
-      _driveSessionService.stopMonitoring();
+      try {
+        _driveSessionService.stopMonitoring();
+      } catch (e) {
+        debugPrint("Errore chiusura sessione: $e");
+        NotificationOverlay.show(
+          'Errore durante la chiusura della sessione: $e',
+          Colors.red,
+        );
+        return;
+      }
     }
     _isSessionActive = !_isSessionActive;
     _startSessionSound();
@@ -126,15 +145,24 @@ class DriveViewModel extends ChangeNotifier {
   void togglePipeConnection(BuildContext context) async {
     try {
       final devices = await _driveSessionService.scanBluetoothDevices();
-      _bluetoothAddress = await _showDeviceSelectionDialog(context, devices);
-      if (_bluetoothAddress.isEmpty) return;
-      _isBluetoothConnected = !_isBluetoothConnected;
+      final selectedAddress = await _showDeviceSelectionDialog(
+        context,
+        devices,
+      );
+      debugPrint("Selected Bluetooth Address: $selectedAddress");
+      // If cancelled, just return. State remains untouched, no notify needed.
+      if (selectedAddress.isEmpty) return;
+      // Now it's safe to update state
+      _bluetoothAddress = selectedAddress;
+      _isBluetoothConnected = true;
+      notifyListeners();
     } catch (e) {
       debugPrint("Error scanning Bluetooth devices: $e");
       NotificationOverlay.show(
         'Errore durante la scansione dei dispositivi Bluetooth: $e',
         Colors.red,
       );
+      // Notify in case we want to show/
     }
     notifyListeners();
   }
@@ -212,8 +240,7 @@ Future<String> _showDeviceSelectionDialog(
   BuildContext context,
   List<Map<String, String>> devices,
 ) async {
-  String selectedAddress = "";
-  showDialog<void>(
+  final selectedAddress = await showDialog<String>(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
@@ -228,9 +255,8 @@ Future<String> _showDeviceSelectionDialog(
               return ListTile(
                 title: Text(device['name'] ?? 'Unknown Device'),
                 subtitle: Text(device['address'] ?? 'No address'),
-                onTap: () async {
-                  selectedAddress = device['address'] ?? '';
-                  Navigator.of(context).pop(); // Close the dialog
+                onTap: () {
+                  Navigator.of(context).pop(device['address']);
                 },
               );
             },
@@ -239,5 +265,5 @@ Future<String> _showDeviceSelectionDialog(
       );
     },
   );
-  return selectedAddress;
+  return selectedAddress ?? "";
 }
