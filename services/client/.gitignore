@@ -33,6 +33,7 @@ migrate_working_dir/
 /build/
 /coverage/
 *.g.dart
+lib/data/proto/*
 
 # Symbolication related
 app.*.symbols
