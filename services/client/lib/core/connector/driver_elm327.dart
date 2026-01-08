@@ -232,6 +232,20 @@ class Elm327Driver {
     throw Exception('Invalid fuel tank level response: $response');
   }
 
+  // VIN: response "09 02 XX ... " => ASCII string
+  Future<String> vin() async {
+    final response = await sendCommand('09 02');
+    final parts = response.split(' ');
+    if (parts.length >= 3 && parts[0] == '49' && parts[1] == '02') {
+      final vinChars = parts.sublist(2).map((p) {
+        final code = int.parse(p, radix: 16);
+        return String.fromCharCode(code);
+      }).join();
+      return vinChars;
+    }
+    throw Exception('Invalid VIN response: $response');
+  }
+
   // ELM327 Version: response "AT Z" => version string
   Future<String> elmVersion() async => await sendCommand('AT Z');
 }
