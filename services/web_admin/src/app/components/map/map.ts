@@ -39,7 +39,7 @@ export class MapComponent implements AfterViewInit {
   drawnPolygons: number[][][] = [];
   
   /** Lista delle tipologie associate ai poligoni disegnati. */
-  drawnPolygonTypes: string[] = []; // <--- NUOVO ARRAY
+  drawnPolygonTypes: string[] = []; // 
 
   /** Layer grafici dei poligoni disegnati. */
   drawnPolygonLayers: any[] = []; 
@@ -202,15 +202,12 @@ export class MapComponent implements AfterViewInit {
       return;
     }
 
-    this.drawnPolygons.forEach((polygon, index) => {
-      // Inverte lat/lng per GeoJSON (che usa [lng, lat])
-      const geoJsonCoords = polygon.map(([lat, lng]) => [lng, lat]);
-      
+    this.drawnPolygons.forEach((polygon, index) => {      
       // Recupera la tipologia selezionata per questo poligono
       const tipologia = this.drawnPolygonTypes[index];
 
       const body = {
-        coordinates: geoJsonCoords,
+        coordinates: polygon,
         tipologia: tipologia 
       };
       
