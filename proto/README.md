@@ -21,8 +21,7 @@ protoc -I=proto --js_out=import_style=commonjs,binary:services/api/proto proto/a
     - Installa `protoc`
     - Installa il plugin Dart per protoc (`pub global activate protoc_plugin`)
 ```
-protoc -I=proto --dart_out=grpc:services/client/lib/da
-ta/proto proto/api/v1/*.proto proto/common/*.proto
+protoc -I=proto --dart_out=grpc:services/client/lib/data/proto proto/api/v1/*.proto proto/common/*.proto
 ```
 ### Nota
 Assicurati che il percorso del plugin Dart sia incluso nella variabile d'ambiente PATH. Puoi aggiungerlo con:
