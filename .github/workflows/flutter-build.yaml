@@ -18,11 +18,11 @@ jobs:
         working-directory: services/client
       - name: Generate API Protos
         run: |
-        sudo apt-get update && sudo apt-get install -y protobuf-compiler
-        mkdir -p services/client/lib/data/proto
-        pub global activate protoc_plugin
-        export PATH="$PATH":"$HOME/.pub-cache/bin"
-        protoc -I=proto --dart_out=grpc:services/client/lib/data/proto proto/api/v1/*.proto proto/common/*.proto
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+          mkdir -p services/client/lib/data/proto
+          pub global activate protoc_plugin
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
+          protoc -I=proto --dart_out=grpc:services/client/lib/data/proto proto/api/v1/*.proto proto/common/*.proto
       - run: flutter build apk --release
         working-directory: services/client
       - uses: actions/upload-artifact@v3
