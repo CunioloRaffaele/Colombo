@@ -102,19 +102,67 @@ class Elm327Driver {
     final supported = <int>{};
     for (final (cmd, base) in _pidDiscovery) {
       final response = await sendCommand(cmd);
-      final parts = response.split(' ').where((p) => p.isNotEmpty).toList();
-      // Expected: 41 <start> XX XX XX XX
-      if (parts.length < 6 || parts[0] != '41') {
-        continue; // Skip malformed responses
+
+      // Clean the response: remove "SEARCHING..." and extra spaces
+      String cleaned = response
+          .replaceAll('SEARCHING...', '')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+
+      final List<String> hexBytes = [];
+      final tokens = cleaned.split(' ');
+
+      for (var token in tokens) {
+        if (token.isEmpty) continue;
+        // handle tokens with colon (e.g., "0:41", "1:4A", etc.)
+        // take only the part after the colon
+        if (token.contains(':')) {
+          token = token.split(':').last;
+        }
+        if (RegExp(r'^[0-9A-Fa-f]{2}$').hasMatch(token)) {
+          hexBytes.add(token);
+        }
       }
 
-      for (int i = 0; i < 32; i++) {
-        final byteIdx = 2 + (i ~/ 8);
-        final bitPos = 7 - (i % 8);
-        final byteVal = int.tryParse(parts[byteIdx], radix: 16) ?? 0;
-        final isSet = ((byteVal >> bitPos) & 0x01) == 1;
-        if (isSet) {
-          supported.add(base + i + 1); // Bits map to PID base+1..base+32
+      // look for the positive response signature: "41 XX" (41 = 01 + 40, XX = pid base)
+      // the second byte must match the base we requested
+      final expectedPidHex = base
+          .toRadixString(16)
+          .padLeft(2, '0')
+          .toUpperCase();
+
+      int startIndex = -1;
+      for (int i = 0; i < hexBytes.length - 1; i++) {
+        if (hexBytes[i] == '41' && hexBytes[i + 1] == expectedPidHex) {
+          startIndex = i;
+          break;
+        }
+      }
+
+      // if not found, skip
+      if (startIndex == -1) continue;
+
+      // The data starts after "41 XX"
+      // 4 bytes of bitmask
+      int dataIdx = startIndex + 2;
+
+      // Sanity check (enough bytes for 4 bytes of bitmask)
+      if (hexBytes.length - dataIdx < 4) continue;
+
+      // Parse the 4 bytes of bitmask
+      for (int i = 0; i < 4; i++) {
+        final byteHex = hexBytes[dataIdx + i];
+        final byteVal = int.tryParse(byteHex, radix: 16) ?? 0;
+
+        for (int bit = 0; bit < 8; bit++) {
+          // bit 7 is the first PID of the block, bit 0 is the last
+          final isSet = ((byteVal >> (7 - bit)) & 0x01) == 1;
+          if (isSet) {
+            // base + (byte index * 8) + bit index + 1
+            // Example: for base 0x00, the first bit of the first byte is PID 0x01
+            final pidNumber = base + (i * 8) + bit + 1;
+            supported.add(pidNumber);
+          }
         }
       }
     }
@@ -128,6 +176,21 @@ class Elm327Driver {
   // You can call this method multiple times as the supported PIDs are cached.
   Future<Map<String, bool>> availableSensors() async {
     final pids = await _supportedPids();
+
+    // Fallback
+    if (pids.isEmpty) {
+      return {
+        'rpm': true,
+        'speed': true,
+        'throttlePosition': true,
+        'coolantTemp': true,
+        'fuelRate': true,
+        'odometer': true, // Spesso falso sulle auto vecchie, ma proviamo
+        'engineExhaustFlow': true,
+        'fuelTankLevel': true,
+      };
+    }
+
     return {
       'rpm': pids.contains(0x0C),
       'speed': pids.contains(0x0D),
@@ -235,17 +298,71 @@ class Elm327Driver {
   // VIN: response "09 02 XX ... " => ASCII string
   Future<String> vin() async {
     final response = await sendCommand('09 02');
-    final parts = response.split(' ');
-    if (parts.length >= 3 && parts[0] == '49' && parts[1] == '02') {
-      final vinChars = parts.sublist(2).map((p) {
-        final code = int.parse(p, radix: 16);
-        return String.fromCharCode(code);
-      }).join();
-      return vinChars;
+
+    // Clean the response: remove "SEARCHING..." and extra spaces
+    String cleaned = response
+        .replaceAll('SEARCHING...', '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    // 1. Handle explicit error "7F 09 12" or similar (Mode 09 not supported for VIN) and return special value (all 0)
+    if (cleaned.contains('7F 09')) {
+      return "00000000000000000";
     }
+
+    final List<String> hexBytes = [];
+    final tokens = cleaned.split(' ');
+
+    for (var token in tokens) {
+      if (token.isEmpty) continue;
+      // 2. Handle tokens with colon (e.g., "0:41", "1:4A", etc.)
+      // Take only the part after the colon
+      if (token.contains(':')) {
+        token = token.split(':').last;
+      }
+
+      // Get tokens that are valid hex bytes
+      if (RegExp(r'^[0-9A-Fa-f]{2}$').hasMatch(token)) {
+        hexBytes.add(token);
+      }
+    }
+
+    // Look for the positive response signature: "49 02" (49 = 09 + 40)
+    int startIndex = -1;
+    for (int i = 0; i < hexBytes.length - 1; i++) {
+      if (hexBytes[i] == '49' && hexBytes[i + 1] == '02') {
+        startIndex = i;
+        break;
+      }
+    }
+
+    if (startIndex != -1) {
+      // Data starts after "49 02"
+      int dataIdx = startIndex + 2;
+
+      // Sometimes there's a byte indicating the number of elements (e.g., 01) or padding.
+      // If we find "01" and still have enough bytes after to make a VIN (17 characters), skip it.
+      if (dataIdx < hexBytes.length && hexBytes[dataIdx] == '01') {
+        if ((hexBytes.length - (dataIdx + 1)) >= 17) {
+          dataIdx++;
+        }
+      }
+
+      // Vin should be 17 characters long
+      if (hexBytes.length - dataIdx >= 17) {
+        final vinHex = hexBytes.sublist(dataIdx, dataIdx + 17);
+        // Convert hex to ASCII
+        return vinHex
+            .map((h) => String.fromCharCode(int.parse(h, radix: 16)))
+            .join();
+      }
+    }
+
     throw Exception('Invalid VIN response: $response');
   }
 
   // ELM327 Version: response "AT Z" => version string
   Future<String> elmVersion() async => await sendCommand('AT Z');
 }
+
+//https://blog.perquin.com/prj/obdii/
