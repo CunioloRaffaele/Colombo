@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:colombo/core/connector/mock_driver_elm327.dart';
 import 'package:colombo/data/services/municipality_service.dart';
 import 'package:colombo/data/services/telemetry_service.dart';
 import 'package:colombo/data/services/vehicle_service.dart';
 import 'package:flutter/foundation.dart';
-//import '../../core/connector/driver_elm327.dart';
+import '../../core/connector/driver_elm327.dart';
+// import 'package:colombo/core/connector/mock_driver_elm327.dart';
 import '../../core/api/telemetry_api.dart';
 import '../global_drive_state.dart';
 import '../models/drive_data_point_dto.dart';
@@ -17,8 +17,8 @@ class DriveSessionService {
   factory DriveSessionService() => _instance;
   DriveSessionService._internal();
 
-  // final Elm327Driver _driver = Elm327Driver();
-  final MockElm327Driver _driver = MockElm327Driver();
+  final Elm327Driver _driver = Elm327Driver();
+  // final MockElm327Driver _driver = MockElm327Driver();
   final TelemetryApi _telemetryApi = TelemetryApi();
   final VehicleService _vehicleService = VehicleService();
   final TelemetryService _telemetryService = TelemetryService();

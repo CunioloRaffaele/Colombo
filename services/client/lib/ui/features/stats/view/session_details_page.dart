@@ -176,13 +176,30 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                widget.session.vettura,
+                                widget.session.vettura != "00000000000000000"
+                                    ? "Veicolo: ${widget.session.vettura}"
+                                    : "VIN del veicolo non disponibile",
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.6),
                                 ),
                               ),
 
                               const SizedBox(height: 20),
+
+                              if (widget.session.vettura ==
+                                  "00000000000000000") ...[
+                                GlassCard(
+                                  color: Colors.red.withOpacity(0.5),
+                                  child: Text(
+                                    'Informazioni sul veicolo non disponibili o parziali. L\'errore potrebbe essere dovuto all\'impossibilità di recuperare il VIN dalla centralina del veicolo.',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 30),
+                              ],
 
                               // Main Stats Row
                               _buildMainStats(),

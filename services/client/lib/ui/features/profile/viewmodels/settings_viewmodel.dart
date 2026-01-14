@@ -63,21 +63,38 @@ class SettingsViewModel extends ChangeNotifier {
         _cars = [];
       } else {
         for (var car in carList) {
-          final carDetails = await _vehicleService.getCarDetails(car.vin);
-          if (carDetails != null) {
-            final rawManufacturer = carDetails.info.manufacturer ?? '';
-            final assetPath = _getCarAssetPath(rawManufacturer);
+          if (car.vin == '00000000000000000') {
+            // Card placeholder for no vin car
             _cars.add(
               CarUiModel(
-                vin: car.vin,
-                model: '',
-                manufacturer: rawManufacturer,
-                year: carDetails.modelYear?.toString() ?? 'Anno sconosciuto',
-                co2Emissions: carDetails.co2Perkm,
-                pmEmissions: carDetails.pmPerkm,
-                image: AssetImage(assetPath),
+                vin: '',
+                model: '-',
+                manufacturer: '-',
+                year: '-',
+                co2Emissions: 0.0,
+                pmEmissions: 0.0,
+                image: const AssetImage(
+                  'lib/ui/assets/icon/car_placeholder.png',
+                ),
               ),
             );
+          } else {
+            final carDetails = await _vehicleService.getCarDetails(car.vin);
+            if (carDetails != null) {
+              final rawManufacturer = carDetails.info.manufacturer ?? '';
+              final assetPath = _getCarAssetPath(rawManufacturer);
+              _cars.add(
+                CarUiModel(
+                  vin: car.vin,
+                  model: '',
+                  manufacturer: rawManufacturer,
+                  year: carDetails.modelYear?.toString() ?? 'Anno sconosciuto',
+                  co2Emissions: carDetails.co2Perkm,
+                  pmEmissions: carDetails.pmPerkm,
+                  image: AssetImage(assetPath),
+                ),
+              );
+            }
           }
         }
       }

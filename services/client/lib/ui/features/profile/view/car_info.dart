@@ -1,3 +1,4 @@
+import 'package:colombo/ui/widgets/glass_card.dart';
 import 'package:flutter/material.dart';
 
 class CarInfoPage extends StatelessWidget {
@@ -50,6 +51,18 @@ class CarInfoPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
                 children: [
+                  if (vin.isEmpty) ...[
+                    GlassCard(
+                      color: Colors.red.withOpacity(0.5),
+                      child: Text(
+                        'Informazioni sul veicolo non disponibili o parziali. L\'errore potrebbe essere dovuto all\'impossibilità di recuperare il VIN dalla centralina del veicolo.',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
                   Hero(
                     tag: heroTag,
                     child: Container(
