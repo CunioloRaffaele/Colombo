@@ -2,17 +2,21 @@
 
 Questo documento fornisce le istruzioni tecniche per configurare lo stack Colombo su un server Linux. Copre sia le strategie di distribuzione containerizzata (Podman/Docker) che manuale.
 
+Se si desidera compilare e distribuire l'applicazione client Flutter, fare riferimento al file `services/client/README.md`.
+
 **Sistema di Destinazione:** Linux (Debian/Ubuntu raccomandato)
-**Prerequisiti:** `git`, `podman` (o `docker`), `podman-compose` (o `docker compose`), `node` (v22+), `npm`, `nginx` (per l'installazione manuale).
+**Prerequisiti:** `git`, `podman` (o `docker`), `podman-compose` (o `docker compose`), `node` (v22+), `npm`, `nginx` (per l'installazione non containerizzata), `protoc` (Protocol Buffers compiler).
 
 ---
 
 ## 1. Configurazione dell'Ambiente
 
-Indipendentemente dal metodo di distribuzione, è necessario definire le variabili d'ambiente.
-Creare un file `.env` nella directory `infrastructure/` (per i container) o esportare queste variabili nella propria shell (manuale).
+Indipendentemente dal metodo di distribuzione, è necessario definire le variabili d'ambiente e generare i file Protocol Buffers.
 
-### Variabili Richieste
+### 1.1 Variabili d'Ambiente
+Creare un file `.env` nella directory `infrastructure/` (per i container) o esportare queste variabili nella propria shell.
+
+#### Variabili Richieste
 ```bash
 # Configurazione Database
 POSTGRES_USER=colombo_user
@@ -52,7 +56,21 @@ Il container Nginx si aspetta artefatti Angular pre-compilati. È necessario com
     # Mount previsto: ../web_admin/web_admin/browser (Verificare che questo percorso corrisponda all'output dist)
     ```
 
-### Passo 2.2: Generazione del Certificato SSL (Solo Produzione)
+### Passo 2.2: Build degli Artefatti Frontend
+Il backend (e l'applicazione client) richiede i file generati dai `.proto` per funzionare.
+
+1. Installare il compilatore `protoc` e il plugin JS:
+   ```bash
+   sudo apt install -y protobuf-compiler
+   npm install -g protoc-gen-js
+   ```
+2. Generare i file (dalla root del progetto):
+   ```bash
+   mkdir -p services/api/proto
+   protoc -I=proto --js_out=import_style=commonjs,binary:services/api/proto proto/api/v1/*.proto proto/common/*.proto
+   ```
+
+### Passo 2.3: Generazione del Certificato SSL (Solo Produzione)
 **SALTA QUESTO PASSAGGIO SE IN AMBIENTE DI TEST/DEV.**
 
 1. Fermare qualsiasi server web in esecuzione sulla porta 80.
@@ -63,7 +81,7 @@ Il container Nginx si aspetta artefatti Angular pre-compilati. È necessario com
     ```
     *Nota: Assicurarsi che `compose.certbot.yaml` definisca il dominio e l'email corretti.*
 
-### Passo 2.3: Avviare lo Stack
+### Passo 2.4: Avviare lo Stack
 1. Spostarsi in `infrastructure`.
 2. Avviare i servizi:
     ```bash
