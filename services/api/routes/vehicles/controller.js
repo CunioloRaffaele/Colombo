@@ -12,6 +12,15 @@ exports.addCarToUser = async (req, res) => {
             return res.status(400).json({ error: 'Invalid VIN length. VIN must be 17 characters long.' });
         }
 
+        // Verifica se la vettura esiste già per qualche utente
+        const existingCar = await prisma.vetture.findUnique({
+            where: { vin: vin }
+        });
+
+        if (existingCar) {
+            return res.status(409).json({ error: 'Car is already associated with a user' });
+        }
+
         // Find the user
         const user = await prisma.cittadini.findUnique({
             where: { email: userEmail }
