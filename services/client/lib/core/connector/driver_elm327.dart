@@ -203,14 +203,59 @@ class Elm327Driver {
     };
   }
 
+  /// Helper: Parse response for Mode 01 commands.
+  /// Looks for "41 <PID>" pattern and returns the data bytes following it.
+  /// This robust parsing handles echoes and extra whitespace/newlines.
+  List<int> _parseMode01Values(String response, String pidHex) {
+    // 1. Clean the response
+    String cleaned = response
+        .replaceAll('SEARCHING...', '')
+        .replaceAll(
+          RegExp(r'[\r\n>]+'),
+          ' ',
+        ) // Treat newlines/prompts as spaces
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    final List<String> hexTokens = [];
+    final parts = cleaned.split(' ');
+
+    for (var token in parts) {
+      if (token.isEmpty) continue;
+      // Handle CAN formatting like "0:41", "1:0C" etc.
+      if (token.contains(':')) {
+        token = token.split(':').last;
+      }
+      // Check if it's a valid hex byte
+      if (RegExp(r'^[0-9A-Fa-f]{2}$').hasMatch(token)) {
+        hexTokens.add(token.toUpperCase());
+      }
+    }
+
+    final targetPid = pidHex.toUpperCase();
+
+    // 2. Find "41 <PID>"
+    for (int i = 0; i < hexTokens.length - 1; i++) {
+      if (hexTokens[i] == '41' && hexTokens[i + 1] == targetPid) {
+        // Return everything after the PID
+        return hexTokens
+            .sublist(i + 2)
+            .map((h) => int.parse(h, radix: 16))
+            .toList();
+      }
+    }
+
+    throw Exception(
+      'Invalid response for 01 $pidHex (header "41 $pidHex" not found): $response',
+    );
+  }
+
   // RPM: response "41 0C XX YY" => ((XX*256)+YY)/4
   Future<int> rpm() async {
     final response = await sendCommand('01 0C');
-    final parts = response.split(' ');
-    if (parts.length >= 4) {
-      final xx = int.parse(parts[2], radix: 16);
-      final yy = int.parse(parts[3], radix: 16);
-      return ((xx * 256) + yy) ~/ 4;
+    final bytes = _parseMode01Values(response, '0C');
+    if (bytes.length >= 2) {
+      return ((bytes[0] * 256) + bytes[1]) ~/ 4;
     }
     throw Exception('Invalid RPM response: $response');
   }
@@ -218,9 +263,9 @@ class Elm327Driver {
   // Speed: response "41 0D XX" => XX
   Future<int> speed() async {
     final response = await sendCommand('01 0D');
-    final parts = response.split(' ');
-    if (parts.length >= 3) {
-      return int.parse(parts[2], radix: 16);
+    final bytes = _parseMode01Values(response, '0D');
+    if (bytes.isNotEmpty) {
+      return bytes[0];
     }
     throw Exception('Invalid speed response: $response');
   }
@@ -228,10 +273,9 @@ class Elm327Driver {
   // Throttle Position: response "41 11 XX" => (XX*100)/255
   Future<double> throttlePosition() async {
     final response = await sendCommand('01 11');
-    final parts = response.split(' ');
-    if (parts.length >= 3) {
-      final xx = int.parse(parts[2], radix: 16);
-      return (xx * 100) / 255;
+    final bytes = _parseMode01Values(response, '11');
+    if (bytes.isNotEmpty) {
+      return (bytes[0] * 100) / 255;
     }
     throw Exception('Invalid throttle position response: $response');
   }
@@ -239,9 +283,9 @@ class Elm327Driver {
   // Coolant Temp: response "41 05 XX" => XX - 40
   Future<int> coolantTemp() async {
     final response = await sendCommand('01 05');
-    final parts = response.split(' ');
-    if (parts.length >= 3) {
-      return int.parse(parts[2], radix: 16) - 40;
+    final bytes = _parseMode01Values(response, '05');
+    if (bytes.isNotEmpty) {
+      return bytes[0] - 40;
     }
     throw Exception('Invalid coolant temp response: $response');
   }
@@ -249,11 +293,9 @@ class Elm327Driver {
   // Fuel Rate: response "41 5E XX YY" => ((XX*256)+YY)/20
   Future<double> fuelRate() async {
     final response = await sendCommand('01 5E');
-    final parts = response.split(' ');
-    if (parts.length >= 4 && parts[0] == '41' && parts[1] == '5E') {
-      final xx = int.parse(parts[2], radix: 16);
-      final yy = int.parse(parts[3], radix: 16);
-      return ((xx * 256) + yy) / 20.0;
+    final bytes = _parseMode01Values(response, '5E');
+    if (bytes.length >= 2) {
+      return ((bytes[0] * 256) + bytes[1]) / 20.0;
     }
     throw Exception('Invalid fuel rate response: $response');
   }
@@ -261,12 +303,12 @@ class Elm327Driver {
   // Odometer: response "41 A6 XX1 XX2 XX3 XX4" => ((XX1<<24)+(XX2<<16)+(XX3<<8)+XX4)/10.0
   Future<double> odometer() async {
     final response = await sendCommand('01 A6');
-    final parts = response.split(' ');
-    if (parts.length >= 6 && parts[0] == '41' && parts[1] == 'A6') {
-      final xx1 = int.parse(parts[2], radix: 16);
-      final xx2 = int.parse(parts[3], radix: 16);
-      final xx3 = int.parse(parts[4], radix: 16);
-      final xx4 = int.parse(parts[5], radix: 16);
+    final bytes = _parseMode01Values(response, 'A6');
+    if (bytes.length >= 4) {
+      final xx1 = bytes[0];
+      final xx2 = bytes[1];
+      final xx3 = bytes[2];
+      final xx4 = bytes[3];
       return ((xx1 << 24) + (xx2 << 16) + (xx3 << 8) + xx4) / 10.0;
     }
     throw Exception('Invalid odometer response: $response');
@@ -275,11 +317,9 @@ class Elm327Driver {
   // Engine Exhaust Flow: response "41 5F XX YY" => ((XX*256)+YY)/100.0
   Future<double> engineExhaustFlow() async {
     final response = await sendCommand('01 5F');
-    final parts = response.split(' ');
-    if (parts.length >= 4 && parts[0] == '41' && parts[1] == '5F') {
-      final xx = int.parse(parts[2], radix: 16);
-      final yy = int.parse(parts[3], radix: 16);
-      return ((xx * 256) + yy) / 100.0;
+    final bytes = _parseMode01Values(response, '5F');
+    if (bytes.length >= 2) {
+      return ((bytes[0] * 256) + bytes[1]) / 100.0;
     }
     throw Exception('Invalid engine exhaust flow response: $response');
   }
@@ -287,10 +327,9 @@ class Elm327Driver {
   // Fuel Tank Level: response "41 2F XX" => (XX*100)/255.0
   Future<double> fuelTankLevel() async {
     final response = await sendCommand('01 2F');
-    final parts = response.split(' ');
-    if (parts.length >= 3 && parts[0] == '41' && parts[1] == '2F') {
-      final xx = int.parse(parts[2], radix: 16);
-      return (xx * 100) / 255.0;
+    final bytes = _parseMode01Values(response, '2F');
+    if (bytes.isNotEmpty) {
+      return (bytes[0] * 100) / 255.0;
     }
     throw Exception('Invalid fuel tank level response: $response');
   }
