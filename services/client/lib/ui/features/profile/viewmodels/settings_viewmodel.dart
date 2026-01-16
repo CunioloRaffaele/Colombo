@@ -134,6 +134,8 @@ class SettingsViewModel extends ChangeNotifier {
       fileName = 'TOYOTA';
     } else if (cleanName.contains('mg')) {
       fileName = 'MG';
+    } else if (cleanName.contains('Citroën')) {
+      fileName = 'CITROEN';
     } else {
       fileName = 'car_placeholder';
     }
