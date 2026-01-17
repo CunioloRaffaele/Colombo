@@ -9,36 +9,36 @@ class EcoscoreService {
   /// - `mu`: The population mean (ideal value for eco-driving).
   /// - `sigma`: The population standard deviation.
   static final Map<String, VitalStats> variables = {
-    'rpm': const VitalStats(weight: 0.22, mu: 2200, sigma: 500),
+    'rpm': const VitalStats(weight: 0.22, mu: 2200, sigma: 1000),
     'speed': const VitalStats(
       weight: 0.13,
       mu: 80, // km/h
-      sigma: 20,
+      sigma: 40,
     ),
     'throttlePosition': const VitalStats(
       weight: 0.22,
       mu: 30, // %
-      sigma: 15,
+      sigma: 30,
     ),
     'coolantTemp': const VitalStats(
       weight: 0.04,
       mu: 90, // Celsius
-      sigma: 10,
+      sigma: 30,
     ),
     'fuelRate': const VitalStats(
       weight: 0.17,
       mu: 3, // L/h - ideal low consumption rate
-      sigma: 2,
+      sigma: 6,
     ),
     'engineExhaustFlow': const VitalStats(
       weight: 0.09,
       mu: 150, // g/s
-      sigma: 50,
+      sigma: 100,
     ),
     'acceleration': const VitalStats(
       weight: 0.13,
       mu: 0, // m/s^2
-      sigma: 2,
+      sigma: 5,
     ),
     // Vitals not directly related to driving style have a weight of 0.
     'odometer': const VitalStats(weight: 0.0, mu: 0, sigma: 1),
@@ -120,31 +120,49 @@ class VitalStats {
   ///
   /// If some vitals are unavailable, their weights are distributed equally
   /// among the available ones.
-  static void adjustWeights(Map<String, bool> availableVitals) {
+
+  static Map<String, VitalStats> adjustWeights(
+    Map<String, bool> availableVitals,
+  ) {
+    // Create a working copy to avoid mutating the static EcoscoreService.variables
+    final Map<String, VitalStats> adjustedVariables =
+        Map<String, VitalStats>.from(EcoscoreService.variables);
+
     double missingWeight = 0.0;
-    int missingCount = 0;
-    for (final entry in EcoscoreService.variables.entries) {
-      if (availableVitals[entry.key] == false ||
-          (entry.key == 'odometer' || entry.key == 'fuelTankLevel')) {
-        missingWeight += entry.value.weight;
-        missingCount += 1;
-      }
-    }
-    if (missingCount != 0) {
-      final distrW =
-          missingWeight / (EcoscoreService.variables.length - missingCount);
-      for (final entry in EcoscoreService.variables.entries) {
-        if (availableVitals[entry.key] == true &&
-            entry.key == 'odometer' &&
-            entry.key == 'fuelTankLevel') {
-          EcoscoreService.variables[entry.key] = VitalStats(
-            weight: entry.value.weight + distrW,
-            mu: entry.value.mu,
-            sigma: entry.value.sigma,
-          );
+    int scoringVarsCount = 0;
+
+    // 1. Calculate missing weight from unavailable vars (only those that normally have weight > 0)
+    EcoscoreService.variables.forEach((key, stats) {
+      if (stats.weight > 0) {
+        if (availableVitals[key] != true ||
+            (key == 'odometer' || key == 'fuelTankLevel')) {
+          missingWeight += stats.weight;
+        } else {
+          scoringVarsCount++;
         }
       }
+    });
+
+    // 2. Distribute missing weight among available scoring variables
+    if (missingWeight > 0 && scoringVarsCount > 0) {
+      final double extraWeight = missingWeight / scoringVarsCount;
+
+      adjustedVariables.forEach((key, stats) {
+        // Only add weight to available scoring variables
+        if (stats.weight > 0 &&
+            availableVitals[key] == true &&
+            key == 'odometer' &&
+            key == 'fuelTankLevel') {
+          adjustedVariables[key] = VitalStats(
+            weight: stats.weight + extraWeight,
+            mu: stats.mu,
+            sigma: stats.sigma,
+          );
+        }
+      });
     }
+
+    return adjustedVariables;
   }
 
   /// Calculates the final instant score by summing a list of weighted scores.

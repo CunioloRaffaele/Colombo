@@ -2,37 +2,37 @@ const variables = {
   rpm: {
     weight: 0.22,
     mu: 2200,
-    sigma: 500,
+    sigma: 1000,
   },
   speed: {
     weight: 0.13,
     mu: 80, // km/h
-    sigma: 20,
+    sigma: 40,
   },
   throttlePosition: {
     weight: 0.22,
     mu: 30, // %
-    sigma: 15,
+    sigma: 30,
   },
   coolantTemp: {
     weight: 0.04,
     mu: 90, // Celsius
-    sigma: 10,
+    sigma: 30,
   },
   fuelRate: {
     weight: 0.17,
     mu: 3, // L/h - ideal low consumption rate
-    sigma: 2,
+    sigma: 6,
   },
   engineExhaustFlow: {
     weight: 0.09,
     mu: 150, // g/s
-    sigma: 50,
+    sigma: 100,
   },
   acceleration: {
     weight: 0.13,
     mu: 0, // m/s^2
-    sigma: 2,
+    sigma: 5,
   },
   // Vitals not directly related to driving style have a weight of 0.
   odometer: {

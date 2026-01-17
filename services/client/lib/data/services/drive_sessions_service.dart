@@ -18,7 +18,7 @@ class DriveSessionService {
   DriveSessionService._internal();
 
   final Elm327Driver _driver = Elm327Driver();
-  // final MockElm327Driver _driver = MockElm327Driver();
+  //final MockElm327Driver _driver = MockElm327Driver();
   final TelemetryApi _telemetryApi = TelemetryApi();
   final VehicleService _vehicleService = VehicleService();
   final TelemetryService _telemetryService = TelemetryService();
@@ -238,7 +238,7 @@ class DriveSessionService {
         );
 
         // 3. Get local ecoscore
-        final adjustedVariables = VitalStats.getAdjustedVariables(
+        final adjustedVariables = VitalStats.adjustWeights(
           _currentState.supportedPids,
         );
         double totalScore = 0.0;
