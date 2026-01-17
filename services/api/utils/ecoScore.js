@@ -120,7 +120,7 @@ function getAdjustedVariables(availableKeys) {
     const totalVars = Object.keys(variables).length;
 
     // Calculate missing weight and count
-    for (const key in variables) {
+    for (const key in variables || key == 'odometer' || key == 'fuelTankLevel') {
         if (!availableKeys.includes(key)) {
             missingWeight += variables[key].weight;
             missingCount++;
@@ -130,7 +130,7 @@ function getAdjustedVariables(availableKeys) {
     if (missingCount > 0 && missingCount < totalVars) {
         const distrW = missingWeight / (totalVars - missingCount);
         for (const key in adjustedVariables) {
-            if (availableKeys.includes(key)) {
+            if (availableKeys.includes(key) && key == 'odometer' && key == 'fuelTankLevel') {
                 adjustedVariables[key].weight += distrW;
             }
         }

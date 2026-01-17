@@ -124,7 +124,8 @@ class VitalStats {
     double missingWeight = 0.0;
     int missingCount = 0;
     for (final entry in EcoscoreService.variables.entries) {
-      if (availableVitals[entry.key] == false) {
+      if (availableVitals[entry.key] == false ||
+          (entry.key == 'odometer' || entry.key == 'fuelTankLevel')) {
         missingWeight += entry.value.weight;
         missingCount += 1;
       }
@@ -133,7 +134,9 @@ class VitalStats {
       final distrW =
           missingWeight / (EcoscoreService.variables.length - missingCount);
       for (final entry in EcoscoreService.variables.entries) {
-        if (availableVitals[entry.key] == true) {
+        if (availableVitals[entry.key] == true &&
+            entry.key == 'odometer' &&
+            entry.key == 'fuelTankLevel') {
           EcoscoreService.variables[entry.key] = VitalStats(
             weight: entry.value.weight + distrW,
             mu: entry.value.mu,

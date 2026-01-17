@@ -214,8 +214,17 @@ class DriveSessionService {
           }
         }
 
+        // Debug sensor values
+        debugPrint(
+          "Sensors read -> RPM: ${_currentState.rpm}, Speed: ${_currentState.speed}, Fuel: ${_currentState.fuelRate}",
+        );
+
         // 2. Get location
         final pos = await determinePosition();
+        debugPrint(
+          "Location read -> Lat: ${pos.latitude}, Lon: ${pos.longitude}",
+        );
+
         var serverStateOfPosition = await MunicipalityService.isPointInZone(
           pos.latitude,
           pos.longitude,
@@ -229,11 +238,13 @@ class DriveSessionService {
         );
 
         // 3. Get local ecoscore
-        VitalStats.adjustWeights(_currentState.supportedPids);
+        final adjustedVariables = VitalStats.getAdjustedVariables(
+          _currentState.supportedPids,
+        );
         double totalScore = 0.0;
         List<double> componentScores = [];
 
-        EcoscoreService.variables.forEach((key, variable) {
+        adjustedVariables.forEach((key, variable) {
           double? value;
           switch (key) {
             case 'rpm':
@@ -265,65 +276,35 @@ class DriveSessionService {
               break;
           }
 
-          var pValue = 0.0;
-          if (value != null) {
-            switch (key) {
-              case 'rpm':
-                pValue = VitalStats.twoTailedZTestPValue(
-                  value,
-                  variable.mu,
-                  variable.sigma,
-                );
-                break;
-              case 'speed':
-                pValue = VitalStats.twoTailedZTestPValue(
-                  value,
-                  variable.mu,
-                  variable.sigma,
-                );
-                break;
-              case 'throttlePosition':
-                pValue = VitalStats.twoTailedZTestPValue(
-                  value,
-                  variable.mu,
-                  variable.sigma,
-                );
-                break;
-              case 'coolantTemp':
-                pValue = VitalStats.twoTailedZTestPValue(
-                  value,
-                  variable.mu,
-                  variable.sigma,
-                );
-                break;
-              case 'fuelRate':
-                pValue = VitalStats.twoTailedZTestPValue(
-                  value,
-                  variable.mu,
-                  variable.sigma,
-                );
-                break;
-              case 'engineExhaustFlow':
-                pValue = VitalStats.twoTailedZTestPValue(
-                  value,
-                  variable.mu,
-                  variable.sigma,
-                );
-                break;
-              case 'odometer':
-                pValue = VitalStats.twoTailedZTestPValue(
-                  value,
-                  variable.mu,
-                  variable.sigma,
-                );
-                break;
-              case 'fuelTankLevel':
-                pValue = VitalStats.rightTailedZTestPValue(
-                  value,
-                  variable.mu,
-                  variable.sigma,
-                );
-                break;
+          // Salta se il valore non è valido o se la variabile (come odometer) ha peso 0 e non influisce
+          if (value != null && variable.weight > 0) {
+            double pValue = 0.0;
+
+            if ([
+              'fuelRate',
+              'throttlePosition',
+              'engineExhaustFlow',
+            ].contains(key)) {
+              // Per queste variabili, "meno è meglio" (RightTailed)
+              pValue = VitalStats.rightTailedZTestPValue(
+                value,
+                variable.mu,
+                variable.sigma,
+              );
+            } else if (key == 'acceleration') {
+              // Accelerazione: vogliamo valori vicini a zero (TwoTailed Target Zero)
+              pValue = VitalStats.twoTailedZTestPValue(
+                value,
+                0,
+                variable.sigma,
+              );
+            } else {
+              // Per RPM, Speed, CoolantTemp il valore ideale è la media (TwoTailed Ideal Mean)
+              pValue = VitalStats.twoTailedZTestPValue(
+                value,
+                variable.mu,
+                variable.sigma,
+              );
             }
 
             final weightedScore = VitalStats.getWeightedScore(
@@ -336,7 +317,8 @@ class DriveSessionService {
 
         //Final score
         totalScore = VitalStats.getInstantScore(componentScores);
-        _currentState = _currentState.copyWith(ecoscore: totalScore);
+        debugPrint("Ecoscore calculated -> $totalScore");
+        _currentState = _currentState.copyWith(ecoscore: totalScore * 100);
 
         // 4. Update ui
         _controller.add(_currentState);

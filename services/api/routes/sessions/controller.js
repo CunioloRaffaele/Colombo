@@ -256,7 +256,15 @@ exports.sendReadings = async (req, res) => {
                 let value = reading[key];
                 // Salta se la variabile non è gestita o il valore non è numerico
                 if (!variable || typeof value !== 'number') continue;
-                const pValue = ecoScore.twoTailedZTestPValue(value, variable.mu, variable.sigma);
+                let pValue;
+                // Logica differenziata per il tipo di test statistico
+                if (['fuelRate', 'throttlePosition', 'engineExhaustFlow'].includes(camelKey)) {
+                    // Per queste variabili, valori più bassi indicano un comportamento migliore (RightTailed test inverso nell'implementazione)
+                    pValue = ecoScore.rightTailedZTestPValue(value, variable.mu, variable.sigma);
+                } else {
+                    // Per RPM, Speed, CoolantTemp e Acceleration il valore ideale è centrale/media (TwoTailed)
+                    pValue = ecoScore.twoTailedZTestPValue(value, variable.mu, variable.sigma);
+                }
                 const weightedScore = ecoScore.getWeightedScore(pValue, variable.weight);
                 componentScores.push(weightedScore);
             }
