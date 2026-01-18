@@ -38,6 +38,11 @@
             Minimo 6 caratteri
           </mat-error>
         </mat-form-field>
+        Procedendo con la registrazione, accetti i nostri
+        <a href="https://raw.githubusercontent.com/CunioloRaffaele/Colombo/refs/heads/main/docs/TERMS_AND_CONDITIONS.md" target="_blank">Termini di Servizio</a>
+        e
+        <a href="https://raw.githubusercontent.com/CunioloRaffaele/Colombo/refs/heads/main/docs/PRIVACY_POLICY.md" target="_blank">Informativa sulla Privacy</a>.
+        <br /><br />
         <button mat-raised-button color="primary" class="full-width" type="submit" [disabled]="registrationForm.invalid || loading">
           <span *ngIf="!loading">Registrati</span>
           <mat-progress-spinner *ngIf="loading" diameter="20" mode="indeterminate"></mat-progress-spinner>
