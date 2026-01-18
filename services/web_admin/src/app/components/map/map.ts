@@ -195,6 +195,7 @@ export class MapComponent implements AfterViewInit {
   saveZone() {
     const token = localStorage.getItem('jwt_token');
     const headers = { Authorization: `Bearer ${token}` };
+    let wasSaved: boolean = false;
 
     // Validazione: controlla se ci sono tipologie non selezionate
     if (this.drawnPolygonTypes.some(type => !type)) {
@@ -218,13 +219,21 @@ export class MapComponent implements AfterViewInit {
       ).subscribe({
         next: () => {
           // Successo
+          wasSaved = true;
           console.log(`Zona ${index + 1} salvata come ${tipologia}`);
         },
         error: () => {
+          wasSaved = false;
+          alert(`Errore nel salvataggio della zona ${index + 1}. Riprova.`);
           console.error('Errore salvataggio zona');
         }
       });
     });
+    if (wasSaved) {
+      // Dopo il salvataggio, torna alla pagina delle zone (precendente)
+      window.history.back();
+
+    }
 
   }
 
