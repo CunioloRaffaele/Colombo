@@ -16,6 +16,22 @@ exports.addCarToUser = async (req, res) => {
         // Se il VIN è composto da 17 zeri (caso in cui il veicolo non lo espone),
         // ne generiamo uno univoco per poter salvare la vettura nel DB.
         if (vin === '00000000000000000') {
+            // Verifica che l'utente non abbia già una vettura senza VIN
+            const existingNoVinCar = await prisma.vetture.findFirst({
+                where: {
+                    proprietario: userEmail,
+                    vin: {
+                        startsWith: 'NO_VIN_'
+                    }
+                }
+            });
+
+            if (existingNoVinCar) {
+                return res.status(201).json({
+                    message: 'Car added successfully',
+                    car: existingNoVinCar
+                });
+            }
             let uniqueFound = false;
             while (!uniqueFound) {
                 const uniqueSuffix = crypto.randomBytes(5).toString('hex').toUpperCase();
