@@ -1,15 +1,37 @@
 const prisma = require('../../utils/prisma');
 const vinDecoder = require('../../utils/vin');
 const emissions = require('../../utils/emissions');
+const crypto = require('crypto');
 
 // Aggiungi una vettura all'utente
 exports.addCarToUser = async (req, res) => {
     try {
         const userEmail = req.userToken.email;
-        const { vin } = req.body;
+        let { vin } = req.body;
 
         if (vin.length !== 17) {
             return res.status(400).json({ error: 'Invalid VIN length. VIN must be 17 characters long.' });
+        }
+
+        // Se il VIN è composto da 17 zeri (caso in cui il veicolo non lo espone),
+        // ne generiamo uno univoco per poter salvare la vettura nel DB.
+        if (vin === '00000000000000000') {
+            let uniqueFound = false;
+            while (!uniqueFound) {
+                const uniqueSuffix = crypto.randomBytes(5).toString('hex').toUpperCase();
+                // 'NO_VIN_' (7 chars) + 10 chars hex = 17 chars
+                const candidateVin = 'NO_VIN_' + uniqueSuffix;
+
+                // Verifichiamo che questo VIN generato non esista già
+                const check = await prisma.vetture.findUnique({
+                    where: { vin: candidateVin }
+                });
+
+                if (!check) {
+                    vin = candidateVin;
+                    uniqueFound = true;
+                }
+            }
         }
 
         // Verifica se la vettura esiste già per qualche utente
@@ -66,6 +88,13 @@ exports.listUserCars = async (req, res) => {
             where: { proprietario: user.email },
         });
 
+        // Verify if user has a car with "NO_VIN_" prefix
+        for (let car of cars) {
+            if (car.vin.startsWith('NO_VIN_')) {
+                car.vin = '00000000000000000'; // Replace with 17 zeros for response
+            }
+        }
+
         return res.status(200).json({
             message: 'User cars retrieved successfully',
             cars: cars
@@ -84,6 +113,10 @@ exports.getCarInfo = async (req, res) => {
         // Validate VIN length
         if (vin.length !== 17) {
             return res.status(400).json({ error: 'Invalid VIN length. VIN must be 17 characters long.' });
+        }
+
+        if (vin === '00000000000000000' || vin.startsWith('NO_VIN_')) {
+            return res.status(400).json({ error: 'No detailed information available for vehicles without a valid VIN.' });
         }
 
         // Find the car by VIN and return it if it belongs to the requesting user
