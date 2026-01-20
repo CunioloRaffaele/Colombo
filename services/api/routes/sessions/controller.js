@@ -233,49 +233,57 @@ exports.sendReadings = async (req, res) => {
             odometer: 'odometer',
             fuel_tank_level: 'fuelTankLevel'
         };
+        console.log(`Processing ${readings.length} readings for session ${sessionId}...`);
+        
         for (const [i, reading] of readings.entries()) {
             // Controllo presenza latitude e longitude
             if (typeof reading.latitude !== 'number' || typeof reading.longitude !== 'number') {
-                return res.status(400).json({
-                    error: `Missing latitude or longitude in data_points[${i}]`
-                });
+            console.error(`Missing latitude or longitude in reading index ${i}`, reading);
+            return res.status(400).json({
+                error: `Missing latitude or longitude in data_points[${i}]`
+            });
             }
             // Estraggo la mappa delle variabili disponibili
             const availableVitals = reading.available_vitals || reading.availableVitals || {};
             // Solo le chiavi gestite da ecoScore
             const availableKeys = Object.keys(availableVitals)
-                .filter(k => availableVitals[k] && keyMap[k]);
+            .filter(k => availableVitals[k] && keyMap[k]);
+
+            // console.log(`Reading ${i}: Available keys found:`, availableKeys);
+
             // Calcolo pesi aggiustati (in camelCase)
             const camelKeys = availableKeys.map(k => keyMap[k]);
             const adjustedVars = ecoScore.getAdjustedVariables(camelKeys);
             // Calcolo weighted scores
             let componentScores = [];
             for (const key of availableKeys) {
-                const camelKey = keyMap[key];
-                const variable = adjustedVars[camelKey];
-                let value = reading[key];
-                // Salta se la variabile non è gestita o il valore non è numerico
-                if (!variable || typeof value !== 'number') continue;
-                let pValue;
-                // Logica differenziata per il tipo di test statistico
-                if (['fuelRate', 'throttlePosition', 'engineExhaustFlow'].includes(camelKey)) {
-                    // Per queste variabili, valori più bassi indicano un comportamento migliore (RightTailed test inverso nell'implementazione)
-                    pValue = ecoScore.rightTailedZTestPValue(value, variable.mu, variable.sigma);
-                } else {
-                    // Per RPM, Speed, CoolantTemp e Acceleration il valore ideale è centrale/media (TwoTailed)
-                    pValue = ecoScore.twoTailedZTestPValue(value, variable.mu, variable.sigma);
-                }
-                const weightedScore = ecoScore.getWeightedScore(pValue, variable.weight);
-                componentScores.push(weightedScore);
+            const camelKey = keyMap[key];
+            const variable = adjustedVars[camelKey];
+            let value = reading[key];
+            // Salta se la variabile non è gestita o il valore non è numerico
+            if (!variable || typeof value !== 'number') continue;
+            let pValue;
+            // Logica differenziata per il tipo di test statistico
+            if (['fuelRate', 'throttlePosition', 'engineExhaustFlow'].includes(camelKey)) {
+                // Per queste variabili, valori più bassi indicano un comportamento migliore (RightTailed test inverso nell'implementazione)
+                pValue = ecoScore.rightTailedZTestPValue(value, variable.mu, variable.sigma);
+            } else {
+                // Per RPM, Speed, CoolantTemp e Acceleration il valore ideale è centrale/media (TwoTailed)
+                pValue = ecoScore.twoTailedZTestPValue(value, variable.mu, variable.sigma);
+            }
+            const weightedScore = ecoScore.getWeightedScore(pValue, variable.weight);
+            console.log(`  - ${camelKey}: value=${value}, mu=${variable.mu}, sigma=${variable.sigma}, pValue=${pValue.toFixed(4)}, weight=${variable.weight}, weightedScore=${weightedScore.toFixed(4)}`);
+            componentScores.push(weightedScore);
             }
             const totalScore = ecoScore.getInstantScore(componentScores);
             readingsTotScore.push(totalScore);
 
             // Salva su rilevazioni: solo query raw PostGIS, compatibile con il DB
-            //console.log(`Inserting reading ${i + 1}/${readings.length} with score ${totalScore} and data :`, reading);
+            console.log(`Inserting reading ${i + 1}/${readings.length} with score ${totalScore} at [${reading.longitude}, ${reading.latitude}]`);
+            
             await prisma.$executeRawUnsafe(
-                `INSERT INTO rilevazioni (sessione, punto, punteggio) VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), $4)`,
-                Number(sessionId), reading.longitude, reading.latitude, totalScore
+            `INSERT INTO rilevazioni (sessione, punto, punteggio) VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), $4)`,
+            Number(sessionId), reading.longitude, reading.latitude, totalScore
             );
             processed++;
         }

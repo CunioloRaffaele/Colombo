@@ -9,36 +9,36 @@ class EcoscoreService {
   /// - `mu`: The population mean (ideal value for eco-driving).
   /// - `sigma`: The population standard deviation.
   static final Map<String, VitalStats> variables = {
-    'rpm': const VitalStats(weight: 0.22, mu: 2200, sigma: 1000),
+    'rpm': const VitalStats(weight: 0.22, mu: 2500, sigma: 1500),
     'speed': const VitalStats(
       weight: 0.13,
-      mu: 80, // km/h
-      sigma: 40,
+      mu: 90, // km/h
+      sigma: 50,
     ),
     'throttlePosition': const VitalStats(
       weight: 0.22,
-      mu: 30, // %
-      sigma: 30,
+      mu: 40, // %
+      sigma: 35,
     ),
     'coolantTemp': const VitalStats(
       weight: 0.04,
       mu: 90, // Celsius
-      sigma: 30,
+      sigma: 40,
     ),
     'fuelRate': const VitalStats(
       weight: 0.17,
-      mu: 3, // L/h - ideal low consumption rate
-      sigma: 6,
+      mu: 5, // L/h - ideal low consumption rate
+      sigma: 8,
     ),
     'engineExhaustFlow': const VitalStats(
       weight: 0.09,
-      mu: 150, // g/s
-      sigma: 100,
+      mu: 200, // g/s
+      sigma: 150,
     ),
     'acceleration': const VitalStats(
       weight: 0.13,
       mu: 0, // m/s^2
-      sigma: 5,
+      sigma: 10,
     ),
     // Vitals not directly related to driving style have a weight of 0.
     'odometer': const VitalStats(weight: 0.0, mu: 0, sigma: 1),

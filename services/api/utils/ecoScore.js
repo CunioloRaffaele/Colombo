@@ -1,38 +1,38 @@
 const variables = {
   rpm: {
     weight: 0.22,
-    mu: 2200,
-    sigma: 1000,
+    mu: 2500,
+    sigma: 1500,
   },
   speed: {
     weight: 0.13,
-    mu: 80, // km/h
-    sigma: 40,
+    mu: 90, // km/h
+    sigma: 50,
   },
   throttlePosition: {
     weight: 0.22,
-    mu: 30, // %
-    sigma: 30,
+    mu: 40, // %
+    sigma: 35,
   },
   coolantTemp: {
     weight: 0.04,
     mu: 90, // Celsius
-    sigma: 30,
+    sigma: 40,
   },
   fuelRate: {
     weight: 0.17,
-    mu: 3, // L/h - ideal low consumption rate
-    sigma: 6,
+    mu: 5, // L/h - ideal low consumption rate
+    sigma: 8,
   },
   engineExhaustFlow: {
     weight: 0.09,
-    mu: 150, // g/s
-    sigma: 100,
+    mu: 200, // g/s
+    sigma: 150,
   },
   acceleration: {
     weight: 0.13,
     mu: 0, // m/s^2
-    sigma: 5,
+    sigma: 10,
   },
   // Vitals not directly related to driving style have a weight of 0.
   odometer: {
@@ -120,8 +120,8 @@ function getAdjustedVariables(availableKeys) {
     const totalVars = Object.keys(variables).length;
 
     // Calculate missing weight and count
-    for (const key in variables || key == 'odometer' || key == 'fuelTankLevel') {
-        if (!availableKeys.includes(key)) {
+    for (const key in variables ) {
+        if (!availableKeys.includes(key) || key === 'odometer' || key === 'fuelTankLevel') {
             missingWeight += variables[key].weight;
             missingCount++;
         }
@@ -130,7 +130,7 @@ function getAdjustedVariables(availableKeys) {
     if (missingCount > 0 && missingCount < totalVars) {
         const distrW = missingWeight / (totalVars - missingCount);
         for (const key in adjustedVariables) {
-            if (availableKeys.includes(key) && key == 'odometer' && key == 'fuelTankLevel') {
+            if (availableKeys.includes(key) && key !== 'odometer' && key !== 'fuelTankLevel') {
                 adjustedVariables[key].weight += distrW;
             }
         }
