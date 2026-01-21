@@ -155,14 +155,14 @@ exports.ecoscoreSessione = async (req, res) => {
       }
       comune.zone_attraversate.push({
         zona_id: curr.zona_id,
-        ecoscore: curr.ecoscore_zona
+        ecoscore: curr.ecoscore_zona*100
       });
       return acc;
     }, []);
 
     const responseData = {
       message: ecoscore !== null ? "Ecoscore retrieved successfully" : "No ecoscore found for this session",
-      ecoscore: ecoscore,
+      ecoscore: ecoscore*100,
       km: session.km,
       vin: session.vettura,
       pm: session.pm,
@@ -272,7 +272,7 @@ exports.getUserSessionsListByMonthYear = async (req, res) => {
       return {
       ...session,
       inizio: session.inizio.toString(),
-      ecoscore: ecoscore !== null ? ecoscore : -1
+      ecoscore: ecoscore !== null ? ecoscore*100 : -1
       };
     }));
 
