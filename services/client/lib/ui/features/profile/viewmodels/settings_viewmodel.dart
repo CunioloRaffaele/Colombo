@@ -234,35 +234,35 @@ class SettingsViewModel extends ChangeNotifier {
           await MunicipalityService.isMunicipalityRegistered(
             userDto.residenza.toString(),
           );
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder: (_) => UserInfoPage(
+              nome: userDto.nome,
+              cognome: userDto.cognome,
+              email: userDto.email,
+              codiceIstat: userDto.residenza.toString(),
+              comune: municipalityName ?? 'Comune non trovato',
+              comuneRegistrato: isMunicipalityRegistered,
+              veicoliRegistrati: vehicles.length,
+              sessioniGuida: sessionsDto.numeroSessioni,
+              serverInfo: ApiConstants.baseUrl
+                  .toString()
+                  .split('//')
+                  .last
+                  .split('/')
+                  .first,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       NotificationOverlay.show(
         "Errore durante il recupero delle info utente: $e",
         const Color.fromARGB(255, 200, 50, 50),
       );
       debugPrint("Errore durante il recupero delle info utente: $e");
-    }
-    if (context.mounted) {
-      Navigator.push(
-        context,
-        CupertinoPageRoute(
-          builder: (_) => UserInfoPage(
-            nome: userDto.nome,
-            cognome: userDto.cognome,
-            email: userDto.email,
-            codiceIstat: userDto.residenza.toString(),
-            comune: municipalityName ?? 'Comune non trovato',
-            comuneRegistrato: isMunicipalityRegistered,
-            veicoliRegistrati: vehicles.length,
-            sessioniGuida: sessionsDto.numeroSessioni,
-            serverInfo: ApiConstants.baseUrl
-                .toString()
-                .split('//')
-                .last
-                .split('/')
-                .first,
-          ),
-        ),
-      );
     }
   }
 }
