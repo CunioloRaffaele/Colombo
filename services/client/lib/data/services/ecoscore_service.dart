@@ -9,10 +9,10 @@ class EcoscoreService {
   /// - `mu`: The population mean (ideal value for eco-driving).
   /// - `sigma`: The population standard deviation.
   static final Map<String, VitalStats> variables = {
-    'rpm': const VitalStats(weight: 0.22, mu: 2500, sigma: 1500),
+    'rpm': const VitalStats(weight: 0.22, mu: 1900, sigma: 1500),
     'speed': const VitalStats(
       weight: 0.13,
-      mu: 90, // km/h
+      mu: 80, // km/h
       sigma: 50,
     ),
     'throttlePosition': const VitalStats(
