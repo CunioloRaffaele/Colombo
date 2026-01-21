@@ -69,7 +69,7 @@ exports.endSession = async (req, res) => {
         // Leggi email dal token, id dalla path e km dal body
         const email = req.userToken.email;
         const sessioneId = parseInt(req.params.id);
-        const { km } = req.body;
+        let { km } = req.body;
 
         // Validazione email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -109,6 +109,22 @@ exports.endSession = async (req, res) => {
         });
         if (!sessione) {
             return res.status(404).json({ error: 'Session not found or not associated with user' });
+        }
+
+        // Se l'odometro non ha restituito i km (km è 0), calcolali tramite i punti GPS salvati
+        if (km === 0) {
+            try {
+                const result = await prisma.$queryRaw`
+                    SELECT ST_Length(ST_MakeLine(punto ORDER BY id)::geography) / 1000.0 as val
+                    FROM rilevazioni
+                    WHERE sessione = ${sessioneId}
+                `;
+                if (result.length > 0 && result[0].val != null) {
+                    km = result[0].val;
+                }
+            } catch (err) {
+                console.error("Error calculating km from GPS:", err);
+            }
         }
 
         // Calcolo emissioni
@@ -233,7 +249,7 @@ exports.sendReadings = async (req, res) => {
             odometer: 'odometer',
             fuel_tank_level: 'fuelTankLevel'
         };
-        console.log(`Processing ${readings.length} readings for session ${sessionId}...`);
+        //console.log(`Processing ${readings.length} readings for session ${sessionId}...`);
         
         for (const [i, reading] of readings.entries()) {
             // Controllo presenza latitude e longitude
@@ -272,14 +288,14 @@ exports.sendReadings = async (req, res) => {
                 pValue = ecoScore.twoTailedZTestPValue(value, variable.mu, variable.sigma);
             }
             const weightedScore = ecoScore.getWeightedScore(pValue, variable.weight);
-            console.log(`  - ${camelKey}: value=${value}, mu=${variable.mu}, sigma=${variable.sigma}, pValue=${pValue.toFixed(4)}, weight=${variable.weight}, weightedScore=${weightedScore.toFixed(4)}`);
+            //console.log(`  - ${camelKey}: value=${value}, mu=${variable.mu}, sigma=${variable.sigma}, pValue=${pValue.toFixed(4)}, weight=${variable.weight}, weightedScore=${weightedScore.toFixed(4)}`);
             componentScores.push(weightedScore);
             }
             const totalScore = ecoScore.getInstantScore(componentScores);
             readingsTotScore.push(totalScore);
 
             // Salva su rilevazioni: solo query raw PostGIS, compatibile con il DB
-            console.log(`Inserting reading ${i + 1}/${readings.length} with score ${totalScore} at [${reading.longitude}, ${reading.latitude}]`);
+            //console.log(`Inserting reading ${i + 1}/${readings.length} with score ${totalScore} at [${reading.longitude}, ${reading.latitude}]`);
             
             await prisma.$executeRawUnsafe(
             `INSERT INTO rilevazioni (sessione, punto, punteggio) VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), $4)`,
