@@ -123,11 +123,17 @@ class SessionSummaryDto {
 @JsonSerializable()
 class ComuneAttraversatoDto {
   final int istat;
+  final String citta;
+  final String regione;
   @JsonKey(name: 'zone_attraversate')
   final List<ZonaAttraversataDto> zoneAttraversate;
 
-  ComuneAttraversatoDto({required this.istat, required this.zoneAttraversate});
-
+  ComuneAttraversatoDto({
+    required this.istat,
+    required this.citta,
+    required this.regione,
+    required this.zoneAttraversate,
+  });
   factory ComuneAttraversatoDto.fromJson(Map<String, dynamic> json) =>
       _$ComuneAttraversatoDtoFromJson(json);
 }

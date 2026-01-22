@@ -447,7 +447,7 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
                     color: Colors.white70,
                   ),
                   title: Text(
-                    "Comune ${comune.istat}", // Replace with name if available
+                    "Comune ${comune.citta}, ${comune.regione}", // Replace with name if available
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,

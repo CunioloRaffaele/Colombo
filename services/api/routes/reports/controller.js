@@ -135,12 +135,14 @@ exports.ecoscoreSessione = async (req, res) => {
     const comuniAttraversatiRaw = await prisma.$queryRaw`
         SELECT
             z.comune AS istat_comune,
+            c.citta, c.regione,
             z.id AS zona_id,
             AVG(r.punteggio) AS ecoscore_zona
         FROM rilevazioni r
         JOIN zone z ON ST_Intersects(r.punto, z.poligono)
+        JOIN comuni c ON z.comune = c.istat
         WHERE r.sessione = ${id}::int
-        GROUP BY z.comune, z.id
+        GROUP BY z.comune, z.id, c.citta, c.regione
     `;
 
     // Raggruppa i risultati per comune
@@ -149,6 +151,8 @@ exports.ecoscoreSessione = async (req, res) => {
       if (!comune) {
         comune = {
           istat: curr.istat_comune,
+          citta: curr.citta,
+          regione: curr.regione,
           zone_attraversate: []
         };
         acc.push(comune);
