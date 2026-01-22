@@ -13,7 +13,11 @@ To compile and run the Colombo Flutter client application, ensure you have Flutt
    ```bash
    flutter pub get
    ```
-3. Run the application:
+3. Generate the necessary files using build_runner:
+   ```bash
+   flutter pub run build_runner build
+   ```
+4. Run the application:
    ```bash
    flutter run
    ```
