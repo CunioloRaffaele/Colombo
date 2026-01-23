@@ -380,7 +380,7 @@ exports.downloadReadings = async (req, res) => {
 
         // Scarica le rilevazioni
         const rilevazioni = await prisma.$queryRaw`
-                SELECT ST_AsGeoJSON(punto) as punto, punteggio
+                SELECT ST_AsGeoJSON(punto) as punto, punteggio*100 as punteggio
                 FROM rilevazioni
                 WHERE sessione = ${sessione.id}
             `;

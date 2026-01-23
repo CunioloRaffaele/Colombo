@@ -128,7 +128,7 @@ exports.ecoscoreSessione = async (req, res) => {
       return res.status(403).json({ error: 'Non hai il permesso di accedere a questa sessione' });
     }
     const ret = await prisma.$queryRaw`
-        SELECT ecoscore_sessione(${id}::int) AS ecoscore`;
+        SELECT ecoscore_sessione(${id}::int)*100 AS ecoscore`;
     const ecoscore = ret[0].ecoscore;
 
     // Trova i comuni e le zone attraversate con il relativo ecoscore
@@ -137,7 +137,7 @@ exports.ecoscoreSessione = async (req, res) => {
             z.comune AS istat_comune,
             c.citta, c.regione,
             z.id AS zona_id,
-            AVG(r.punteggio) AS ecoscore_zona
+            AVG(r.punteggio)*100 AS ecoscore_zona
         FROM rilevazioni r
         JOIN zone z ON ST_Intersects(r.punto, z.poligono)
         JOIN comuni c ON z.comune = c.istat
@@ -159,14 +159,14 @@ exports.ecoscoreSessione = async (req, res) => {
       }
       comune.zone_attraversate.push({
         zona_id: curr.zona_id,
-        ecoscore: curr.ecoscore_zona*100
+        ecoscore: curr.ecoscore_zona
       });
       return acc;
     }, []);
 
     const responseData = {
       message: ecoscore !== null ? "Ecoscore retrieved successfully" : "No ecoscore found for this session",
-      ecoscore: ecoscore*100,
+      ecoscore: ecoscore,
       km: session.km,
       vin: session.vettura,
       pm: session.pm,
@@ -271,12 +271,12 @@ exports.getUserSessionsListByMonthYear = async (req, res) => {
 
     const sessionsWithEcoscore = await Promise.all(sessions.map(async (session) => {
       const ret = await prisma.$queryRaw`
-        SELECT ecoscore_sessione(${session.id}::int) AS ecoscore`;
+        SELECT ecoscore_sessione(${session.id}::int)*100 AS ecoscore`;
       const ecoscore = ret[0].ecoscore;
       return {
       ...session,
       inizio: session.inizio.toString(),
-      ecoscore: ecoscore !== null ? ecoscore*100 : -1
+      ecoscore: ecoscore !== null ? ecoscore : -1
       };
     }));
 

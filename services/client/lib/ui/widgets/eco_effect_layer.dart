@@ -192,10 +192,20 @@ class _EcoEffectPainter extends CustomPainter {
         canvas.translate(dx, dy);
         canvas.rotate(p.rotation);
 
-        final path = Path();
-        path.moveTo(0, -radius);
-        path.quadraticBezierTo(radius, 0, 0, radius);
-        path.quadraticBezierTo(-radius, 0, 0, -radius);
+        final path = Path(); // PATH FOGLIA
+        path.moveTo(0, -radius); // Punta superiore
+        path.quadraticBezierTo(
+          radius,
+          0,
+          0,
+          radius,
+        ); // Lato destro verso il basso
+        path.quadraticBezierTo(
+          -radius,
+          0,
+          0,
+          -radius,
+        ); // Lato sinistro verso l'alto
         path.close();
 
         canvas.drawPath(path, paint);

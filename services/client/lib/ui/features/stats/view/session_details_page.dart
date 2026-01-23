@@ -266,13 +266,13 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
             Colors.blueAccent,
           ),
           _buildDivider(),
-          _buildStatColumn(
+          /*_buildStatColumn(
             Icons.eco,
             widget.session.ecoscore?.toStringAsFixed(0) ?? '-',
             "Score",
             getScoreColor(widget.session.ecoscore?.toInt() ?? 0),
           ),
-          _buildDivider(),
+          _buildDivider(),*/
           _buildStatColumn(
             Icons.cloud,
             widget.session.co2?.toStringAsFixed(2) ?? '-',
@@ -367,7 +367,7 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
                   Row(
                     children: [
                       Text(
-                        "${avgScore.toStringAsFixed(0)}%",
+                        "${widget.session.ecoscore?.toStringAsFixed(0) ?? '-'}%",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -380,10 +380,12 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
-                            value: avgScore / 100,
+                            value: (widget.session.ecoscore ?? 0) / 100,
                             backgroundColor: Colors.white10,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              getScoreColor(avgScore.toInt()),
+                              getScoreColor(
+                                widget.session.ecoscore?.toInt() ?? 0,
+                              ),
                             ),
                             minHeight: 6,
                           ),
@@ -468,12 +470,12 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            "Zona ${zona.zonaId}",
+                            "ID Zona: ${zona.zonaId}",
                             style: const TextStyle(color: Colors.white70),
                           ),
                           const Spacer(),
                           Text(
-                            "${zona.ecoscore.toInt()}",
+                            "Ecoscore: ${zona.ecoscore.toInt()}",
                             style: TextStyle(
                               color: getScoreColor(zona.ecoscore.toInt()),
                               fontWeight: FontWeight.bold,
