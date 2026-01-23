@@ -84,21 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                           width: 72,
                                           height: 72,
                                           decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white.withOpacity(
-                                                0.06,
-                                              ),
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(
-                                                  0.5,
-                                                ),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 3),
-                                              ),
-                                            ],
+                                            shape: BoxShape.rectangle,
                                             image: car.image != null
                                                 ? DecorationImage(
                                                     image: car.image!,
@@ -303,7 +289,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           const SizedBox(height: 24),
                           Center(
                             child: Text(
-                              'Colombo 2025',
+                              'Colombo 2026',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.4),

@@ -3,6 +3,7 @@ import 'package:colombo/data/services/municipality_service.dart';
 import 'package:colombo/data/services/telemetry_service.dart';
 import 'package:colombo/data/services/vehicle_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../core/connector/driver_elm327.dart';
 // import 'package:colombo/core/connector/mock_driver_elm327.dart';
 import '../../core/api/telemetry_api.dart';
@@ -138,6 +139,8 @@ class DriveSessionService {
       throw Exception("Errore avvio nuova sessione: $e");
     }
 
+    // Prevent screen from sleeping
+    WakelockPlus.enable();
     // Start the sensor reading loop
     _sensorLoop();
   }
@@ -168,6 +171,9 @@ class DriveSessionService {
 
     _currentState = _currentState.copyWith(isPipeConnected: false);
     _controller.add(_currentState);
+
+    // Allow screen to sleep again
+    WakelockPlus.disable();
   }
 
   Future<void> _sensorLoop() async {

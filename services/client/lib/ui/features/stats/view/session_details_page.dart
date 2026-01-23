@@ -257,7 +257,7 @@ class _SessionDetailsPageState extends State<SessionDetailsPage> {
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStatColumn(
             Icons.straighten,
