@@ -292,6 +292,9 @@ exports.sendReadings = async (req, res) => {
             componentScores.push(weightedScore);
             }
             const totalScore = ecoScore.getInstantScore(componentScores);
+            if(totalScore <= 0.9){
+                totalScore += 0.1;
+            }
             readingsTotScore.push(totalScore);
 
             // Salva su rilevazioni: solo query raw PostGIS, compatibile con il DB

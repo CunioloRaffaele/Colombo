@@ -323,6 +323,9 @@ class DriveSessionService {
 
         //Final score
         totalScore = VitalStats.getInstantScore(componentScores);
+        if (totalScore <= 0.9) {
+          totalScore += 0.1;
+        }
         debugPrint("Ecoscore calculated -> $totalScore");
         _currentState = _currentState.copyWith(ecoscore: totalScore * 100);
 
