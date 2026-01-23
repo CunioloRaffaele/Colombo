@@ -336,68 +336,104 @@ class Elm327Driver {
 
   // VIN: response "09 02 XX ... " => ASCII string
   Future<String> vin() async {
-    final response = await sendCommand('09 02');
+    try {
+      final response = await sendCommand('09 02');
 
-    // Clean the response: remove "SEARCHING..." and extra spaces
-    String cleaned = response
-        .replaceAll('SEARCHING...', '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-
-    // 1. Handle explicit error "7F 09 12" or similar (Mode 09 not supported for VIN) and return special value (all 0)
-    if (cleaned.contains('7F 09')) {
-      return "00000000000000000";
-    }
-
-    final List<String> hexBytes = [];
-    final tokens = cleaned.split(' ');
-
-    for (var token in tokens) {
-      if (token.isEmpty) continue;
-      // 2. Handle tokens with colon (e.g., "0:41", "1:4A", etc.)
-      // Take only the part after the colon
-      if (token.contains(':')) {
-        token = token.split(':').last;
+      // 1. Gestione errore esplicito (Negative Response)
+      if (response.contains('7F 09')) {
+        return "00000000000000000";
       }
 
-      // Get tokens that are valid hex bytes
-      if (RegExp(r'^[0-9A-Fa-f]{2}$').hasMatch(token)) {
-        hexBytes.add(token);
-      }
-    }
+      // 2. Logica di Riordino Frame CAN (Fondamentale per risposte multilinea)
+      // Suddividiamo per righe
+      final lines = response
+          .replaceAll('SEARCHING...', '')
+          .split(RegExp(r'[\r\n]+'));
 
-    // Look for the positive response signature: "49 02" (49 = 09 + 40)
-    int startIndex = -1;
-    for (int i = 0; i < hexBytes.length - 1; i++) {
-      if (hexBytes[i] == '49' && hexBytes[i + 1] == '02') {
-        startIndex = i;
-        break;
-      }
-    }
+      final Map<int, String> frames = {};
+      final List<String> unindexed = [];
 
-    if (startIndex != -1) {
-      // Data starts after "49 02"
-      int dataIdx = startIndex + 2;
+      for (var line in lines) {
+        line = line.trim();
+        if (line.isEmpty) continue;
 
-      // Sometimes there's a byte indicating the number of elements (e.g., 01) or padding.
-      // If we find "01" and still have enough bytes after to make a VIN (17 characters), skip it.
-      if (dataIdx < hexBytes.length && hexBytes[dataIdx] == '01') {
-        if ((hexBytes.length - (dataIdx + 1)) >= 17) {
-          dataIdx++;
+        // Cerca pattern "0: ..." o "1:..."
+        final match = RegExp(r'^(\d+)\s*:(.*)').firstMatch(line);
+        if (match != null) {
+          final index = int.parse(match.group(1)!);
+          frames[index] = match.group(2)!;
+        } else {
+          unindexed.add(line);
         }
       }
 
-      // Vin should be 17 characters long
-      if (hexBytes.length - dataIdx >= 17) {
-        final vinHex = hexBytes.sublist(dataIdx, dataIdx + 17);
-        // Convert hex to ASCII
-        return vinHex
-            .map((h) => String.fromCharCode(int.parse(h, radix: 16)))
-            .join();
+      // Ricostruiamo lo stream nell'ordine corretto
+      String cleanStream = "";
+      if (frames.isNotEmpty) {
+        final sortedKeys = frames.keys.toList()..sort();
+        cleanStream = sortedKeys.map((k) => frames[k]!).join(' ');
+      } else {
+        cleanStream = unindexed.join(' ');
       }
-    }
 
-    throw Exception('Invalid VIN response: $response');
+      // 3. Estrazione Byte Hex
+      final List<String> hexBytes = [];
+      final tokens = cleanStream.split(RegExp(r'\s+'));
+      for (var token in tokens) {
+        if (RegExp(r'^[0-9A-Fa-f]{2}$').hasMatch(token)) {
+          hexBytes.add(token);
+        }
+      }
+
+      // 4. Tentativo Standard: Cerca header "49 02"
+      int startIndex = -1;
+      for (int i = 0; i < hexBytes.length - 1; i++) {
+        if (hexBytes[i] == '49' && hexBytes[i + 1] == '02') {
+          startIndex = i;
+          break;
+        }
+      }
+
+      if (startIndex != -1) {
+        int dataIdx = startIndex + 2;
+        // Salta eventuale byte conteggio/padding (solitamente 01)
+        if (dataIdx < hexBytes.length && hexBytes[dataIdx] == '01') {
+          if ((hexBytes.length - (dataIdx + 1)) >= 17) {
+            dataIdx++;
+          }
+        }
+
+        if (hexBytes.length - dataIdx >= 17) {
+          final vinHex = hexBytes.sublist(dataIdx, dataIdx + 17);
+          return vinHex
+              .map((h) => String.fromCharCode(int.parse(h, radix: 16)))
+              .join();
+        }
+      }
+
+      // 5. Tentativo Fallback: Se header corrotto, cerca qualsiasi sequenza valida di 17 caratteri
+      // Decodifica interi stream hex in ASCII e cerca un pattern VIN
+      final fullAscii = hexBytes
+          .map((h) => int.tryParse(h, radix: 16) ?? 0)
+          .map((c) => String.fromCharCode(c))
+          .join();
+
+      // Regex VIN lasco (lettere e numeri, 17 char)
+      final fallbackMatch = RegExp(
+        r'[A-HJ-NPR-Z0-9]{17}',
+      ).firstMatch(fullAscii);
+      if (fallbackMatch != null) {
+        return fallbackMatch.group(0)!;
+      }
+
+      // Se arriviamo qui, non siamo riusciti a leggere
+      print("VIN Parsing failed on response: $response");
+      return "00000000000000000";
+    } catch (e) {
+      // 6. Catch-all: previene crash dell'app qualunque cosa succeda
+      print("VIN Exception: $e");
+      return "00000000000000000";
+    }
   }
 
   // ELM327 Version: response "AT Z" => version string
