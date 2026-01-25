@@ -1,14 +1,14 @@
 const emissioniCO2 = {
-    'Euro1': { diesel: 2.72, benzina: 2.72 },
-    'Euro2': { diesel: 1.0, benzina: 2.2 },
-    'Euro3': { diesel: 0.66, benzina: 2.3 },
-    'Euro4': { diesel: 0.50, benzina: 1.0 },
-    'Euro5a': { diesel: 0.50, benzina: 1.0 },
-    'Euro5b': { diesel: 0.50, benzina: 1.0 },
-    'Euro6b': { diesel: 0.50, benzina: 1.0 },
-    'Euro6c': { diesel: 0.50, benzina: 1.0 },
-    'Euro6d': { diesel: 0.50, benzina: 1.0 },
-    'Euro7': { diesel: 0.50, benzina: 1.7 }
+    'Euro1': { diesel: 200.0, benzina: 195.0 },
+    'Euro2': { diesel: 180.0, benzina: 185.0 },
+    'Euro3': { diesel: 170.0, benzina: 175.0 },
+    'Euro4': { diesel: 160.0, benzina: 165.0 },
+    'Euro5a': { diesel: 150.0, benzina: 155.0 },
+    'Euro5b': { diesel: 145.0, benzina: 150.0 },
+    'Euro6b': { diesel: 120.0, benzina: 130.0 },
+    'Euro6c': { diesel: 115.0, benzina: 125.0 },
+    'Euro6d': { diesel: 110.0, benzina: 120.0 },
+    'Euro7': { diesel: 95.0, benzina: 95.0 }
 };
 
 const emissioniPM = {
@@ -42,10 +42,10 @@ exports.pmPerKm = function (year) {
     const categoriaEuro = getEuroCategory(year);
 
     // Ottieni le emissioni per la categoria Euro
-    const emissioni = emissioniCO2[categoriaEuro];
+    const emissioni = emissioniPM[categoriaEuro];
     if (emissioni) {
-        const mediaCO2 = (emissioni.diesel + emissioni.benzina) / 2;
-        return mediaCO2;
+        const mediaPM = (emissioni.diesel + emissioni.benzina) / 2;
+        return mediaPM;
     } else {
         throw new Error("Categoria Euro non trovata.");
     }
@@ -58,10 +58,10 @@ exports.co2PerKm = function (year) {
     const categoriaEuro = getEuroCategory(year);
 
     // Ottieni le emissioni per la categoria Euro
-    const emissioni = emissioniPM[categoriaEuro];
+    const emissioni = emissioniCO2[categoriaEuro];
     if (emissioni) {
-        const mediaPM = (emissioni.diesel + emissioni.benzina) / 2;
-        return mediaPM;
+        const mediaCO2 = (emissioni.diesel + emissioni.benzina) / 2;
+        return mediaCO2;
     } else {
         throw new Error("Categoria Euro non trovata.");
     }
