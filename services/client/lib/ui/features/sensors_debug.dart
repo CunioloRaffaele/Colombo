@@ -209,7 +209,7 @@ class _SensorsDebugPageState extends State<SensorsDebugPage> {
           children: <Widget>[
             const Divider(),
             const Text(
-              'Questa pagina è scollegata dal resto dell\'app. Non usarla se risulta una pipe già aperta con l\'ELM327. L\'implemtazione è diversa da quella del resto dell\'app e potrebbe causare conflitti.',
+              'Questa pagina è scollegata dal resto dell\'app. Non usarla se risulta una pipe già aperta con l\'ELM327. L\'implementazione è diversa da quella del resto dell\'app e potrebbe causare conflitti.',
               textAlign: TextAlign.center,
             ),
             const Divider(),
