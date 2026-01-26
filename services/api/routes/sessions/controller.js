@@ -30,13 +30,26 @@ exports.startSession = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        let car;
+
+        if (vin === '00000000000000000') {
+            car = await prisma.vetture.findFirst({
+                where: {
+                    proprietario: email,
+                    vin: {
+                        startsWith: 'NO_VIN_'
+                    }
+                }
+            });
+        } else {
         // Verifica se la vettura esiste ed è legata all'utente
-        const car = await prisma.vetture.findFirst({
+        car = await prisma.vetture.findFirst({
             where: {
                 vin: vin,
                 proprietario: email
             }
         });
+    }   
 
         if (!car) {
             return res.status(404).json({ error: 'Car not found or does not belong to the user' });
@@ -49,7 +62,7 @@ exports.startSession = async (req, res) => {
                 co2: 0,
                 vetture: {
                     connect: {
-                        vin: req.params.vin
+                        vin: car.vin
                     }
                 },
                 inizio: BigInt(Math.floor(Date.now() / 1000))
