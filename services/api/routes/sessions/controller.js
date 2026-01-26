@@ -304,7 +304,7 @@ exports.sendReadings = async (req, res) => {
             //console.log(`  - ${camelKey}: value=${value}, mu=${variable.mu}, sigma=${variable.sigma}, pValue=${pValue.toFixed(4)}, weight=${variable.weight}, weightedScore=${weightedScore.toFixed(4)}`);
             componentScores.push(weightedScore);
             }
-            const totalScore = ecoScore.getInstantScore(componentScores);
+            let totalScore = ecoScore.getInstantScore(componentScores);
             if(totalScore <= 0.9){
                 totalScore += 0.1;
             }
