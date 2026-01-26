@@ -156,6 +156,13 @@ class StatisticsViewModel extends ChangeNotifier {
           originalDto: session,
         );
       });
+
+      // Ordina le sessioni per data (dalla più recente alla più vecchia)
+      _sessions.sort((a, b) {
+        final timeA = int.tryParse(a.originalDto.inizio) ?? 0;
+        final timeB = int.tryParse(b.originalDto.inizio) ?? 0;
+        return timeB.compareTo(timeA);
+      });
     } catch (e) {
       NotificationOverlay.show(
         "Errore nel caricamento delle statistiche mensili: $e",
