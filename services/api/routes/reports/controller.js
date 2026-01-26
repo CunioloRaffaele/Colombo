@@ -214,7 +214,7 @@ exports.ecoscoreUtente = async (req, res) => {
     if (ecoscore === null) {
       return res.status(200).json({ message: "No ecoscore found for this user", ecoscore: -1, numeroSessioni: 0 });
     }
-    return res.status(200).json({ message: "Ecoscore retrieved successfully", ecoscore: ecoscore, numeroSessioni: numeroSessioni });
+    return res.status(200).json({ message: "Ecoscore retrieved successfully", ecoscore: ecoscore*100, numeroSessioni: numeroSessioni });
 
   } catch (error) {
     console.error(error);
