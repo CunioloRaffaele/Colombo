@@ -114,7 +114,7 @@ class MockElm327Driver implements Elm327Driver {
 
   @override
   Future<String> vin() async {
-    return "WVWZZZ3CZWE123456";
+    return "00000000000000000"; // Mock VIN
   }
 
   @override
